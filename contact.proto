@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package baetyl;
+
+service Contact {
+    rpc Talk (stream Message) returns (stream Message) {}
+    rpc Callback (Message) returns (Message) {}
+}
+
+message Message {
+	MsgContext Context = 1;
+	bytes Content      = 2;
+}
+
+message MsgContext {
+	uint64 ID     = 1;
+	uint64 TS     = 2;
+	uint32 QOS    = 3;
+	uint32 Retain = 4;
+	string Topic  = 5;
+	string Src    = 6;
+	string Dest	  = 7;
+}
+
+
+/* Topic
+ * https://stackoverflow.com/questions/48238365/good-way-to-design-mqtt-topic
+ * protocol_prefix / src_id / dest_id / message_id / extra_properties
+ *
+ * baetyl/grpc/{src_module}/{dest_module}/{message_context_id}/{extra_properties}
+ *
+**/
