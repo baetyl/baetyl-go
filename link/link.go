@@ -18,13 +18,19 @@ const (
 	MsgTimeoutDefault = 30 * time.Second
 )
 
+// (中文注释后面提交会去掉，mock server的测试代码待补充)
+// 整体行为：
+// 1）在初始化后不会立即建立连接，会在第一次进行消息收发操作时打开连接
+// 2）在调用异步消息收取方法 Receive 或同步消息发送方法 SendSync 后会开始监听收到的消息
+//
 // LinkerAPI Contact API
 type LinkerAPI interface {
 	// async mode
-	Send(req *Message) error
-	Receive(talk Talk) error
+	Send(src string, dest string, content []byte) error
+	Receive(handler Handler)
 	// sync mode
-	SendSync(req *Message) (*Message, error)
+	SendSync(src string, dest string,
+		content []byte, timeout time.Duration) (*Message, error)
 }
 
 // Handler
@@ -69,6 +75,26 @@ func load(l *Linker) error {
 	return nil
 }
 
+// receive 行为
+// 1）只会实际执行一次
+// 2）执行后启动两个协程。协程1 进行消息的收取，解析和处理；协程2 进行异步或同步消息的响应数据的发送
+// 3）协程1 会在收到消息后
+//     a. 监听并接收消息
+//     b. 判断是否是同步消息的响应消息：
+//        是->查看消息是否过期，过期则丢弃；未过期则传回同步消息等待的chan中。转a
+//        否->c
+//     c. 判断是否handler是否可用
+//        是->d
+//        否->阻塞等待用户通过Receive传入可用handler
+//     d. 调用handler处理消息
+//     e. 判断消息是否 为同步消息或handler返回值不为空
+//        是->准备待响应消息，转f
+//        否->a
+//     f. 判断是否是待响应的同步消息
+//        是->ID设为和传入消息一致，FLAGS位设为FlagResp
+//        否->生成ID
+//     g. 向待发送消息chan写入响应信息
+//
 // receive implement Talk for receive async message
 func (l *Linker) receive() {
 	l.once.Do(func() {
@@ -99,7 +125,6 @@ func (l *Linker) receive() {
 					continue
 				}
 				if l.handler == nil {
-					fmt.Println("hold...")
 					l.handlerSem.Wait()
 				}
 				resp, err := l.handler(in)
@@ -114,7 +139,7 @@ func (l *Linker) receive() {
 						Context: &Context{
 							TS:    uint64(time.Now().Unix()),
 							QOS:   1,
-							Flags: 2,
+							Flags: 0,
 							Topic: "$sys/service/" + in.Context.Src,
 							Src:   in.Context.Dest,
 							Dest:  in.Context.Src,
@@ -122,6 +147,7 @@ func (l *Linker) receive() {
 					}
 					if (in.Context.Flags & FlagSync) == FlagSync {
 						msg.Context.ID = in.Context.ID
+						msg.Context.Flags = FlagResp
 					} else {
 						msg.Context.ID = uint64(time.Now().UnixNano())
 					}

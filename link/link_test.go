@@ -9,6 +9,7 @@ import (
 )
 
 func TestLinkSendReceive(t *testing.T) {
+	t.Skip("local svr: start server")
 	cfg := LClientConfig{
 		Address: "127.0.0.1:8080",
 		Timeout: time.Duration(20) * time.Second,
@@ -84,6 +85,7 @@ func TestLinkSendReceive(t *testing.T) {
 }
 
 func TestLinkSync(t *testing.T) {
+	t.Skip("local svr: start server")
 	cfg := LClientConfig{
 		Address: "127.0.0.1:8080",
 		Timeout: time.Duration(20) * time.Second,
