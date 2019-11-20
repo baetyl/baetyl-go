@@ -1,4 +1,4 @@
-package baetyl
+package link
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/baetyl/baetyl-go/utils"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -16,80 +15,76 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Callback message handler
-type Callback func(context.Context, *Message, ...grpc.CallOption) (*Message, error)
+// Call message handler
+type Call func(context.Context, *Message) (*Message, error)
 
 // Talk stream message handler
-type Talk func(Contact_TalkServer) error
+type Talk func(Link_TalkServer) error
 
-// CServer Contact server to handle message
-type CServer struct {
+// LServer Link server to handle message
+type LServer struct {
 	addr string
-	cfg  ContactServerConfig
+	cfg  LServerConfig
 	svr  *grpc.Server
-	call Callback
+	call Call
 	talk Talk
 }
 
-// NewCServer creates a new Contact server
-func NewCServer(c ContactServerConfig, call Callback, talk Talk) (*CServer, error) {
+// NewLServer creates a new Link server
+func NewLServer(c LServerConfig, call Call, talk Talk) (*LServer, error) {
 	lis, err := net.Listen("tcp", c.Address)
 	if err != nil {
 		return nil, err
 	}
-	tls, err := utils.NewTLSServerConfig(c.Auth.Certificate)
-	if err != nil {
-		return nil, err
-	}
-	opts := []grpc.ServerOption{
-		grpc.MaxConcurrentStreams(c.Concurrent.Max),
-		grpc.MaxRecvMsgSize(int(c.Message.Length.Max)),
-		grpc.MaxSendMsgSize(int(c.Message.Length.Max)),
-	}
-	if tls != nil {
-		opts = append(opts, grpc.Creds(credentials.NewTLS(tls)))
+	opts := []grpc.ServerOption{}
+	if c.Certificate.Cert != "" && c.Certificate.Key != "" {
+		creds, err := credentials.NewServerTLSFromFile(c.Certificate.Cert, c.Certificate.Key)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, grpc.Creds(creds))
 	}
 	svr := grpc.NewServer(opts...)
-	s := &CServer{
+	s := &LServer{
 		addr: lis.Addr().String(),
 		cfg:  c,
 		svr:  svr,
 		call: call,
 		talk: talk,
 	}
-	RegisterContactServer(svr, s)
+	RegisterLinkServer(svr, s)
 	reflection.Register(svr)
 	go s.svr.Serve(lis)
 	return s, nil
 }
 
-// Callback handles message
-func (s *CServer) Callback(c context.Context, m *Message) (*Message, error) {
+// Call handles message
+func (s *LServer) Call(c context.Context, m *Message) (*Message, error) {
 	if s.call == nil {
 		return nil, fmt.Errorf("handle not implemented")
 	}
-	if authResult, err := authenticate(c, s.cfg.Auth); !authResult {
+	if authResult, err := authenticate(c, s.cfg.Account); !authResult {
 		return nil, err
 	}
 	return s.call(c, m)
 }
 
 // Talk stream message handler
-func (s *CServer) Talk(stream Contact_TalkServer) error {
-	if authResult, err := authenticate(stream.Context(), s.cfg.Auth); !authResult {
+func (s *LServer) Talk(stream Link_TalkServer) error {
+	if authResult, err := authenticate(stream.Context(), s.cfg.Account); !authResult {
 		return err
 	}
 	return s.talk(stream)
 }
 
 // Close closes server
-func (s *CServer) Close() {
+func (s *LServer) Close() {
 	if s.svr != nil {
 		s.svr.GracefulStop()
 	}
 }
 
-func authenticate(c context.Context, a Auth) (bool, error) {
+func authenticate(c context.Context, a Account) (bool, error) {
 	if len(a.Username) > 0 {
 		md, ok := metadata.FromIncomingContext(c)
 		if !ok {
