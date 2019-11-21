@@ -1,129 +1,247 @@
 package link
 
 import (
-	"fmt"
+	"context"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLinkClient(t *testing.T) {
-	t.Skip("local svr: start server")
-	ccfg := LClientConfig{
-		Address: "127.0.0.1:8080",
-		Timeout: time.Duration(20) * time.Second,
-		Account: Account{
-			Username: "svr",
-			Password: "svr",
-		},
-		Certificate: LClientCert{
+type msg struct {
+	msgCall *Message
+	msgTalk *Message
+}
+
+type errInfo struct {
+	wantErr bool
+	errMsg  string
+}
+
+var (
+	scfg = LServerConfig{
+		Address: "0.0.0.0:8276",
+		Account: Account{Username: "svr", Password: "svr"},
+		Certificate: LServerCert{
 			Cert: "./testcert/server.pem",
-			Name: "bd",
-		},
-	}
-	ccfgErr0 := LClientConfig{
-		Address: "127.0.0.1:8080",
-		Timeout: time.Duration(1) * time.Second,
-		Account: Account{
-			Username: "svr",
-			Password: "svr",
-		},
-		Certificate: LClientCert{
-			Cert: "./testcert/server.pem",
-			Name: "",
-		},
-	}
-	ccfgErr1 := LClientConfig{
-		Address: "127.0.0.1:8080",
-		Timeout: time.Duration(20) * time.Second,
-		Account: Account{
-			Username: "svr",
-			Password: "error",
-		},
-		Certificate: LClientCert{
-			Cert: "./testcert/server.pem",
-			Name: "bd",
+			Key:  "./testcert/server.key",
 		},
 	}
 
-	msg := &Message{
+	accountErrMsg = "rpc error: code = Unauthenticated " +
+		"desc = username or password not match"
+
+	msgCall = &Message{
 		Context: &Context{
-			ID:    1,
-			TS:    123456,
+			ID:    0,
+			TS:    1,
 			QOS:   2,
-			Flags: 77,
-			Topic: "baety/grpc/cli/ser/svr",
+			Flags: 3,
+			Topic: "$sys/service/cli",
 			Src:   "cli",
 			Dest:  "ser",
 		},
-		Content: []byte("test123"),
+		Content: []byte("test msg call"),
 	}
 
-	// cert error
-	_, err := NewLClient(ccfgErr0)
-	assert.Error(t, err)
-
-	// username & password error
-	cliErr, err := NewLClient(ccfgErr1)
-	assert.NoError(t, err)
-	defer cliErr.Close()
-	_, err = cliErr.Call(msg)
-	assert.Error(t, err)
-	assert.Equal(t, "rpc error: code = Unauthenticated "+
-		"desc = username or password not match", err.Error())
-
-	// Call
-	cli, err := NewLClient(ccfg)
-	assert.NoError(t, err)
-	defer cli.Close()
-	start := time.Now()
-	resp, err := cli.Call(msg)
-	fmt.Printf("%s call elapsed time: %v\n", t.Name(), time.Since(start))
-	assert.NoError(t, err)
-	assert.Equal(t, string(msg.Content), string(resp.Content))
-	assert.Equal(t, msg.Context.ID, resp.Context.ID)
-	assert.Equal(t, msg.Context.TS, resp.Context.TS)
-	assert.Equal(t, msg.Context.QOS, resp.Context.QOS)
-	assert.Equal(t, msg.Context.Flags, resp.Context.Flags)
-	assert.Equal(t, msg.Context.Topic, resp.Context.Topic)
-	assert.Equal(t, msg.Context.Src, resp.Context.Src)
-	assert.Equal(t, msg.Context.Dest, resp.Context.Dest)
-
-	// Talk
-	msg = &Message{
+	msgCallResp = &Message{
 		Context: &Context{
-			ID:    2,
-			TS:    654321,
-			QOS:   1,
-			Flags: 44,
-			Topic: "baety/grpc/cli/ser/cli",
-			Src:   "timer",
-			Dest:  "python",
+			ID:    10,
+			TS:    11,
+			QOS:   12,
+			Flags: 13,
+			Topic: "$sys/service/svr",
+			Src:   "ser",
+			Dest:  "cli",
 		},
-		Content: []byte("test for talk"),
+		Content: []byte("test msg call resp"),
 	}
-	waitc := make(chan struct{})
-	stream, err := cli.Talk()
-	assert.NoError(t, err)
-	go func() {
-		in, err := stream.Recv()
-		assert.NoError(t, err)
-		resp = in
-		close(waitc)
-	}()
-	err = stream.Send(msg)
-	assert.NoError(t, err)
-	err = stream.CloseSend()
-	assert.NoError(t, err)
-	<-waitc
 
-	assert.Equal(t, string(msg.Content), string(resp.Content))
-	assert.Equal(t, msg.Context.ID, resp.Context.ID)
-	assert.Equal(t, msg.Context.TS, resp.Context.TS)
-	assert.Equal(t, msg.Context.QOS, resp.Context.QOS)
-	assert.Equal(t, msg.Context.Flags, resp.Context.Flags)
-	assert.Equal(t, msg.Context.Topic, resp.Context.Topic)
-	assert.Equal(t, msg.Context.Src, resp.Context.Src)
-	assert.Equal(t, msg.Context.Dest, resp.Context.Dest)
+	msgTalk = &Message{
+		Context: &Context{
+			ID:    20,
+			TS:    21,
+			QOS:   22,
+			Flags: 23,
+			Topic: "$sys/service/cli",
+			Src:   "cli",
+			Dest:  "ser",
+		},
+		Content: []byte("test msg talk"),
+	}
+
+	msgTalkResp = &Message{
+		Context: &Context{
+			ID:    30,
+			TS:    31,
+			QOS:   32,
+			Flags: 33,
+			Topic: "$sys/service/svr",
+			Src:   "svr",
+			Dest:  "cli",
+		},
+		Content: []byte("test msg talk resp"),
+	}
+
+	linkClientTests = []struct {
+		name   string
+		ccfg   LClientConfig
+		params msg
+		want   msg
+		err    []errInfo
+	}{
+		{
+			name: "Test 0 : Happy path",
+			ccfg: LClientConfig{
+				Address: "0.0.0.0:8276",
+				Timeout: time.Duration(20) * time.Second,
+				Account: Account{
+					Username: "svr",
+					Password: "svr",
+				},
+				Certificate: LClientCert{
+					Cert: "./testcert/server.pem",
+					Name: "bd",
+				},
+			},
+			params: msg{
+				msgCall: msgCall,
+				msgTalk: msgTalk,
+			},
+			want: msg{
+				msgCall: msgCallResp,
+				msgTalk: msgTalkResp,
+			},
+			err: []errInfo{
+				{wantErr: false},
+				{wantErr: false},
+				{wantErr: false},
+			},
+		},
+		{
+			name: "Test 1 : Cert error",
+			ccfg: LClientConfig{
+				Address: "0.0.0.0:8276",
+				Timeout: time.Duration(1) * time.Second,
+				Account: Account{
+					Username: "svr",
+					Password: "svr",
+				},
+				Certificate: LClientCert{
+					Cert: "./testcert/server.pem",
+					Name: "",
+				},
+			},
+			params: msg{
+				msgCall: msgCall,
+				msgTalk: msgTalk,
+			},
+			want: msg{
+				msgCall: msgCall,
+				msgTalk: msgTalk,
+			},
+			err: []errInfo{
+				{wantErr: true},
+			},
+		},
+		{
+			name: "Test 2 : Account error",
+			ccfg: LClientConfig{
+				Address: "0.0.0.0:8276",
+				Timeout: time.Duration(1) * time.Second,
+				Account: Account{
+					Username: "svr",
+					Password: "error",
+				},
+				Certificate: LClientCert{
+					Cert: "./testcert/server.pem",
+					Name: "bd",
+				},
+			},
+			params: msg{
+				msgCall: msgCall,
+				msgTalk: msgTalk,
+			},
+			want: msg{
+				msgCall: msgCallResp,
+				msgTalk: msgTalkResp,
+			},
+			err: []errInfo{
+				{wantErr: false},
+				{
+					wantErr: true,
+					errMsg:  accountErrMsg,
+				},
+				{
+					wantErr: true,
+					errMsg:  accountErrMsg,
+				},
+			},
+		},
+	}
+)
+
+func TestLinkClient(t *testing.T) {
+	ser, err := NewLServer(scfg, func(ctx context.Context, msg *Message) (message *Message, e error) {
+		checkMsg(t, msg, msgCall)
+		return msgCallResp, nil
+	}, func(stream Link_TalkServer) error {
+		for {
+			in, err := stream.Recv()
+			if err != nil {
+				return err
+			}
+			checkMsg(t, in, msgTalk)
+			if err = stream.Send(msgTalkResp); err != nil {
+				return err
+			}
+		}
+	})
+	assert.NoError(t, err)
+	defer ser.Close()
+
+	wg := sync.WaitGroup{}
+	for _, tt := range linkClientTests {
+		cli, err := NewLClient(tt.ccfg)
+		assert.Equal(t, tt.err[0].wantErr, err != nil)
+		if cli != nil {
+			resp, err := cli.Call(tt.params.msgCall)
+			assert.Equal(t, tt.err[1].wantErr, err != nil)
+			if err != nil {
+				assert.Equal(t, accountErrMsg, err.Error())
+				continue
+			}
+			checkMsg(t, msgCallResp, resp)
+			stream, err := cli.Talk()
+			assert.NoError(t, err)
+			go func() {
+				in, err := stream.Recv()
+				assert.NoError(t, err)
+				checkMsg(t, in, msgTalkResp)
+				wg.Done()
+			}()
+			err = stream.Send(tt.params.msgTalk)
+			assert.Equal(t, tt.err[2].wantErr, err != nil)
+			if err != nil {
+				assert.Equal(t, accountErrMsg, err.Error())
+				continue
+			}
+			wg.Add(1)
+			err = stream.CloseSend()
+			assert.NoError(t, err)
+		}
+	}
+	wg.Wait()
+}
+
+func checkMsg(t *testing.T, req *Message, resp *Message) {
+	assert.Equal(t, string(req.Content), string(resp.Content))
+	assert.Equal(t, req.Context.ID, resp.Context.ID)
+	assert.Equal(t, req.Context.TS, resp.Context.TS)
+	assert.Equal(t, req.Context.QOS, resp.Context.QOS)
+	assert.Equal(t, req.Context.Flags, resp.Context.Flags)
+	assert.Equal(t, req.Context.Topic, resp.Context.Topic)
+	assert.Equal(t, req.Context.Src, resp.Context.Src)
+	assert.Equal(t, req.Context.Dest, resp.Context.Dest)
 }
