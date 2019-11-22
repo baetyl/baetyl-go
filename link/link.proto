@@ -16,17 +16,8 @@ message Context {
 	uint64 ID     = 1;
 	uint64 TS     = 2;
 	uint32 QOS    = 3;
-	uint32 Flags  = 4; // 0x1 retained, 0x2 sync , 0x4 sync response
-	string Topic  = 5; // $sys/service/{:module}
+	uint32 Flags  = 4; // 0x1 retained, 0x2 sync , 0x4 response
+	string Topic  = 5; // $SYS/service/{.BAETYL_SERVICE_NAME}
 	string Src    = 6;
 	string Dest   = 7;
 }
-
-
-/* Topic
- * https://stackoverflow.com/questions/48238365/good-way-to-design-mqtt-topic
- * protocol_prefix / src_id / dest_id / message_id / extra_properties
- *
- * baetyl/grpc/{src_module}/{dest_module}/{message_context_id}/{extra_properties}
- *
-**/

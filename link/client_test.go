@@ -2,9 +2,13 @@ package link
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
+
+	g "github.com/baetyl/baetyl-go/utils/protocol/grpc"
+	"google.golang.org/grpc"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,15 +24,6 @@ type errInfo struct {
 }
 
 var (
-	scfg = LServerConfig{
-		Address: "0.0.0.0:8276",
-		Account: Account{Username: "svr", Password: "svr"},
-		Certificate: LServerCert{
-			Cert: "./testcert/server.pem",
-			Key:  "./testcert/server.key",
-		},
-	}
-
 	accountErrMsg = "rpc error: code = Unauthenticated " +
 		"desc = username or password not match"
 
@@ -86,15 +81,15 @@ var (
 
 	linkClientTests = []struct {
 		name   string
-		ccfg   LClientConfig
+		ccfg   ClientConfig
 		params msg
 		want   msg
 		err    []errInfo
 	}{
 		{
 			name: "Test 0 : Happy path",
-			ccfg: LClientConfig{
-				Address: "0.0.0.0:8276",
+			ccfg: ClientConfig{
+				Address: "localhost:8080",
 				Timeout: time.Duration(20) * time.Second,
 				Account: Account{
 					Username: "svr",
@@ -121,9 +116,9 @@ var (
 		},
 		{
 			name: "Test 1 : Cert error",
-			ccfg: LClientConfig{
-				Address: "0.0.0.0:8276",
-				Timeout: time.Duration(1) * time.Second,
+			ccfg: ClientConfig{
+				Address: "localhost:8080",
+				Timeout: time.Duration(10) * time.Second,
 				Account: Account{
 					Username: "svr",
 					Password: "svr",
@@ -147,9 +142,9 @@ var (
 		},
 		{
 			name: "Test 2 : Account error",
-			ccfg: LClientConfig{
-				Address: "0.0.0.0:8276",
-				Timeout: time.Duration(1) * time.Second,
+			ccfg: ClientConfig{
+				Address: "localhost:8080",
+				Timeout: time.Duration(10) * time.Second,
 				Account: Account{
 					Username: "svr",
 					Password: "error",
@@ -183,35 +178,57 @@ var (
 )
 
 func TestLinkClient(t *testing.T) {
-	ser, err := NewLServer(scfg, func(ctx context.Context, msg *Message) (message *Message, e error) {
-		checkMsg(t, msg, msgCall)
-		return msgCallResp, nil
-	}, func(stream Link_TalkServer) error {
-		for {
-			in, err := stream.Recv()
-			if err != nil {
-				return err
+	option := &g.ServerOption{}
+	opts := option.
+		Create().
+		CredsFromFile("./testcert/server.pem", "./testcert/server.key").
+		Build()
+	s := NewServer("svr",
+		"svr",
+		func(c context.Context, msg *Message) (*Message, error) {
+			checkMsg(t, msg, msgCall)
+			return msgCallResp, nil
+		},
+		func(stream Link_TalkServer) error {
+			for {
+				in, err := stream.Recv()
+				if err != nil {
+					return err
+				}
+				checkMsg(t, in, msgTalk)
+				if err = stream.Send(msgTalkResp); err != nil {
+					return err
+				}
 			}
-			checkMsg(t, in, msgTalk)
-			if err = stream.Send(msgTalkResp); err != nil {
-				return err
-			}
-		}
+		})
+	svr, err := g.NewServer(g.NetTCP, "localhost:8080", opts, func(svr *grpc.Server) {
+		RegisterLinkServer(svr, s)
 	})
 	assert.NoError(t, err)
-	defer ser.Close()
+	defer svr.GracefulStop()
 
 	wg := sync.WaitGroup{}
 	for _, tt := range linkClientTests {
-		cli, err := NewLClient(tt.ccfg)
+		fmt.Println(tt.name)
+		option := &g.ClientOption{}
+		opts := option.Create().
+			CredsFromFile(tt.ccfg.Certificate.Cert, tt.ccfg.Certificate.Name).
+			CustomCred(&g.CustomCred{
+				Username: tt.ccfg.Account.Username,
+				Password: tt.ccfg.Account.Password,
+			}).Build()
+
+		conn, err := g.NewClientConnect(tt.ccfg.Address, tt.ccfg.Timeout, opts)
 		assert.Equal(t, tt.err[0].wantErr, err != nil)
-		if cli != nil {
-			resp, err := cli.Call(tt.params.msgCall)
-			assert.Equal(t, tt.err[1].wantErr, err != nil)
-			if err != nil {
+		if conn != nil {
+			cli := NewClient(conn)
+			resp, err := cli.Call(tt.params.msgCall, tt.ccfg.Timeout)
+			if tt.err[1].wantErr {
+				assert.Error(t, err)
 				assert.Equal(t, accountErrMsg, err.Error())
 				continue
 			}
+			assert.NoError(t, err)
 			checkMsg(t, msgCallResp, resp)
 			stream, err := cli.Talk()
 			assert.NoError(t, err)
@@ -222,17 +239,20 @@ func TestLinkClient(t *testing.T) {
 				wg.Done()
 			}()
 			err = stream.Send(tt.params.msgTalk)
-			assert.Equal(t, tt.err[2].wantErr, err != nil)
-			if err != nil {
+			if tt.err[2].wantErr {
+				assert.Error(t, err)
 				assert.Equal(t, accountErrMsg, err.Error())
 				continue
 			}
+			assert.NoError(t, err)
 			wg.Add(1)
 			err = stream.CloseSend()
 			assert.NoError(t, err)
+			wg.Wait()
+			err = conn.Close()
+			assert.NoError(t, err)
 		}
 	}
-	wg.Wait()
 }
 
 func checkMsg(t *testing.T, req *Message, resp *Message) {
