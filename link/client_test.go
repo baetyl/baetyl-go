@@ -2,7 +2,6 @@ package link
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -24,57 +23,63 @@ type errInfo struct {
 }
 
 var (
+	certErrMsg = "rpc error: code = Unavailable desc =" +
+		" all SubConns are in TransientFailure," +
+		" latest connection error: connection error:" +
+		" desc = \"transport: authentication handshake failed:" +
+		" x509: certificate is valid for bd, not error\""
+
 	accountErrMsg = "rpc error: code = Unauthenticated " +
 		"desc = username or password not match"
 
 	msgCall = &Message{
 		Context: &Context{
-			ID:    0,
-			TS:    1,
-			QOS:   2,
-			Flags: 3,
-			Topic: "$sys/service/cli",
-			Src:   "cli",
-			Dest:  "ser",
+			ID:          0,
+			TS:          1,
+			QOS:         2,
+			Flags:       3,
+			Topic:       "$sys/service/cli",
+			Source:      "cli",
+			Destination: "ser",
 		},
 		Content: []byte("test msg call"),
 	}
 
 	msgCallResp = &Message{
 		Context: &Context{
-			ID:    10,
-			TS:    11,
-			QOS:   12,
-			Flags: 13,
-			Topic: "$sys/service/svr",
-			Src:   "ser",
-			Dest:  "cli",
+			ID:          10,
+			TS:          11,
+			QOS:         12,
+			Flags:       13,
+			Topic:       "$sys/service/svr",
+			Source:      "ser",
+			Destination: "cli",
 		},
 		Content: []byte("test msg call resp"),
 	}
 
 	msgTalk = &Message{
 		Context: &Context{
-			ID:    20,
-			TS:    21,
-			QOS:   22,
-			Flags: 23,
-			Topic: "$sys/service/cli",
-			Src:   "cli",
-			Dest:  "ser",
+			ID:          20,
+			TS:          21,
+			QOS:         22,
+			Flags:       23,
+			Topic:       "$sys/service/cli",
+			Source:      "cli",
+			Destination: "ser",
 		},
 		Content: []byte("test msg talk"),
 	}
 
 	msgTalkResp = &Message{
 		Context: &Context{
-			ID:    30,
-			TS:    31,
-			QOS:   32,
-			Flags: 33,
-			Topic: "$sys/service/svr",
-			Src:   "svr",
-			Dest:  "cli",
+			ID:          30,
+			TS:          31,
+			QOS:         32,
+			Flags:       33,
+			Topic:       "$sys/service/svr",
+			Source:      "svr",
+			Destination: "cli",
 		},
 		Content: []byte("test msg talk resp"),
 	}
@@ -89,7 +94,7 @@ var (
 		{
 			name: "Test 0 : Happy path",
 			ccfg: ClientConfig{
-				Address: "localhost:8080",
+				Address: "0.0.0.0:8273",
 				Timeout: time.Duration(20) * time.Second,
 				Account: Account{
 					Username: "svr",
@@ -117,15 +122,15 @@ var (
 		{
 			name: "Test 1 : Cert error",
 			ccfg: ClientConfig{
-				Address: "localhost:8080",
-				Timeout: time.Duration(10) * time.Second,
+				Address: "0.0.0.0:8273",
+				Timeout: time.Duration(30) * time.Second,
 				Account: Account{
 					Username: "svr",
 					Password: "svr",
 				},
 				Certificate: LClientCert{
 					Cert: "./testcert/server.pem",
-					Name: "",
+					Name: "error",
 				},
 			},
 			params: msg{
@@ -137,13 +142,15 @@ var (
 				msgTalk: msgTalk,
 			},
 			err: []errInfo{
-				{wantErr: true},
+				{wantErr: false},
+				{wantErr: true, errMsg: certErrMsg},
+				{wantErr: true, errMsg: certErrMsg},
 			},
 		},
 		{
 			name: "Test 2 : Account error",
 			ccfg: ClientConfig{
-				Address: "localhost:8080",
+				Address: "0.0.0.0:8273",
 				Timeout: time.Duration(10) * time.Second,
 				Account: Account{
 					Username: "svr",
@@ -201,7 +208,7 @@ func TestLinkClient(t *testing.T) {
 				}
 			}
 		})
-	svr, err := g.NewServer(g.NetTCP, "localhost:8080", opts, func(svr *grpc.Server) {
+	svr, err := g.NewServer(g.NetTCP, "0.0.0.0:8273", opts, func(svr *grpc.Server) {
 		RegisterLinkServer(svr, s)
 	})
 	assert.NoError(t, err)
@@ -209,49 +216,50 @@ func TestLinkClient(t *testing.T) {
 
 	wg := sync.WaitGroup{}
 	for _, tt := range linkClientTests {
-		fmt.Println(tt.name)
-		option := &g.ClientOption{}
-		opts := option.Create().
-			CredsFromFile(tt.ccfg.Certificate.Cert, tt.ccfg.Certificate.Name).
-			CustomCred(&g.CustomCred{
-				Username: tt.ccfg.Account.Username,
-				Password: tt.ccfg.Account.Password,
-			}).Build()
+		t.Run(tt.name, func(t *testing.T) {
+			option := &g.ClientOption{}
+			opts := option.Create().
+				CredsFromFile(tt.ccfg.Certificate.Cert, tt.ccfg.Certificate.Name).
+				CustomCred(&g.CustomCred{
+					Username: tt.ccfg.Account.Username,
+					Password: tt.ccfg.Account.Password,
+				}).Build()
 
-		conn, err := g.NewClientConnect(tt.ccfg.Address, tt.ccfg.Timeout, opts)
-		assert.Equal(t, tt.err[0].wantErr, err != nil)
-		if conn != nil {
-			cli := NewClient(conn)
-			resp, err := cli.Call(tt.params.msgCall, tt.ccfg.Timeout)
-			if tt.err[1].wantErr {
-				assert.Error(t, err)
-				assert.Equal(t, accountErrMsg, err.Error())
-				continue
-			}
-			assert.NoError(t, err)
-			checkMsg(t, msgCallResp, resp)
-			stream, err := cli.Talk()
-			assert.NoError(t, err)
-			go func() {
-				in, err := stream.Recv()
+			conn, err := g.NewClientConnect(tt.ccfg.Address, tt.ccfg.Timeout, opts)
+			assert.Equal(t, tt.err[0].wantErr, err != nil)
+			if conn != nil {
+				cli := NewClient(conn)
+				resp, err := cli.Call(tt.params.msgCall, tt.ccfg.Timeout)
+				if tt.err[1].wantErr {
+					assert.Error(t, err)
+					assert.Equal(t, tt.err[1].errMsg, err.Error())
+					return
+				}
 				assert.NoError(t, err)
-				checkMsg(t, in, msgTalkResp)
-				wg.Done()
-			}()
-			err = stream.Send(tt.params.msgTalk)
-			if tt.err[2].wantErr {
-				assert.Error(t, err)
-				assert.Equal(t, accountErrMsg, err.Error())
-				continue
+				checkMsg(t, msgCallResp, resp)
+				stream, err := cli.Talk()
+				assert.NoError(t, err)
+				go func() {
+					in, err := stream.Recv()
+					assert.NoError(t, err)
+					checkMsg(t, in, msgTalkResp)
+					wg.Done()
+				}()
+				err = stream.Send(tt.params.msgTalk)
+				if tt.err[2].wantErr {
+					assert.Error(t, err)
+					assert.Equal(t, tt.err[2].errMsg, err.Error())
+					return
+				}
+				assert.NoError(t, err)
+				wg.Add(1)
+				err = stream.CloseSend()
+				assert.NoError(t, err)
+				wg.Wait()
+				err = conn.Close()
+				assert.NoError(t, err)
 			}
-			assert.NoError(t, err)
-			wg.Add(1)
-			err = stream.CloseSend()
-			assert.NoError(t, err)
-			wg.Wait()
-			err = conn.Close()
-			assert.NoError(t, err)
-		}
+		})
 	}
 }
 
@@ -262,6 +270,6 @@ func checkMsg(t *testing.T, req *Message, resp *Message) {
 	assert.Equal(t, req.Context.QOS, resp.Context.QOS)
 	assert.Equal(t, req.Context.Flags, resp.Context.Flags)
 	assert.Equal(t, req.Context.Topic, resp.Context.Topic)
-	assert.Equal(t, req.Context.Src, resp.Context.Src)
-	assert.Equal(t, req.Context.Dest, resp.Context.Dest)
+	assert.Equal(t, req.Context.Source, resp.Context.Source)
+	assert.Equal(t, req.Context.Destination, resp.Context.Destination)
 }

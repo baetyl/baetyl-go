@@ -19,14 +19,14 @@ import (
 // LinkerAPI Contact API
 type LinkerAPI interface {
 	// async mode
-	Send(src string, dest string, content []byte) error
+	Send(Source string, Destination string, content []byte) error
 	Receive(handler Handler)
 }
 
 // Handler
 // if []byte not nil or source is a sync message,
 // will send a response to the source
-type Handler func([]byte) ([]byte, error)
+type Handler func([]byte) []byte
 
 type Linker struct {
 	conn     *grpc.ClientConn
@@ -97,22 +97,18 @@ func (l *Linker) receive() {
 				fmt.Println("handle not implemented, message dropped")
 				continue
 			}
-			resp, err := l.handler(in.Content)
-			if err != nil {
-				fmt.Printf("Handler error = %s\n", err.Error())
-				continue
-			}
+			resp := l.handler(in.Content)
 			// check : is sync message or handler return not nil
 			msg := &Message{
 				Content: resp,
 				Context: &Context{
-					ID:    uint64(time.Now().UnixNano()),
-					TS:    uint64(time.Now().Unix()),
-					QOS:   1,
-					Flags: 0,
-					Topic: "$SYS/service/" + in.Context.Src,
-					Src:   in.Context.Dest,
-					Dest:  in.Context.Src,
+					ID:          uint64(time.Now().UnixNano()),
+					TS:          uint64(time.Now().Unix()),
+					QOS:         1,
+					Flags:       0,
+					Topic:       "$SYS/service/" + in.Context.Source,
+					Source:      in.Context.Destination,
+					Destination: in.Context.Source,
 				},
 			}
 			select {
@@ -137,17 +133,17 @@ func (l *Linker) receive() {
 }
 
 // Send for send async message
-func (l *Linker) Send(src string, dest string, content []byte) error {
+func (l *Linker) Send(Source, Destination string, content []byte, timeout time.Duration) error {
 	msg := &Message{
 		Content: content,
 		Context: &Context{
-			ID:    uint64(time.Now().UnixNano()),
-			TS:    uint64(time.Now().Unix()),
-			QOS:   1,
-			Flags: 0,
-			Topic: "$sys/service/" + dest,
-			Src:   src,
-			Dest:  dest,
+			ID:          uint64(time.Now().UnixNano()),
+			TS:          uint64(time.Now().Unix()),
+			QOS:         1,
+			Flags:       0,
+			Topic:       "$SYS/service/" + Destination,
+			Source:      Source,
+			Destination: Destination,
 		},
 	}
 	return l.stream.Send(msg)
