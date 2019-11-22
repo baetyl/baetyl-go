@@ -111,12 +111,7 @@ func (l *Linker) receive() {
 					Destination: in.Context.Source,
 				},
 			}
-			select {
-			case l.msgAsync <- msg:
-			case <-l.t.Dying():
-				close(l.msgAsync)
-				return nil
-			}
+			l.msgAsync <- msg
 		}
 	})
 	l.t.Go(func() error {
@@ -154,6 +149,5 @@ func (l *Linker) Close() error {
 	if l.cli != nil {
 		return l.conn.Close()
 	}
-	l.t.Kill(nil)
-	return l.t.Wait()
+	return nil
 }

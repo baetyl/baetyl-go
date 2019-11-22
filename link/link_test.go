@@ -115,4 +115,5 @@ func TestLink(t *testing.T) {
 	assert.NoError(t, err)
 	wg.Add(1)
 	wg.Wait()
+	l.Close()
 }
