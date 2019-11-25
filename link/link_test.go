@@ -39,8 +39,6 @@ var (
 
 	msgResp = &Message{
 		Context: &Context{
-			ID:          1,
-			TS:          2,
 			QOS:         1,
 			Flags:       4,
 			Topic:       "$SYS/service/video",
@@ -53,7 +51,7 @@ var (
 	msgAck = &Message{
 		Context: &Context{
 			QOS:         1,
-			Flags:       0,
+			Flags:       4,
 			Topic:       "$SYS/service/video",
 			Source:      "timer",
 			Destination: "video",
@@ -86,6 +84,8 @@ func TestLink(t *testing.T) {
 					msgSend.Context.ID = in.Context.ID
 					msgSend.Context.TS = in.Context.TS
 					checkMsg(t, in, msgSend)
+					msgResp.Context.ID = in.Context.ID
+					msgResp.Context.TS = in.Context.TS
 					if err = stream.Send(msgResp); err != nil {
 						return err
 					}
@@ -111,7 +111,9 @@ func TestLink(t *testing.T) {
 	}
 	l, err := NewLinker(cc, handler)
 	assert.NoError(t, err)
-	err = l.Send(msgSend.Context.Source, msgSend.Context.Destination, msgSend.Content, 10000)
+	err = l.Send(msgSend.Context.Source, msgSend.Context.Destination, msgSend.Content)
+	assert.NoError(t, err)
+	err = l.stream.Send(packetAckMsg(msgResp, []byte("timer ack")))
 	assert.NoError(t, err)
 	wg.Add(1)
 	wg.Wait()
