@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -23,9 +24,41 @@ type Logger = zap.Logger
 // Level log level
 type Level = zapcore.Level
 
-//InitLogger init logger
-func InitLogger(c Config, fields ...string) *Logger {
-	return New(c, fields...)
+// all log level
+const (
+	DebugLevel Level = iota - 1
+	InfoLevel
+	WarnLevel
+	ErrorLevel
+	FatalLevel
+)
+
+var _log, _ = zap.NewDevelopment()
+
+// Int constructs a field with the given key and value.
+func Int(key string, val int) Field {
+	return zap.Int(key, val)
+}
+
+// Error is shorthand for the common idiom NamedError("error", err).
+func Error(err error) Field {
+	return zap.Error(err)
+}
+
+// String constructs a field with the given key and value.
+func String(key string, val string) Field {
+	return zap.String(key, val)
+}
+
+// Duration constructs a field with the given key and value
+func Duration(key string, val time.Duration) Field {
+	return zap.Duration(key, val)
+}
+
+// With creates a child logger and adds structured context to it. Fields added
+// to the child don't affect the parent, and vice versa.
+func With(fields ...Field) *Logger {
+	return _log.With(fields...)
 }
 
 // New new logger
@@ -43,6 +76,7 @@ func New(c Config, fields ...string) *Logger {
 	encoder := newEncoder(c.Format, encoderConfig)
 	caller := zap.AddCaller()
 	stacktrace := zap.AddStacktrace(zapcore.ErrorLevel)
+
 	core := zapcore.NewCore(
 		encoder,
 		zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(fileHook)),
@@ -54,8 +88,8 @@ func New(c Config, fields ...string) *Logger {
 		f := zap.String(fields[index], fields[index+1])
 		fs = append(fs, f)
 	}
-	Global = zap.New(core, caller, stacktrace, zap.Fields(fs...))
-	return Global
+	_log = zap.New(core, caller, stacktrace, zap.Fields(fs...))
+	return _log
 }
 
 func parseLevel(lvl string) (zapcore.Level, error) {
@@ -64,8 +98,6 @@ func parseLevel(lvl string) (zapcore.Level, error) {
 		return zap.FatalLevel, nil
 	case "panic":
 		return zap.PanicLevel, nil
-	case "dpanic":
-		return zap.DPanicLevel, nil
 	case "error":
 		return zap.ErrorLevel, nil
 	case "warn", "warning":

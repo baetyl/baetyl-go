@@ -6,9 +6,9 @@
 *.dylib
 /.idea
 /.vscode
+/**/cover*.html
 /**/.DS_Store
 /**/*.log
-/cover*.out
 
 # Test binary, build with `go test -c`
 *.test
