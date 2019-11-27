@@ -33,7 +33,7 @@ const (
 	FatalLevel
 )
 
-var _log, _ = zap.NewDevelopment()
+var _log, _ = zap.NewProduction()
 
 // Int constructs a field with the given key and value.
 func Int(key string, val int) Field {
