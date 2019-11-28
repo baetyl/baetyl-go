@@ -4,6 +4,11 @@
 *.dll
 *.so
 *.dylib
+/.idea
+/.vscode
+/**/cover*.html
+/**/.DS_Store
+/**/*.log
 
 # Test binary, build with `go test -c`
 *.test

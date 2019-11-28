@@ -1,64 +1,96 @@
 package log
 
 import (
-	"time"
+	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
-// Field log field
-type Field = zap.Field
+var _log *Logger
 
-// Option log Option
-type Option = zap.Option
-
-// Logger logger
-type Logger = zap.Logger
-
-// Level log level
-type Level = zapcore.Level
-
-// all log level
-const (
-	DebugLevel Level = iota - 1
-	InfoLevel
-	WarnLevel
-	ErrorLevel
-	FatalLevel
-)
-
-// var _log, _ = zap.NewDevelopment()
-
-var _log, _ = zap.NewProduction()
-
-// Init initializes logger
-func Init(l *Logger) {
-	_log = l
+func init() {
+	var err error
+	_log, err = zap.NewProduction()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	err = zap.RegisterSink("lumberjack", newFileHook)
+	if err != nil {
+		_log.Error("failed to register lumberjack", Error(err))
+	}
 }
 
-// Int constructs a field with the given key and value.
-func Int(key string, val int) Field {
-	return zap.Int(key, val)
+// Init init and return logger
+func Init(c Config, fields ...Field) (*Logger, error) {
+	config := zap.NewProductionConfig()
+	if c.Path != "" {
+		config.OutputPaths = append(config.OutputPaths, "lumberjack:?"+c.String())
+	}
+	if c.Format == "text" {
+		config.Encoding = "console"
+		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	}
+	config.Level = zap.NewAtomicLevelAt(parseLevel(c.Level))
+	tmp, err := config.Build(zap.Fields(fields...))
+	if err != nil {
+		return nil, err
+	}
+	_log = tmp
+	return _log, nil
 }
 
-// Error is shorthand for the common idiom NamedError("error", err).
-func Error(err error) Field {
-	return zap.Error(err)
+type lumberjackSink struct {
+	*lumberjack.Logger
 }
 
-// String constructs a field with the given key and value.
-func String(key string, val string) Field {
-	return zap.String(key, val)
+func (*lumberjackSink) Sync() error {
+	return nil
 }
 
-// Duration constructs a field with the given key and value
-func Duration(key string, val time.Duration) Field {
-	return zap.Duration(key, val)
+func newFileHook(u *url.URL) (zap.Sink, error) {
+	args := u.Query()
+	path := args.Get("path")
+	err := os.MkdirAll(filepath.Dir(path), 0755)
+	if err != nil {
+		_log.Warn("failed to create log directory", Error(err))
+		return nil, err
+	}
+	inner := &lumberjack.Logger{Filename: path, Compress: true}
+	if age, err := strconv.Atoi(args.Get("age_max")); err == nil {
+		inner.MaxAge = age
+	}
+	if size, err := strconv.Atoi(args.Get("size_max")); err == nil {
+		inner.MaxSize = size
+	}
+	if backup, err := strconv.Atoi(args.Get("backup_max")); err == nil {
+		inner.MaxBackups = backup
+	}
+	return &lumberjackSink{inner}, nil
 }
 
-// With creates a child logger and adds structured context to it. Fields added
-// to the child don't affect the parent, and vice versa.
-func With(fields ...Field) *Logger {
-	return _log.With(fields...)
+func parseLevel(lvl string) Level {
+	switch strings.ToLower(lvl) {
+	case "fatal":
+		return FatalLevel
+	case "panic":
+		return PanicLevel
+	case "error":
+		return ErrorLevel
+	case "warn", "warning":
+		return WarnLevel
+	case "info":
+		return InfoLevel
+	case "debug":
+		return DebugLevel
+	default:
+		_log.Warn("failed to parse log level, use default level (info)", String("level", lvl))
+		return InfoLevel
+	}
 }
