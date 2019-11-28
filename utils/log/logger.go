@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,6 +29,7 @@ const (
 	InfoLevel
 	WarnLevel
 	ErrorLevel
+	PanicLevel
 	FatalLevel
 )
 
@@ -62,74 +62,69 @@ func With(fields ...Field) *Logger {
 }
 
 // New new logger
-func New(c Config, fields ...string) *Logger {
-	logLevel, err := parseLevel(c.Level)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to parse log level (%s), use default level (info)", c.Level)
-		logLevel = zapcore.InfoLevel
-	}
-
+func New(c Config, fields ...Field) *Logger {
+	logLevel := parseLevel(c.Level)
 	fileHook := newFileHook(c)
 	encoderConfig := newEncoderConfig()
 	atomicLevel := zap.NewAtomicLevel()
 	atomicLevel.SetLevel(logLevel)
 	encoder := newEncoder(c.Format, encoderConfig)
 	caller := zap.AddCaller()
-	stacktrace := zap.AddStacktrace(zapcore.ErrorLevel)
+	stacktrace := zap.AddStacktrace(WarnLevel)
 
+	var writer zapcore.WriteSyncer
+	if fileHook != nil {
+		writer = zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(fileHook))
+	} else {
+		writer = zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout))
+	}
 	core := zapcore.NewCore(
 		encoder,
-		zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(fileHook)),
+		writer,
 		atomicLevel,
 	)
 
-	var fs []Field
-	for index := 0; index < len(fields)-1; index = index + 2 {
-		f := zap.String(fields[index], fields[index+1])
-		fs = append(fs, f)
-	}
-	_log = zap.New(core, caller, stacktrace, zap.Fields(fs...))
+	_log = zap.New(core, caller, stacktrace, zap.Fields(fields...))
 	return _log
 }
 
-func parseLevel(lvl string) (zapcore.Level, error) {
+func parseLevel(lvl string) Level {
 	switch strings.ToLower(lvl) {
 	case "fatal":
-		return zap.FatalLevel, nil
+		return FatalLevel
 	case "panic":
-		return zap.PanicLevel, nil
+		return PanicLevel
 	case "error":
-		return zap.ErrorLevel, nil
+		return ErrorLevel
 	case "warn", "warning":
-		return zap.WarnLevel, nil
+		return WarnLevel
 	case "info":
-		return zap.InfoLevel, nil
+		return InfoLevel
 	case "debug":
-		return zap.DebugLevel, nil
+		return DebugLevel
+	default:
+		_log.Warn("failed to parse log level, use default level (info)", String("level", lvl))
+		return InfoLevel
 	}
-
-	var l zapcore.Level
-	return l, fmt.Errorf("not a valid zap level: %q", lvl)
 }
 
 func newFileHook(c Config) *lumberjack.Logger {
-	var fileHook lumberjack.Logger
-	if c.Path != "" {
-		err := os.MkdirAll(filepath.Dir(c.Path), 0755)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to create log directory: %s", err.Error())
-		} else {
-			fileHook = lumberjack.Logger{
-				Filename:   c.Path,
-				MaxSize:    c.Size.Max,
-				MaxAge:     c.Age.Max,
-				MaxBackups: c.Backup.Max,
-				LocalTime:  true,
-				Compress:   true,
-			}
-		}
+	if c.Path == "" {
+		return nil
 	}
-	return &fileHook
+
+	err := os.MkdirAll(filepath.Dir(c.Path), 0755)
+	if err != nil {
+		_log.Warn("failed to create log directory", Error(err))
+		return nil
+	}
+	return &lumberjack.Logger{
+		Filename:   c.Path,
+		MaxSize:    c.Size.Max,
+		MaxAge:     c.Age.Max,
+		MaxBackups: c.Backup.Max,
+		Compress:   true,
+	}
 }
 
 func newEncoderConfig() zapcore.EncoderConfig {
@@ -144,7 +139,7 @@ func newEncoderConfig() zapcore.EncoderConfig {
 		EncodeLevel:    zapcore.LowercaseLevelEncoder,
 		EncodeTime:     zapcore.ISO8601TimeEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.FullCallerEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
 		EncodeName:     zapcore.FullNameEncoder,
 	}
 	return encoderConfig

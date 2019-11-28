@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zapcore"
 )
 
 func TestLogger(t *testing.T) {
@@ -46,20 +44,20 @@ func TestLogger(t *testing.T) {
 	}
 
 	log = New(cfg)
-	log.Info("baetyl")
+	log.Info("baetyl", Int("age", 12), Error(errors.New("custom error")), String("icon", "baetyl"), Duration("duration", time.Duration(1)))
 	log.Sync()
 	assert.FileExists(t, jsonFile)
 
 	bytes, err := ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
-	res, _ := regexp.MatchString(`{"level":"info","time":"[0-9T:\.\-\+]+","caller":".*","msg":"baetyl"}`, string(bytes))
+	res, _ := regexp.MatchString(`{"level":"info","time":"[0-9T:\.\-\+]+","caller":".*logger_test.*","msg":"baetyl","age":12,"error":"custom error","errorVerbose":".*logger_test.*","icon":"baetyl","duration":.*}`, string(bytes))
 	assert.True(t, res)
 
 	log.Error("test error")
 	log.Sync()
 	bytes, err = ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
-	res, _ = regexp.MatchString(`{"level":"error","time":"[0-9T:\.\-\+]+","caller":".*","msg":"test error","stacktrace":".*"}`, string(bytes))
+	res, _ = regexp.MatchString(`{"level":"error","time":"[0-9T:\.\-\+]+","caller":".*logger_test.*","msg":"test error","stacktrace":".*"}`, string(bytes))
 	assert.True(t, res)
 
 	log.Debug("baetyl")
@@ -73,7 +71,7 @@ func TestLogger(t *testing.T) {
 
 	bytes, err = ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
-	res, _ = regexp.MatchString(`{"level":"info","time":"[0-9T:\.\-\+]+","caller":".*","msg":"baetyl","name":"baetyl"}`, string(bytes))
+	res, _ = regexp.MatchString(`{"level":"info","time":"[0-9T:\.\-\+]+","caller":".*logger_test.*","msg":"baetyl","name":"baetyl"}`, string(bytes))
 	assert.True(t, res)
 
 	cfg.Level = "xxx"
@@ -84,14 +82,13 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), `"level":"debug"`)
 
-	log = New(cfg, "height", "122")
+	log = New(cfg, String("height", "122"))
 	assert.NotEmpty(t, log)
 	log.Info("baetyl")
 	log.Sync()
 	bytes, err = ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
-	fmt.Println(string(bytes))
-	res, _ = regexp.MatchString(`{"level":"info","time":"[0-9T:\.\-\+]+","caller":".+","msg":"baetyl","height":"122"}`, string(bytes))
+	res, _ = regexp.MatchString(`{"level":"info","time":"[0-9T:\.\-\+]+","caller":".*logger_test.*","msg":"baetyl","height":"122"}`, string(bytes))
 	assert.True(t, res)
 
 	textFile := path.Join(dir, "text.log")
@@ -127,7 +124,7 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), "debug")
 
-	log = New(cfg, "height", "122")
+	log = New(cfg, String("height", "122"))
 	log.Info("baetyl")
 	log.Sync()
 	bytes, err = ioutil.ReadFile(textFile)
@@ -136,36 +133,29 @@ func TestLogger(t *testing.T) {
 }
 
 func TestParseLevel(t *testing.T) {
-	level, err := parseLevel("fatal")
-	assert.NoError(t, err)
-	assert.Equal(t, zapcore.FatalLevel, level)
+	level := parseLevel("fatal")
+	assert.Equal(t, FatalLevel, level)
 
-	level, err = parseLevel("panic")
-	assert.NoError(t, err)
-	assert.Equal(t, zapcore.PanicLevel, level)
+	level = parseLevel("panic")
+	assert.Equal(t, PanicLevel, level)
 
-	level, err = parseLevel("error")
-	assert.NoError(t, err)
-	assert.Equal(t, zapcore.ErrorLevel, level)
+	level = parseLevel("error")
+	assert.Equal(t, ErrorLevel, level)
 
-	level, err = parseLevel("warn")
-	assert.NoError(t, err)
-	assert.Equal(t, zapcore.WarnLevel, level)
+	level = parseLevel("warn")
+	assert.Equal(t, WarnLevel, level)
 
-	level, err = parseLevel("warning")
-	assert.NoError(t, err)
-	assert.Equal(t, zapcore.WarnLevel, level)
+	level = parseLevel("warning")
+	assert.Equal(t, WarnLevel, level)
 
-	level, err = parseLevel("info")
-	assert.NoError(t, err)
-	assert.Equal(t, zapcore.InfoLevel, level)
+	level = parseLevel("info")
+	assert.Equal(t, InfoLevel, level)
 
-	level, err = parseLevel("debug")
-	assert.NoError(t, err)
-	assert.Equal(t, zapcore.DebugLevel, level)
+	level = parseLevel("debug")
+	assert.Equal(t, DebugLevel, level)
 
-	level, err = parseLevel("xxx")
-	assert.Error(t, err)
+	level = parseLevel("xxx")
+	assert.Equal(t, InfoLevel, level)
 }
 
 func TestField(t *testing.T) {
@@ -176,7 +166,6 @@ func TestField(t *testing.T) {
 
 	m = Error(errors.New("test"))
 	assert.Equal(t, m.Key, "error")
-	assert.Equal(t, zapcore.ErrorType, m.Type)
 
 	m = String(key, "baetyl")
 	assert.Equal(t, key, m.Key)
@@ -184,7 +173,6 @@ func TestField(t *testing.T) {
 
 	m = Duration(key, time.Duration(12))
 	assert.Equal(t, key, m.Key)
-	assert.Equal(t, zapcore.DurationType, m.Type)
 	assert.Equal(t, int64(12), m.Integer)
 }
 
