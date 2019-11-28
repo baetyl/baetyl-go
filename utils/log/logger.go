@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -15,8 +16,12 @@ import (
 var _log *Logger
 
 func init() {
-	_log, _ = zap.NewProduction()
-	err := zap.RegisterSink("lumberjack", newFileHook)
+	var err error
+	_log, err = zap.NewProduction()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	err = zap.RegisterSink("lumberjack", newFileHook)
 	if err != nil {
 		_log.Error("failed to register lumberjack", Error(err))
 	}
