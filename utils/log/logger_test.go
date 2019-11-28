@@ -45,7 +45,8 @@ func TestLogger(t *testing.T) {
 		},
 	}
 
-	log = New(cfg)
+	log, err = Init(cfg)
+	assert.NoError(t, err)
 	log.Info("baetyl", Int("age", 12), Error(errors.New("custom error")), String("icon", "baetyl"), Duration("duration", time.Duration(1)))
 	log.Sync()
 	assert.FileExists(t, jsonFile)
@@ -77,14 +78,16 @@ func TestLogger(t *testing.T) {
 	assert.True(t, res)
 
 	cfg.Level = "xxx"
-	log = New(cfg)
+	log, err = Init(cfg)
+	assert.NoError(t, err)
 	log.Debug("baetyl")
 	log.Sync()
 	bytes, err = ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), `"level":"debug"`)
 
-	log = New(cfg, String("height", "122"))
+	log, err = Init(cfg, String("height", "122"))
+	assert.NoError(t, err)
 	assert.NotEmpty(t, log)
 	log.Info("baetyl")
 	log.Sync()
@@ -97,7 +100,8 @@ func TestLogger(t *testing.T) {
 	cfg.Format = "text"
 	cfg.Path = textFile
 	cfg.Level = "info"
-	log = New(cfg)
+	log, err = Init(cfg)
+	assert.NoError(t, err)
 
 	log.Info("baetyl")
 	log.Sync()
@@ -120,14 +124,16 @@ func TestLogger(t *testing.T) {
 	assert.Contains(t, string(bytes), `{"name": "baetyl"}`)
 
 	cfg.Level = "xxx"
-	log = New(cfg)
+	log, err = Init(cfg)
+	assert.NoError(t, err)
 	log.Debug("baetyl")
 	log.Sync()
 	bytes, err = ioutil.ReadFile(textFile)
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), "debug")
 
-	log = New(cfg, String("height", "122"))
+	log, err = Init(cfg, String("height", "122"))
+	assert.NoError(t, err)
 	log.Info("baetyl")
 	log.Sync()
 	bytes, err = ioutil.ReadFile(textFile)
@@ -220,7 +226,8 @@ func BenchmarkConsoleAndFile(b *testing.B) {
 			Max: 15,
 		},
 	}
-	logger := New(cfg)
+	logger, err := Init(cfg)
+	assert.NoError(b, err)
 	b.ResetTimer()
 	b.Run("log", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

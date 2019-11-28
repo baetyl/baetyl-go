@@ -48,3 +48,9 @@ func String(key string, val string) Field {
 func Duration(key string, val time.Duration) Field {
 	return zap.Duration(key, val)
 }
+
+// With creates a child logger and adds structured context to it. Fields added
+// to the child don't affect the parent, and vice versa.
+func With(fields ...Field) *Logger {
+	return _log.With(fields...)
+}

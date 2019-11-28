@@ -12,19 +12,20 @@ import (
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
-var _log, _ = zap.NewProduction()
+var _log *Logger
 
-// With creates a child logger and adds structured context to it. Fields added
-// to the child don't affect the parent, and vice versa.
-func With(fields ...Field) *Logger {
-	return _log.With(fields...)
+func init() {
+	_log, _ = zap.NewProduction()
+	err := zap.RegisterSink("lumberjack", newFileHook)
+	if err != nil {
+		_log.Error("failed to register lumberjack", Error(err))
+	}
 }
 
-// New new logger
-func New(c Config, fields ...Field) *Logger {
+// Init init and return logger
+func Init(c Config, fields ...Field) (*Logger, error) {
 	config := zap.NewProductionConfig()
 	if c.Path != "" {
-		zap.RegisterSink("lumberjack", newFileHook)
 		config.OutputPaths = append(config.OutputPaths, "lumberjack:?"+c.String())
 	}
 	if c.Format == "text" {
@@ -32,13 +33,12 @@ func New(c Config, fields ...Field) *Logger {
 		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	}
 	config.Level = zap.NewAtomicLevelAt(parseLevel(c.Level))
-	log, err := config.Build(zap.Fields(fields...))
+	tmp, err := config.Build(zap.Fields(fields...))
 	if err != nil {
-		_log.Warn("failed to build Logger", Error(err))
-	} else {
-		_log = log
+		return nil, err
 	}
-	return _log
+	_log = tmp
+	return _log, nil
 }
 
 type lumberjackSink struct {
