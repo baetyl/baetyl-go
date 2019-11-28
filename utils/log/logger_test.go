@@ -1,7 +1,9 @@
 package log
 
 import (
+	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -50,14 +52,14 @@ func TestLogger(t *testing.T) {
 
 	bytes, err := ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
-	res, _ := regexp.MatchString(`{"level":"info","time":"[0-9T:\.\-\+]+","caller":".*logger_test.*","msg":"baetyl","age":12,"error":"custom error","errorVerbose":".*logger_test.*","icon":"baetyl","duration":.*}`, string(bytes))
+	res, _ := regexp.MatchString(`{"level":"info","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"baetyl","age":12,"error":"custom error","errorVerbose":".*logger_test.*","icon":"baetyl","duration":.*}`, string(bytes))
 	assert.True(t, res)
 
 	log.Error("test error")
 	log.Sync()
 	bytes, err = ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
-	res, _ = regexp.MatchString(`{"level":"error","time":"[0-9T:\.\-\+]+","caller":".*logger_test.*","msg":"test error","stacktrace":".*"}`, string(bytes))
+	res, _ = regexp.MatchString(`{"level":"error","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"test error","stacktrace":".*"}`, string(bytes))
 	assert.True(t, res)
 
 	log.Debug("baetyl")
@@ -71,7 +73,7 @@ func TestLogger(t *testing.T) {
 
 	bytes, err = ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
-	res, _ = regexp.MatchString(`{"level":"info","time":"[0-9T:\.\-\+]+","caller":".*logger_test.*","msg":"baetyl","name":"baetyl"}`, string(bytes))
+	res, _ = regexp.MatchString(`{"level":"info","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"baetyl","name":"baetyl"}`, string(bytes))
 	assert.True(t, res)
 
 	cfg.Level = "xxx"
@@ -88,17 +90,18 @@ func TestLogger(t *testing.T) {
 	log.Sync()
 	bytes, err = ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
-	res, _ = regexp.MatchString(`{"level":"info","time":"[0-9T:\.\-\+]+","caller":".*logger_test.*","msg":"baetyl","height":"122"}`, string(bytes))
+	res, _ = regexp.MatchString(`{"level":"info","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"baetyl","height":"122"}`, string(bytes))
 	assert.True(t, res)
 
 	textFile := path.Join(dir, "text.log")
 	cfg.Format = "text"
 	cfg.Path = textFile
+	cfg.Level = "info"
 	log = New(cfg)
 
 	log.Info("baetyl")
 	log.Sync()
-	assert.FileExists(t, jsonFile)
+	assert.FileExists(t, textFile)
 
 	bytes, err = ioutil.ReadFile(textFile)
 	assert.NoError(t, err)
@@ -174,6 +177,21 @@ func TestField(t *testing.T) {
 	m = Duration(key, time.Duration(12))
 	assert.Equal(t, key, m.Key)
 	assert.Equal(t, int64(12), m.Integer)
+}
+
+func TestNewFileHook(t *testing.T) {
+	url := url.URL{
+		Scheme: "lumberjack",
+		RawQuery: fmt.Sprintf("path=%s&level=%s&format=%s&age_max=%d&size_max=%d&backup_max=%d",
+			"test.log", "info", "json", 12, 13, 14),
+	}
+	lumber, err := newFileHook(&url)
+	assert.NoError(t, err)
+	assert.True(t, lumber.(*lumberjackSink).Compress)
+	assert.Equal(t, "test.log", lumber.(*lumberjackSink).Filename)
+	assert.Equal(t, 12, lumber.(*lumberjackSink).MaxAge)
+	assert.Equal(t, 13, lumber.(*lumberjackSink).MaxSize)
+	assert.Equal(t, 14, lumber.(*lumberjackSink).MaxBackups)
 }
 
 func BenchmarkConsoleAndFile(b *testing.B) {

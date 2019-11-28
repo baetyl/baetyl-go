@@ -1,59 +1,18 @@
 package log
 
 import (
+	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
-	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
-// Field log field
-type Field = zap.Field
-
-// Option log Option
-type Option = zap.Option
-
-// Logger logger
-type Logger = zap.Logger
-
-// Level log level
-type Level = zapcore.Level
-
-// all log level
-const (
-	DebugLevel Level = iota - 1
-	InfoLevel
-	WarnLevel
-	ErrorLevel
-	PanicLevel
-	FatalLevel
-)
-
 var _log, _ = zap.NewProduction()
-
-// Int constructs a field with the given key and value.
-func Int(key string, val int) Field {
-	return zap.Int(key, val)
-}
-
-// Error is shorthand for the common idiom NamedError("error", err).
-func Error(err error) Field {
-	return zap.Error(err)
-}
-
-// String constructs a field with the given key and value.
-func String(key string, val string) Field {
-	return zap.String(key, val)
-}
-
-// Duration constructs a field with the given key and value
-func Duration(key string, val time.Duration) Field {
-	return zap.Duration(key, val)
-}
 
 // With creates a child logger and adds structured context to it. Fields added
 // to the child don't affect the parent, and vice versa.
@@ -63,29 +22,52 @@ func With(fields ...Field) *Logger {
 
 // New new logger
 func New(c Config, fields ...Field) *Logger {
-	logLevel := parseLevel(c.Level)
-	fileHook := newFileHook(c)
-	encoderConfig := newEncoderConfig()
-	atomicLevel := zap.NewAtomicLevel()
-	atomicLevel.SetLevel(logLevel)
-	encoder := newEncoder(c.Format, encoderConfig)
-	caller := zap.AddCaller()
-	stacktrace := zap.AddStacktrace(WarnLevel)
-
-	var writer zapcore.WriteSyncer
-	if fileHook != nil {
-		writer = zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(fileHook))
-	} else {
-		writer = zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout))
+	config := zap.NewProductionConfig()
+	if c.Path != "" {
+		zap.RegisterSink("lumberjack", newFileHook)
+		config.OutputPaths = append(config.OutputPaths, "lumberjack:?"+c.String())
 	}
-	core := zapcore.NewCore(
-		encoder,
-		writer,
-		atomicLevel,
-	)
-
-	_log = zap.New(core, caller, stacktrace, zap.Fields(fields...))
+	if c.Format == "text" {
+		config.Encoding = "console"
+		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	}
+	config.Level = zap.NewAtomicLevelAt(parseLevel(c.Level))
+	log, err := config.Build(zap.Fields(fields...))
+	if err != nil {
+		_log.Warn("failed to build Logger", Error(err))
+	} else {
+		_log = log
+	}
 	return _log
+}
+
+type lumberjackSink struct {
+	*lumberjack.Logger
+}
+
+func (*lumberjackSink) Sync() error {
+	return nil
+}
+
+func newFileHook(u *url.URL) (zap.Sink, error) {
+	args := u.Query()
+	path := args.Get("path")
+	err := os.MkdirAll(filepath.Dir(path), 0755)
+	if err != nil {
+		_log.Warn("failed to create log directory", Error(err))
+		return nil, err
+	}
+	inner := &lumberjack.Logger{Filename: path, Compress: true}
+	if age, err := strconv.Atoi(args.Get("age_max")); err == nil {
+		inner.MaxAge = age
+	}
+	if size, err := strconv.Atoi(args.Get("size_max")); err == nil {
+		inner.MaxSize = size
+	}
+	if backup, err := strconv.Atoi(args.Get("backup_max")); err == nil {
+		inner.MaxBackups = backup
+	}
+	return &lumberjackSink{inner}, nil
 }
 
 func parseLevel(lvl string) Level {
@@ -106,51 +88,4 @@ func parseLevel(lvl string) Level {
 		_log.Warn("failed to parse log level, use default level (info)", String("level", lvl))
 		return InfoLevel
 	}
-}
-
-func newFileHook(c Config) *lumberjack.Logger {
-	if c.Path == "" {
-		return nil
-	}
-
-	err := os.MkdirAll(filepath.Dir(c.Path), 0755)
-	if err != nil {
-		_log.Warn("failed to create log directory", Error(err))
-		return nil
-	}
-	return &lumberjack.Logger{
-		Filename:   c.Path,
-		MaxSize:    c.Size.Max,
-		MaxAge:     c.Age.Max,
-		MaxBackups: c.Backup.Max,
-		Compress:   true,
-	}
-}
-
-func newEncoderConfig() zapcore.EncoderConfig {
-	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-		EncodeName:     zapcore.FullNameEncoder,
-	}
-	return encoderConfig
-}
-
-func newEncoder(format string, config zapcore.EncoderConfig) zapcore.Encoder {
-	var encoder zapcore.Encoder
-	if strings.ToLower(format) == "json" {
-		encoder = zapcore.NewJSONEncoder(config)
-	} else {
-		encoder = zapcore.NewConsoleEncoder(config)
-	}
-	return encoder
 }

@@ -1,5 +1,9 @@
 package log
 
+import (
+	"fmt"
+)
+
 // Config for logging
 type Config struct {
 	Path   string `yaml:"path" json:"path"`
@@ -14,4 +18,9 @@ type Config struct {
 	Backup struct {
 		Max int `yaml:"max" json:"max" default:"15" validate:"min=1"`
 	} `yaml:"backup" json:"backup"`
+}
+
+func (c *Config) String() string {
+	return fmt.Sprintf("path=%s&level=%s&format=%s&age_max=%d&size_max=%d&backup_max=%d",
+		c.Path, c.Level, c.Format, c.Age.Max, c.Size.Max, c.Backup.Max)
 }
