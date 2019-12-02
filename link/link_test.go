@@ -7,22 +7,26 @@ import (
 	"testing"
 	"time"
 
-	g "github.com/baetyl/baetyl-go/utils/protocol/grpc"
+	"github.com/baetyl/baetyl-go/utils"
+
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
 )
 
 var (
 	cc = ClientConfig{
 		Address: "0.0.0.0:8273",
 		Timeout: time.Duration(20) * time.Second,
-		Account: Account{
-			Username: "svr",
-			Password: "svr",
-		},
-		Certificate: LClientCert{
-			Cert: "./testcert/server.pem",
-			Name: "bd",
+		Auth: Auth{
+			Account: Account{
+				Username: "svr",
+				Password: "svr",
+			},
+			Certificate: utils.Certificate{
+				Cert: "./testcert/client.pem",
+				Key:  "./testcert/client.key",
+				CA:   "./testcert/ca.pen",
+				Name: "bd",
+			},
 		},
 	}
 
@@ -62,13 +66,21 @@ var (
 
 func TestLink(t *testing.T) {
 	wg := sync.WaitGroup{}
-	option := &g.ServerOption{}
-	opts := option.
-		Create().
-		CredsFromFile("./testcert/server.pem", "./testcert/server.key").
-		Build()
-	s := NewServer("svr",
-		"svr",
+	sc := ServerConfig{
+		Address: "0.0.0.0:8273",
+		Auth: Auth{
+			Account: Account{
+				Username: "svr",
+				Password: "svr",
+			},
+			Certificate: utils.Certificate{
+				Cert: "./testcert/server.pem",
+				Key:  "./testcert/server.key",
+				CA:   "./testcert/ca.pem",
+			},
+		},
+	}
+	s, err := NewServer(sc,
 		func(c context.Context, msg *Message) (*Message, error) {
 			checkMsg(t, msg, msgCall)
 			return msgCallResp, nil
@@ -99,11 +111,8 @@ func TestLink(t *testing.T) {
 			}
 			return nil
 		})
-	svr, err := g.NewServer(g.NetTCP, "0.0.0.0:8273", opts, func(svr *grpc.Server) {
-		RegisterLinkServer(svr, s)
-	})
 	assert.NoError(t, err)
-	defer svr.GracefulStop()
+	defer s.Close()
 
 	handler := func(content []byte) []byte {
 		assert.Equal(t, string(msgResp.Content), "video resp")
@@ -111,11 +120,11 @@ func TestLink(t *testing.T) {
 	}
 	l, err := NewLinker(cc, handler)
 	assert.NoError(t, err)
+	defer l.Close()
 	err = l.Send(msgSend.Context.Source, msgSend.Context.Destination, msgSend.Content)
 	assert.NoError(t, err)
 	err = l.stream.Send(packetAckMsg(msgResp, []byte("timer ack")))
 	assert.NoError(t, err)
 	wg.Add(1)
 	wg.Wait()
-	l.Close()
 }

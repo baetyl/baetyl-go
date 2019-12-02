@@ -1,7 +1,6 @@
 package link
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -75,7 +74,7 @@ func (l *Linker) acknowledge(msg *Message) {
 	id := msg.Context.ID
 	m, ok := l.publisher.m.Load(id)
 	if !ok {
-		fmt.Printf("message id = %d is not found\n", id)
+		l.log.Sugar().Infof("message id = %d is not found\n", id)
 	}
 	l.publisher.m.Delete(id)
 	m.(*pm).e.Done()

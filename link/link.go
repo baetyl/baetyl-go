@@ -1,14 +1,12 @@
 package link
 
 import (
+	"context"
 	"errors"
 	"time"
 
 	"github.com/baetyl/baetyl-go/utils/log"
 
-	"google.golang.org/grpc"
-
-	g "github.com/baetyl/baetyl-go/utils/protocol/grpc"
 	"gopkg.in/tomb.v2"
 )
 
@@ -29,7 +27,6 @@ var ErrClientClosed = errors.New("grpc client is closed")
 type Handler func([]byte) []byte
 
 type Linker struct {
-	conn      *grpc.ClientConn
 	cli       *Client
 	stream    Link_TalkClient
 	handler   Handler
@@ -41,41 +38,34 @@ type Linker struct {
 
 // NewLinker create client and start receive message
 func NewLinker(cfg ClientConfig, handler Handler) (*Linker, error) {
-	option := &g.ClientOption{}
-	opts := option.Create().
-		CredsFromFile(cfg.Certificate.Cert, cfg.Certificate.Name).
-		CustomCred(&g.CustomCred{
-			Username: cfg.Account.Username,
-			Password: cfg.Account.Password,
-		}).Build()
-
-	conn, err := g.NewClientConnect(cfg.Address, cfg.Timeout, opts)
+	cli, err := NewClient(cfg)
 	if err != nil {
 		return nil, err
 	}
-	cli := NewClient(conn)
-	stream, err := cli.Talk()
+
+	stream, err := cli.Talk(context.Background())
 	if err != nil {
 		return nil, err
 	}
 	l := &Linker{
-		conn:      conn,
 		cli:       cli,
 		stream:    stream,
 		handler:   handler,
 		msgAsync:  make(chan *Message),
 		publisher: newPublisher(cfg.Timeout),
 	}
+	l.log = log.With(log.String("baetyl-go", "link"))
 	l.receive()
 	return l, nil
 }
 
 // Close closes Client
 func (l *Linker) Close() error {
-	if l.cli != nil {
-		return l.conn.Close()
+	err := l.log.Sync()
+	if err != nil {
+		return err
 	}
-	return nil
+	return l.cli.Close()
 }
 
 func packetMsg(src, dest string, content []byte) *Message {
