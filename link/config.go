@@ -28,7 +28,7 @@ type ServerConfig struct {
 		Length Length `yaml:"length" json:"length" default:"{\"max\":4194304}"`
 	} `yaml:"message" json:"message"`
 	Concurrent struct {
-		Max uint32 `yaml:"max" json:"max"`
+		Max uint32 `yaml:"max" json:"max" default:"{\"max\":4194304}`
 	} `yaml:"concurrent" json:"concurrent"`
 	Auth `yaml:"auth" json:"auth"`
 }
@@ -40,8 +40,5 @@ type ClientConfig struct {
 	Message struct {
 		Length Length `yaml:"length" json:"length" default:"{\"max\":4194304}"`
 	} `yaml:"message" json:"message"`
-	Backoff struct {
-		Max time.Duration `yaml:"max" json:"max" default:"1m"`
-	} `yaml:"backoff" json:"backoff"`
 	Auth `yaml:"auth" json:"auth"`
 }

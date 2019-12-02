@@ -164,9 +164,7 @@ var (
 				msgTalk: msgTalk,
 			},
 			err: []errInfo{
-				{wantErr: false},
-				{wantErr: true, errMsg: certErrMsg},
-				{wantErr: true, errMsg: certErrMsg},
+				{wantErr: true},
 			},
 		},
 		{
@@ -211,6 +209,11 @@ var (
 )
 
 func TestLinkClient(t *testing.T) {
+	linkClientTests[0].ccfg.Message.Length.Max = 4194304
+	linkClientTests[1].ccfg.Message.Length.Max = 4194304
+	linkClientTests[2].ccfg.Message.Length.Max = 4194304
+	scfg.Message.Length.Max = 4194304
+	scfg.Concurrent.Max = 4194304
 	ser, err := NewServer(scfg, func(ctx context.Context, msg *Message) (message *Message, e error) {
 		checkMsg(t, msg, msgCall)
 		return msgCallResp, nil

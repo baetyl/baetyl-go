@@ -3,7 +3,6 @@ package link
 import (
 	"github.com/baetyl/baetyl-go/link/auth"
 	"github.com/baetyl/baetyl-go/utils"
-	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials"
 
 	"golang.org/x/net/context"
@@ -24,29 +23,28 @@ func NewClient(cc ClientConfig) (*Client, error) {
 
 	opts := []grpc.DialOption{
 		grpc.WithBlock(),
-		grpc.WithConnectParams(grpc.ConnectParams{
-			Backoff: backoff.Config{
-				MaxDelay: cc.Backoff.Max,
-			},
-		}),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(cc.Message.Length.Max))),
 	}
-	tlsCfg, err := utils.NewTLSConfigClient(&cc.Certificate)
-	if err != nil {
-		return nil, err
+	if cc.Insecure {
+		opts = append(opts, grpc.WithInsecure())
+	} else {
+		tlsCfg, err := utils.NewTLSConfigClient(&cc.Certificate)
+		if err != nil {
+			return nil, err
+		}
+		if tlsCfg != nil {
+			tlsCfg.ServerName = cc.Name
+			creds := credentials.NewTLS(tlsCfg)
+			opts = append(opts, grpc.WithTransportCredentials(creds))
+		}
+		// Custom Credential
+		opts = append(opts, grpc.WithPerRPCCredentials(&auth.CustomCred{
+			Data: map[string]string{
+				auth.KeyUsername: cc.Username,
+				auth.KeyPassword: cc.Password,
+			},
+		}))
 	}
-	if tlsCfg != nil {
-		tlsCfg.ServerName = cc.Name
-		creds := credentials.NewTLS(tlsCfg)
-		opts = append(opts, grpc.WithTransportCredentials(creds))
-	}
-	// Custom Credential
-	opts = append(opts, grpc.WithPerRPCCredentials(&auth.CustomCred{
-		Data: map[string]string{
-			auth.KeyUsername: cc.Username,
-			auth.KeyPassword: cc.Password,
-		},
-	}))
 
 	conn, err := grpc.DialContext(ctx, cc.Address, opts...)
 	if err != nil {

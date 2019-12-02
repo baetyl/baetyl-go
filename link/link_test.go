@@ -24,7 +24,7 @@ var (
 			Certificate: utils.Certificate{
 				Cert: "./testcert/client.pem",
 				Key:  "./testcert/client.key",
-				CA:   "./testcert/ca.pen",
+				CA:   "./testcert/ca.pem",
 				Name: "bd",
 			},
 		},
@@ -80,6 +80,7 @@ func TestLink(t *testing.T) {
 			},
 		},
 	}
+	sc.Message.Length.Max = 4194304
 	s, err := NewServer(sc,
 		func(c context.Context, msg *Message) (*Message, error) {
 			checkMsg(t, msg, msgCall)
@@ -118,6 +119,7 @@ func TestLink(t *testing.T) {
 		assert.Equal(t, string(msgResp.Content), "video resp")
 		return []byte("timer ack")
 	}
+	cc.Message.Length.Max = 4194304
 	l, err := NewLinker(cc, handler)
 	assert.NoError(t, err)
 	defer l.Close()
