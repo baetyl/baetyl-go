@@ -10,5 +10,6 @@ require (
 	go.uber.org/zap v1.13.0
 	golang.org/x/net v0.0.0-20191119073136-fc4aabc6c914
 	google.golang.org/grpc v1.25.1
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 )
