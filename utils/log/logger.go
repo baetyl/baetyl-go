@@ -1,6 +1,7 @@
 package log
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"os"
@@ -56,13 +57,13 @@ func (*lumberjackSink) Sync() error {
 
 func newFileHook(u *url.URL) (zap.Sink, error) {
 	args := u.Query()
-	path := args.Get("path")
-	err := os.MkdirAll(filepath.Dir(path), 0755)
+	path, _ := base64.URLEncoding.DecodeString(args.Get("path"))
+	err := os.MkdirAll(filepath.Dir(string(path)), 0755)
 	if err != nil {
 		_log.Warn("failed to create log directory", Error(err))
 		return nil, err
 	}
-	inner := &lumberjack.Logger{Filename: path, Compress: true}
+	inner := &lumberjack.Logger{Filename: string(path), Compress: true}
 	if age, err := strconv.Atoi(args.Get("age_max")); err == nil {
 		inner.MaxAge = age
 	}

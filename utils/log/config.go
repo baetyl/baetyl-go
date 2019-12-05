@@ -1,6 +1,7 @@
 package log
 
 import (
+	"encoding/base64"
 	"fmt"
 )
 
@@ -22,5 +23,10 @@ type Config struct {
 
 func (c *Config) String() string {
 	return fmt.Sprintf("path=%s&level=%s&format=%s&age_max=%d&size_max=%d&backup_max=%d",
-		c.Path, c.Level, c.Format, c.Age.Max, c.Size.Max, c.Backup.Max)
+		base64.URLEncoding.EncodeToString([]byte(c.Path)),
+		c.Level,
+		c.Format,
+		c.Age.Max,
+		c.Size.Max,
+		c.Backup.Max)
 }
