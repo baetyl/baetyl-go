@@ -3,6 +3,7 @@ package link
 import (
 	"context"
 	"fmt"
+	"net"
 	"sync"
 	"testing"
 	"time"
@@ -25,9 +26,9 @@ var (
 				Cert: "./testcert/client.pem",
 				Key:  "./testcert/client.key",
 				CA:   "./testcert/ca.pem",
-				Name: "bd",
 			},
 		},
+		MaxSize: 464471,
 	}
 
 	msgSend = &Message{
@@ -60,14 +61,50 @@ var (
 			Source:      "timer",
 			Destination: "video",
 		},
-		Content: []byte("timer ack"),
+		Content: nil,
 	}
 )
+
+type lkSerLT struct {
+	t  *testing.T
+	wg sync.WaitGroup
+}
+
+func (l *lkSerLT) Call(ctx context.Context, msg *Message) (*Message, error) {
+	checkMsg(l.t, msg, msgCall)
+	return msgCallResp, nil
+}
+
+func (l *lkSerLT) Talk(stream Link_TalkServer) error {
+	for {
+		in, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("server receive = %v\n", in)
+		if string(in.Content) != "timer ack" {
+			msgSend.Context.ID = in.Context.ID
+			msgSend.Context.TS = in.Context.TS
+			checkMsg(l.t, in, msgSend)
+			msgResp.Context.ID = in.Context.ID
+			msgResp.Context.TS = in.Context.TS
+			if err = stream.Send(msgResp); err != nil {
+				return err
+			}
+			continue
+		}
+		msgAck.Context.ID = in.Context.ID
+		msgAck.Context.TS = in.Context.TS
+		checkMsg(l.t, in, msgAck)
+		l.wg.Done()
+		break
+	}
+	return nil
+}
 
 func TestLink(t *testing.T) {
 	wg := sync.WaitGroup{}
 	sc := ServerConfig{
-		Address: "0.0.0.0:8273",
 		Auth: Auth{
 			Account: Account{
 				Username: "svr",
@@ -79,53 +116,30 @@ func TestLink(t *testing.T) {
 				CA:   "./testcert/ca.pem",
 			},
 		},
+		MaxSize: 464471,
 	}
-	sc.Message.Length.Max = 4194304
-	s, err := NewServer(sc,
-		func(c context.Context, msg *Message) (*Message, error) {
-			checkMsg(t, msg, msgCall)
-			return msgCallResp, nil
-		},
-		func(stream Link_TalkServer) error {
-			for {
-				in, err := stream.Recv()
-				if err != nil {
-					return err
-				}
-				fmt.Printf("server receive = %v\n", in)
-				if string(in.Content) != "timer ack" {
-					msgSend.Context.ID = in.Context.ID
-					msgSend.Context.TS = in.Context.TS
-					checkMsg(t, in, msgSend)
-					msgResp.Context.ID = in.Context.ID
-					msgResp.Context.TS = in.Context.TS
-					if err = stream.Send(msgResp); err != nil {
-						return err
-					}
-					continue
-				}
-				msgAck.Context.ID = in.Context.ID
-				msgAck.Context.TS = in.Context.TS
-				checkMsg(t, in, msgAck)
-				wg.Done()
-				break
-			}
-			return nil
-		})
+	svr, err := NewServer(sc)
 	assert.NoError(t, err)
-	defer s.Close()
-
-	handler := func(content []byte) []byte {
-		assert.Equal(t, string(msgResp.Content), "video resp")
-		return []byte("timer ack")
+	defer svr.GracefulStop()
+	s := &lkSerLT{
+		t:  t,
+		wg: wg,
 	}
-	cc.Message.Length.Max = 4194304
-	l, err := NewLinker(cc, handler)
+	RegisterLinkServer(svr, s)
+	lis, err := net.Listen("tcp", "0.0.0.0:8273")
+	assert.NoError(t, err)
+	go svr.Serve(lis)
+
+	handler := func(m *Message) error {
+		assert.Equal(t, string(msgResp.Content), "video resp")
+		return nil
+	}
+	l, err := NewClient(cc, handler)
 	assert.NoError(t, err)
 	defer l.Close()
-	err = l.Send(msgSend.Context.Source, msgSend.Context.Destination, msgSend.Content)
+	err = l.Send(msgSend.Context.Source, msgSend.Context.Destination, 1, msgSend.Content)
 	assert.NoError(t, err)
-	err = l.stream.Send(packetAckMsg(msgResp, []byte("timer ack")))
+	err = l.stream.Send(packetAckMsg(msgResp))
 	assert.NoError(t, err)
 	wg.Add(1)
 	wg.Wait()

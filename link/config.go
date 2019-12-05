@@ -6,10 +6,6 @@ import (
 	"github.com/baetyl/baetyl-go/utils"
 )
 
-type Length struct {
-	Max int64 `yaml:"max" json:"max"`
-}
-
 // Account authentication information
 type Account struct {
 	Username string `yaml:"username" json:"username"`
@@ -23,10 +19,7 @@ type Auth struct {
 
 // ServerConfig link server config
 type ServerConfig struct {
-	Address string `yaml:"address" json:"address" default: "0.0.0.0"`
-	Message struct {
-		Length Length `yaml:"length" json:"length" default:"{\"max\":4194304}"`
-	} `yaml:"message" json:"message"`
+	MaxSize    utils.Size `yaml:"maxsize" json:"maxsize"`
 	Concurrent struct {
 		Max uint32 `yaml:"max" json:"max" default:"{\"max\":4194304}`
 	} `yaml:"concurrent" json:"concurrent"`
@@ -37,8 +30,7 @@ type ServerConfig struct {
 type ClientConfig struct {
 	Address string        `yaml:"address" json:"address" default: "0.0.0.0"`
 	Timeout time.Duration `yaml:"timeout" json:"timeout" default:"30s"`
-	Message struct {
-		Length Length `yaml:"length" json:"length" default:"{\"max\":4194304}"`
-	} `yaml:"message" json:"message"`
-	Auth `yaml:"auth" json:"auth"`
+	MaxSize utils.Size    `yaml:"maxsize" json:"maxsize"`
+	Ack     bool          `yaml:"ack" json:"ack" default:true"`
+	Auth    `yaml:"auth" json:"auth"`
 }

@@ -2,34 +2,46 @@ package link
 
 import (
 	"context"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
+type lkSerST struct{}
+
+func (l *lkSerST) Call(ctx context.Context, msg *Message) (*Message, error) {
+	return msg, nil
+}
+
+func (l *lkSerST) Talk(stream Link_TalkServer) error {
+	for {
+		in, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+		if err = stream.Send(in); err != nil {
+			return err
+		}
+	}
+}
+
 func TestLinkServer(t *testing.T) {
 	scfg := ServerConfig{}
-	scfg.Address = "localhost:8080"
 	scfg.Username = "svr"
 	scfg.Password = "svr"
 	scfg.Concurrent.Max = 10000
+	scfg.MaxSize = 100000
 	scfg.CA = "./testcert/ca.pem"
 	scfg.Cert = "./testcert/server.pem"
 	scfg.Key = "./testcert/server.key"
 
-	ser, err := NewServer(scfg, func(ctx context.Context, msg *Message) (message *Message, e error) {
-		return msg, nil
-	}, func(stream Link_TalkServer) error {
-		for {
-			in, err := stream.Recv()
-			if err != nil {
-				return err
-			}
-			if err = stream.Send(in); err != nil {
-				return err
-			}
-		}
-	})
+	svr, err := NewServer(scfg)
 	assert.NoError(t, err)
-	defer ser.Close()
+	defer svr.GracefulStop()
+	s := &lkSerST{}
+	RegisterLinkServer(svr, s)
+	lis, err := net.Listen("tcp", "localhost:8080")
+	assert.NoError(t, err)
+	go svr.Serve(lis)
 }

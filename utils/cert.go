@@ -13,7 +13,6 @@ type Certificate struct {
 	CA       string `yaml:"ca" json:"ca"`
 	Key      string `yaml:"key" json:"key"`
 	Cert     string `yaml:"cert" json:"cert"`
-	Name     string `yaml:"name" json:"name"`
 	Insecure bool   `yaml:"insecure" json:"insecure"` // for client, for test purpose
 }
 
