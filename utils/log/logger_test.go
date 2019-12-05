@@ -1,6 +1,7 @@
 package log
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -186,15 +187,16 @@ func TestField(t *testing.T) {
 }
 
 func TestNewFileHook(t *testing.T) {
+	path := "&name=chen&log=wang"
 	url := url.URL{
 		Scheme: "lumberjack",
 		RawQuery: fmt.Sprintf("path=%s&level=%s&format=%s&age_max=%d&size_max=%d&backup_max=%d",
-			"test.log", "info", "json", 12, 13, 14),
+			base64.URLEncoding.EncodeToString([]byte(path)), "info", "json", 12, 13, 14),
 	}
 	lumber, err := newFileHook(&url)
 	assert.NoError(t, err)
 	assert.True(t, lumber.(*lumberjackSink).Compress)
-	assert.Equal(t, "test.log", lumber.(*lumberjackSink).Filename)
+	assert.Equal(t, path, lumber.(*lumberjackSink).Filename)
 	assert.Equal(t, 12, lumber.(*lumberjackSink).MaxAge)
 	assert.Equal(t, 13, lumber.(*lumberjackSink).MaxSize)
 	assert.Equal(t, 14, lumber.(*lumberjackSink).MaxBackups)
