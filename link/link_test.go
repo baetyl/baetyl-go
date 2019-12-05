@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"sync"
 	"testing"
 	"time"
 
@@ -29,6 +28,7 @@ var (
 			},
 		},
 		MaxSize: 464471,
+		Ack:     true,
 	}
 
 	msgSend = &Message{
@@ -40,17 +40,6 @@ var (
 			Destination: "video",
 		},
 		Content: []byte("timer send"),
-	}
-
-	msgResp = &Message{
-		Context: &Context{
-			QOS:         1,
-			Flags:       4,
-			Topic:       "$SYS/service/video",
-			Source:      "video",
-			Destination: "timer",
-		},
-		Content: []byte("video resp"),
 	}
 
 	msgAck = &Message{
@@ -66,8 +55,7 @@ var (
 )
 
 type lkSerLT struct {
-	t  *testing.T
-	wg sync.WaitGroup
+	t *testing.T
 }
 
 func (l *lkSerLT) Call(ctx context.Context, msg *Message) (*Message, error) {
@@ -82,28 +70,18 @@ func (l *lkSerLT) Talk(stream Link_TalkServer) error {
 			return err
 		}
 		fmt.Printf("server receive = %v\n", in)
-		if string(in.Content) != "timer ack" {
-			msgSend.Context.ID = in.Context.ID
-			msgSend.Context.TS = in.Context.TS
-			checkMsg(l.t, in, msgSend)
-			msgResp.Context.ID = in.Context.ID
-			msgResp.Context.TS = in.Context.TS
-			if err = stream.Send(msgResp); err != nil {
-				return err
-			}
-			continue
-		}
+		msgSend.Context.ID = in.Context.ID
+		msgSend.Context.TS = in.Context.TS
+		checkMsg(l.t, in, msgSend)
 		msgAck.Context.ID = in.Context.ID
 		msgAck.Context.TS = in.Context.TS
-		checkMsg(l.t, in, msgAck)
-		l.wg.Done()
-		break
+		if err = stream.Send(msgAck); err != nil {
+			return err
+		}
 	}
-	return nil
 }
 
 func TestLink(t *testing.T) {
-	wg := sync.WaitGroup{}
 	sc := ServerConfig{
 		Auth: Auth{
 			Account: Account{
@@ -120,10 +98,8 @@ func TestLink(t *testing.T) {
 	}
 	svr, err := NewServer(sc)
 	assert.NoError(t, err)
-	defer svr.GracefulStop()
 	s := &lkSerLT{
-		t:  t,
-		wg: wg,
+		t: t,
 	}
 	RegisterLinkServer(svr, s)
 	lis, err := net.Listen("tcp", "0.0.0.0:8273")
@@ -131,7 +107,6 @@ func TestLink(t *testing.T) {
 	go svr.Serve(lis)
 
 	handler := func(m *Message) error {
-		assert.Equal(t, string(msgResp.Content), "video resp")
 		return nil
 	}
 	l, err := NewClient(cc, handler)
@@ -139,8 +114,4 @@ func TestLink(t *testing.T) {
 	defer l.Close()
 	err = l.Send(msgSend.Context.Source, msgSend.Context.Destination, 1, msgSend.Content)
 	assert.NoError(t, err)
-	err = l.stream.Send(packetAckMsg(msgResp))
-	assert.NoError(t, err)
-	wg.Add(1)
-	wg.Wait()
 }

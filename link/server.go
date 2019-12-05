@@ -29,7 +29,10 @@ func NewServer(c ServerConfig) (*grpc.Server, error) {
 				Username: c.Username,
 				Password: c.Password,
 			}
-			return resp, auth.Authenticate(ctx)
+			err = auth.Authenticate(ctx)
+			if err != nil {
+				return resp, err
+			}
 		}
 		// todo auth token
 		return handler(ctx, req)

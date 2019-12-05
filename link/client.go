@@ -30,11 +30,10 @@ type Client struct {
 	conn *grpc.ClientConn
 	cli  LinkClient
 
-	stream   Link_TalkClient
-	handler  Handler
-	ack      chan *Message
-	asyncMsg chan *Message
-	t        tomb.Tomb
+	stream  Link_TalkClient
+	handler Handler
+	ack     chan *Message
+	t       tomb.Tomb
 }
 
 // NewClient creates a new client of functions server
@@ -75,6 +74,7 @@ func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
 		cfg:     cc,
 		conn:    conn,
 		handler: handler,
+		ack:     make(chan *Message, 1),
 		cli:     NewLinkClient(conn),
 	}
 	stream, err := cli.Talk(context.Background())
@@ -82,7 +82,6 @@ func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
 		return nil, err
 	}
 	cli.stream = stream
-	cli.t.Go(cli.publish)
 	cli.t.Go(cli.receive)
 	return cli, nil
 }
@@ -118,19 +117,6 @@ func (c *Client) Send(src, dest string, qos uint32, content []byte) error {
 	return nil
 }
 
-// publish send message
-func (c *Client) publish() error {
-	for {
-		msg, ok := <-c.asyncMsg
-		if ok {
-			err := c.stream.Send(msg)
-			if err != nil {
-				return err
-			}
-		}
-	}
-}
-
 // receive implement Talk for receive async message
 func (c *Client) receive() error {
 	for {
@@ -143,6 +129,7 @@ func (c *Client) receive() error {
 			return err
 		}
 		// check : is ack message
+		fmt.Printf("reveice = %v", in)
 		if (in.Context.Flags & FlagAck) == FlagAck {
 			c.ack <- in
 		} else {
@@ -156,7 +143,7 @@ func (c *Client) receive() error {
 			}
 			if c.cfg.Ack {
 				msg := packetAckMsg(in)
-				c.asyncMsg <- msg
+				c.ack <- msg
 			}
 		}
 	}

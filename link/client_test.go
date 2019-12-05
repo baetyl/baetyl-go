@@ -235,34 +235,34 @@ func (l *lkSerCT) Talk(stream Link_TalkServer) error {
 
 func TestLinkClient(t *testing.T) {
 	scfg.Concurrent.Max = 4194304
-
 	ser, err := NewServer(scfg)
 	assert.NoError(t, err)
 	s := &lkSerCT{t: t}
 	RegisterLinkServer(ser, s)
-	defer ser.GracefulStop()
 	lis, err := net.Listen("tcp", addr)
 	assert.NoError(t, err)
 	go ser.Serve(lis)
 
 	wg := sync.WaitGroup{}
+	x := 0
 	for _, tt := range linkClientTests {
 		t.Run(tt.name, func(t *testing.T) {
 			cli, err := NewClient(tt.ccfg, nil)
 			assert.Equal(t, tt.err[0].wantErr, err != nil)
 			if cli != nil {
-				//resp, err := cli.Call(context.Background(), tt.params.msgCall)
-				//assert.Equal(t, tt.err[1].wantErr, err != nil)
+				resp, err := cli.Call(context.Background(), tt.params.msgCall)
+				assert.Equal(t, tt.err[1].wantErr, err != nil)
 				if err != nil {
 					assert.Equal(t, accountErrMsg, err.Error())
 				} else {
-					//checkMsg(t, msgCallResp, resp)
+					checkMsg(t, msgCallResp, resp)
 					stream, err := cli.Talk(context.Background())
 					assert.NoError(t, err)
 					go func() {
 						in, err := stream.Recv()
 						assert.NoError(t, err)
 						checkMsg(t, in, msgTalkResp)
+						x--
 						wg.Done()
 					}()
 					err = stream.Send(tt.params.msgTalk)
@@ -271,6 +271,7 @@ func TestLinkClient(t *testing.T) {
 						assert.Equal(t, accountErrMsg, err.Error())
 					} else {
 						wg.Add(1)
+						x++
 						err = stream.CloseSend()
 						assert.NoError(t, err)
 					}
