@@ -19,7 +19,7 @@ func init() {
 	var err error
 	_log, err = zap.NewProduction()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		panic(fmt.Sprintf("failed to new default logger: %s", err.Error()))
 	}
 	err = zap.RegisterSink("lumberjack", newFileHook)
 	if err != nil {
