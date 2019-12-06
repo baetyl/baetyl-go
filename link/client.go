@@ -111,6 +111,7 @@ func (c *Client) receiving() error {
 			return err
 		}
 		if err != nil {
+			c.log.Error("talk stream recv error", log.Error(err))
 			return err
 		}
 		c.log.Debug("talk receive msg",
@@ -118,7 +119,7 @@ func (c *Client) receiving() error {
 			log.String("dest", in.Context.Destination))
 
 		// check : is ack message
-		if (in.Context.Flags & FlagAck) != FlagAck {
+		if (in.Context.Flags & FlagAck) == FlagAck {
 			c.log.Debug("talk receive ack", log.Int("id", int(in.Context.ID)))
 		} else {
 			if c.handler != nil {

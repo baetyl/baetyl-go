@@ -43,6 +43,19 @@ var (
 		Content: []byte("timer send"),
 	}
 
+	msgResp = &Message{
+		Context: &Context{
+			ID:          123,
+			TS:          3213123,
+			QOS:         1,
+			Flags:       0,
+			Topic:       "$SYS/service/timer",
+			Source:      "video",
+			Destination: "timer",
+		},
+		Content: []byte("video send"),
+	}
+
 	msgAck = &Message{
 		Context: &Context{
 			QOS:         1,
@@ -71,13 +84,18 @@ func (l *lkSerLT) Talk(stream Link_TalkServer) error {
 			return err
 		}
 		fmt.Printf("server receive = %v\n", in)
-		msgSend.Context.ID = in.Context.ID
-		msgSend.Context.TS = in.Context.TS
-		checkMsg(l.t, in, msgSend)
-		msgAck.Context.ID = in.Context.ID
-		msgAck.Context.TS = in.Context.TS
-		if err = stream.Send(msgAck); err != nil {
-			return err
+		if in.Context.Flags != 4 {
+			msgSend.Context.ID = in.Context.ID
+			msgSend.Context.TS = in.Context.TS
+			checkMsg(l.t, in, msgSend)
+			if err = stream.Send(msgResp); err != nil {
+				return err
+			}
+		} else {
+			if err = stream.Send(packetAckMsg(in)); err != nil {
+				return err
+			}
+			return nil
 		}
 	}
 }
@@ -107,7 +125,10 @@ func TestLink(t *testing.T) {
 	assert.NoError(t, err)
 	go svr.Serve(lis)
 
+	ch := make(chan struct{})
 	handler := func(m *Message) error {
+		checkMsg(t, m, msgResp)
+		close(ch)
 		return nil
 	}
 	l, err := NewClient(cc, handler)
@@ -115,4 +136,5 @@ func TestLink(t *testing.T) {
 	defer l.Close()
 	err = l.Send(msgSend.Context.Source, msgSend.Context.Destination, 1, msgSend.Content)
 	assert.NoError(t, err)
+	<-ch
 }
