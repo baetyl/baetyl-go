@@ -83,8 +83,6 @@ func UnmarshalJSON(in []byte, out interface{}) error {
 	return nil
 }
 
-type unitMap map[string]int64
-
 /*
   "b" represents for "B"
   "k" represents for "KB" or "KiB"
