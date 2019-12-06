@@ -14,7 +14,7 @@ import (
 
 var (
 	cc = ClientConfig{
-		Address: "0.0.0.0:8273",
+		Address: "0.0.0.0:8274",
 		Timeout: time.Duration(20) * time.Second,
 		Auth: Auth{
 			Account: Account{
@@ -102,7 +102,7 @@ func TestLink(t *testing.T) {
 		t: t,
 	}
 	RegisterLinkServer(svr, s)
-	lis, err := net.Listen("tcp", "0.0.0.0:8273")
+	lis, err := net.Listen("tcp", "0.0.0.0:8274")
 	assert.NoError(t, err)
 	go svr.Serve(lis)
 
