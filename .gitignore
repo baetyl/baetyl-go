@@ -15,3 +15,20 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Other
+*~
+*.swp
+*.a
+*.jar
+*.iml
+/.idea
+/.vscode
+/output*
+/**/*.zip
+/**/.DS_Store
+/**/*.db
+/**/*.db.lock
+/**/*debug.test
+/**/debug
+/**/*.log

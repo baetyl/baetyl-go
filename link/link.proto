@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package link;
+
+service Link {
+    rpc Talk (stream Message) returns (stream Message) {}
+    rpc Call (Message) returns (Message) {}
+}
+
+message Message {
+    Context Context = 1;
+    bytes Content = 2;
+}
+
+message Context {
+    uint64 ID          = 1;
+    uint64 TS          = 2;
+    uint32 QOS         = 3;
+    uint32 Flags       = 4; // 0x1 retained, 0x2 sync , 0x4 response
+    string Topic       = 5; // $SYS/service/{.BAETYL_SERVICE_NAME}
+    string Source      = 6;
+    string Destination = 7;
+}
