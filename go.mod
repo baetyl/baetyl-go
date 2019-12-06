@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/creasty/defaults v1.3.0
 	github.com/docker/go-connections v0.4.0
+	github.com/cweill/gotests v1.5.3 // indirect
 	github.com/docker/go-units v0.4.0
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/frankban/quicktest v1.7.2 // indirect
@@ -19,6 +20,7 @@ require (
 	go.uber.org/zap v1.13.0
 	golang.org/x/net v0.0.0-20191119073136-fc4aabc6c914
 	google.golang.org/grpc v1.25.1
+	golang.org/x/tools v0.0.0-20191205225056-3393d29bb9fe // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/validator.v2 v2.0.0-20191107172027-c3144fdedc21

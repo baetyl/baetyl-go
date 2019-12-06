@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -282,18 +283,65 @@ func TestUnmarshalYAML(t *testing.T) {
 }
 
 func TestMarshalYAML(t *testing.T) {
-	var result []string
-	ll := []Length{
-		{2},
-		{2 * 1024},
-		{2 * 1024 * 1024},
-		{2 * 1024 * 1024 * 1024},
-		{2 * 1024 * 1024 * 1024 * 1024},
+	type fields struct {
+		Max int64
 	}
-	for _, v := range ll {
-		res, err := v.MarshalYAML()
-		assert.Nil(t, err)
-		result = append(result, res.(length).Max)
+	tests := []struct {
+		name    string
+		fields  fields
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name:    "test1",
+			fields:  fields{Max: 2},
+			want:    length{"2"},
+			wantErr: false,
+		},
+		{
+			name:    "test2",
+			fields:  fields{Max: 2 * 1024},
+			want:    length{"2k"},
+			wantErr: false,
+		},
+		{
+			name:    "test3",
+			fields:  fields{Max: 2 * 1024 * 1024},
+			want:    length{"2m"},
+			wantErr: false,
+		},
+		{
+			name:    "test4",
+			fields:  fields{Max: 2 * 1024 * 1024 * 1024},
+			want:    length{"2g"},
+			wantErr: false,
+		},
+		{
+			name:    "test5",
+			fields:  fields{Max: 2 * 1024 * 1024 * 1024 * 1024},
+			want:    length{"2t"},
+			wantErr: false,
+		},
+		{
+			name:    "test6",
+			fields:  fields{Max: 2 * 1024 * 1024 * 1024 * 1024 * 1024},
+			want:    length{"2p"},
+			wantErr: false,
+		},
 	}
-	assert.Equal(t, []string{"2B", "2KiB", "2MiB", "2GiB", "2TiB"}, result)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &Length{
+				Max: tt.fields.Max,
+			}
+			got, err := l.MarshalYAML()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Length.MarshalYAML() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Length.MarshalYAML() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
