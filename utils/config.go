@@ -104,6 +104,13 @@ func (l *Length) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// MarshalYAML implements the Marshaller interface
+func (l *Length) MarshalYAML() (interface{}, error) {
+	var ls length
+	ls.Max = units.BytesSize(float64(l.Max))
+	return ls, nil
+}
+
 type length struct {
 	Max string `yaml:"max" json:"max"`
 }

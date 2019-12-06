@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -70,7 +71,53 @@ func TestPathJoin(t *testing.T) {
 	assert.Equal(t, "/mnt/data0", path.Join("/", path.Join("/", "/mnt/data0")))
 }
 
+func TestWriteFile(t *testing.T) {
+	var res io.ReadCloser
+	err := WriteFile("var/lib/baetyl/service.yml", res)
+	assert.NotNil(t, err)
+	assert.Equal(t, "open var/lib/baetyl/service.yml: no such file or directory", err.Error())
+
+	re := strings.NewReader("hello world")
+	dirname, err := ioutil.TempDir("", "test")
+	defer os.RemoveAll(dirname)
+	assert.Nil(t, err)
+	tmpfile, err := ioutil.TempFile(dirname, "example")
+	assert.Nil(t, err)
+	fname := tmpfile.Name() + ".yml"
+	err = WriteFile(fname, re)
+	assert.Nil(t, err)
+}
+
+func TestCopyFile(t *testing.T) {
+	err := CopyFile("var/lib/test/service.yml", "var/lib/baetyl/services.yml")
+	assert.NotNil(t, err)
+	assert.Equal(t, "open var/lib/test/service.yml: no such file or directory", err.Error())
+
+	dirname, err := ioutil.TempDir("", "test")
+	defer os.RemoveAll(dirname)
+	assert.Nil(t, err)
+	tmpfile, err := ioutil.TempFile(dirname, "example")
+	assert.Nil(t, err)
+	fname := tmpfile.Name() + ".yml"
+	err = CopyFile("log/config.go", fname)
+	assert.Nil(t, err)
+}
+
+func TestCalculateMD5(t *testing.T) {
+	md5, err := CalculateFileMD5("var/lib/baetyl/service.yml")
+	assert.NotNil(t, err)
+	assert.Equal(t, "open var/lib/baetyl/service.yml: no such file or directory", err.Error())
+	assert.Equal(t, "", md5)
+
+	_, err = CalculateFileMD5("log/config.go")
+	assert.Nil(t, err)
+}
+
 func TestCreateSymlink(t *testing.T) {
+	err := CreateSymlink("", "")
+	assert.NotNil(t, err)
+	assert.Equal(t, "failed to make symlink  of : symlink  : no such file or directory", err.Error())
+
 	dir, err := ioutil.TempDir("", "")
 	assert.NoError(t, err)
 	cwd, err := os.Getwd()
@@ -85,6 +132,8 @@ func TestCreateSymlink(t *testing.T) {
 	assert.NoError(t, err)
 	symlink := "symlink"
 	CreateSymlink(filename, symlink)
+	err = CreateSymlink("", symlink)
+	assert.Nil(t, err)
 	res, err := ioutil.ReadFile(symlink)
 	assert.NoError(t, err)
 	assert.Equal(t, content, string(res))

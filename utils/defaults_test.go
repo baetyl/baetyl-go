@@ -20,6 +20,10 @@ type testDefaultsStruct struct {
 }
 
 func TestSetDefaults(t *testing.T) {
+	err := SetDefaults("")
+	assert.NotNil(t, err)
+	assert.Equal(t, ": not a struct pointer", err.Error())
+
 	tests := []struct {
 		name    string
 		args    *testDefaultsStruct

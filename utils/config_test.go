@@ -280,3 +280,20 @@ func TestUnmarshalYAML(t *testing.T) {
 	err = l.UnmarshalYAML(unmarshal2)
 	assert.Error(t, err)
 }
+
+func TestMarshalYAML(t *testing.T) {
+	var result []string
+	ll := []Length{
+		{2},
+		{2 * 1024},
+		{2 * 1024 * 1024},
+		{2 * 1024 * 1024 * 1024},
+		{2 * 1024 * 1024 * 1024 * 1024},
+	}
+	for _, v := range ll {
+		res, err := v.MarshalYAML()
+		assert.Nil(t, err)
+		result = append(result, res.(length).Max)
+	}
+	assert.Equal(t, []string{"2B", "2KiB", "2MiB", "2GiB", "2TiB"}, result)
+}
