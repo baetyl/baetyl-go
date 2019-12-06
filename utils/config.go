@@ -83,6 +83,17 @@ func UnmarshalJSON(in []byte, out interface{}) error {
 	return nil
 }
 
+/*
+  "b" represents for "B"
+  "k" represents for "KB" or "KiB"
+  "m" represents for "MB" or "MiB"
+  "g" represents for "GB" or "GiB"
+  "t" represents for "TB" or "TiB"
+  "p" represents for "PB" or "PiB"
+  maxValue is (2 >> 63 -1).
+*/
+var decimapAbbrs = []string{"", "k", "m", "g", "t", "p"}
+
 // Length length
 type Length struct {
 	Max int64 `yaml:"max" json:"max"`
@@ -107,7 +118,7 @@ func (l *Length) UnmarshalYAML(unmarshal func(interface{}) error) error {
 // MarshalYAML implements the Marshaller interface
 func (l *Length) MarshalYAML() (interface{}, error) {
 	var ls length
-	ls.Max = units.BytesSize(float64(l.Max))
+	ls.Max = units.CustomSize("%.4g%s", float64(l.Max), 1024.0, decimapAbbrs)
 	return ls, nil
 }
 
