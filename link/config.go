@@ -19,8 +19,8 @@ type Auth struct {
 
 // ServerConfig link server config
 type ServerConfig struct {
-	MaxSize    utils.Size `yaml:"maxsize" json:"maxsize"`
-	Concurrent struct {
+	MaxMessageSize utils.Size `yaml:"maxMessageSize" json:"maxMessageSize"`
+	Concurrent     struct {
 		Max uint32 `yaml:"max" json:"max" default:"{\"max\":4194304}`
 	} `yaml:"concurrent" json:"concurrent"`
 	Auth `yaml:"auth" json:"auth"`
@@ -28,9 +28,9 @@ type ServerConfig struct {
 
 // ClientConfig link client config
 type ClientConfig struct {
-	Address string        `yaml:"address" json:"address" default: "0.0.0.0"`
-	Timeout time.Duration `yaml:"timeout" json:"timeout" default:"30s"`
-	MaxSize utils.Size    `yaml:"maxsize" json:"maxsize"`
-	Ack     bool          `yaml:"ack" json:"ack" default:true"`
-	Auth    `yaml:"auth" json:"auth"`
+	Address        string        `yaml:"address" json:"address" default: "0.0.0.0"`
+	Timeout        time.Duration `yaml:"timeout" json:"timeout" default:"30s"`
+	MaxMessageSize utils.Size    `yaml:"maxMessageSize" json:"maxMessageSize"`
+	DisableAutoAck bool          `yaml:"disableAutoAck" json:"disableAutoAck"`
+	Auth           `yaml:"auth" json:"auth"`
 }

@@ -1,16 +1,15 @@
 package link
 
 import (
-	"fmt"
 	"io"
 	"time"
 
-	"github.com/baetyl/baetyl-go/utils"
-	"google.golang.org/grpc/credentials"
-	"gopkg.in/tomb.v2"
+	"github.com/baetyl/baetyl-go/utils/log"
 
+	"github.com/baetyl/baetyl-go/utils"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -32,8 +31,7 @@ type Client struct {
 
 	stream  Link_TalkClient
 	handler Handler
-	ack     chan *Message
-	t       tomb.Tomb
+	log     *log.Logger
 }
 
 // NewClient creates a new client of functions server
@@ -43,7 +41,7 @@ func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
 
 	opts := []grpc.DialOption{
 		grpc.WithBlock(),
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(cc.MaxSize))),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(cc.MaxMessageSize))),
 	}
 	if cc.Insecure {
 		opts = append(opts, grpc.WithInsecure())
@@ -53,7 +51,11 @@ func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
 			return nil, err
 		}
 		if tlsCfg != nil {
-			tlsCfg.InsecureSkipVerify = true // don't verifies the server's certificate chain and host name
+			if cc.Name == "" {
+				tlsCfg.InsecureSkipVerify = true // don't verifies the server's certificate chain and host name
+			} else {
+				tlsCfg.ServerName = cc.Name
+			}
 			creds := credentials.NewTLS(tlsCfg)
 			opts = append(opts, grpc.WithTransportCredentials(creds))
 		}
@@ -74,26 +76,26 @@ func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
 		cfg:     cc,
 		conn:    conn,
 		handler: handler,
-		ack:     make(chan *Message, 1),
 		cli:     NewLinkClient(conn),
+		log:     log.With(log.String("link", "client")),
 	}
 	stream, err := cli.Talk(context.Background())
 	if err != nil {
 		return nil, err
 	}
 	cli.stream = stream
-	cli.t.Go(cli.receive)
+	go cli.receiving()
 	return cli, nil
 }
 
 // Call sends request to link server
 func (c *Client) Call(ctx context.Context, req *Message) (*Message, error) {
-	return c.cli.Call(ctx, req, grpc.WaitForReady(false))
+	return c.cli.Call(ctx, req, grpc.WaitForReady(true))
 }
 
 // Talk talk to link server
 func (c *Client) Talk(ctx context.Context) (Link_TalkClient, error) {
-	return c.cli.Talk(ctx, grpc.WaitForReady(false))
+	return c.cli.Talk(ctx, grpc.WaitForReady(true))
 }
 
 // Close closes the client
@@ -103,47 +105,41 @@ func (c *Client) Close() error {
 
 func (c *Client) Send(src, dest string, qos uint32, content []byte) error {
 	msg := packetMsg(src, dest, qos, content)
-	err := c.stream.Send(msg)
-	if err != nil {
-		return err
-	}
-	if qos != QoS0 {
-		a := <-c.ack
-		if a.Context.ID != msg.Context.ID {
-			return fmt.Errorf("Mseeage ack error."+
-				" Expect id : %d, Actual id : %d\n", msg.Context.ID, a.Context.ID)
-		}
-	}
-	return nil
+	return c.stream.Send(msg)
 }
 
-// receive implement Talk for receive async message
-func (c *Client) receive() error {
+// receiving implement Talk for receive async message
+func (c *Client) receiving() error {
 	for {
 		in, err := c.stream.Recv()
 		if err == io.EOF {
-			close(c.ack)
 			return err
 		}
 		if err != nil {
 			return err
 		}
+		c.log.Debug("talk receive msg",
+			log.String("src", in.Context.Source),
+			log.String("dest", in.Context.Destination))
+
 		// check : is ack message
-		fmt.Printf("reveice = %v", in)
-		if (in.Context.Flags & FlagAck) == FlagAck {
-			c.ack <- in
+		if (in.Context.Flags & FlagAck) != FlagAck {
+			c.log.Debug("talk receive ack", log.Int("id", int(in.Context.ID)))
 		} else {
 			if c.handler != nil {
 				err = c.handler(in)
 				if err != nil {
-					fmt.Printf("handler exec error, err = %v\n", err.Error())
+					c.log.Error("handler exec error", log.Error(err))
 				}
 			} else {
-				fmt.Println("handler not implemented, ack context is null")
+				c.log.Warn("handler not implemented")
 			}
-			if c.cfg.Ack {
+			if !c.cfg.DisableAutoAck {
 				msg := packetAckMsg(in)
-				c.ack <- msg
+				err = c.stream.Send(msg)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

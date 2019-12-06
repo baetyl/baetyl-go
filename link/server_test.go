@@ -31,7 +31,7 @@ func TestLinkServer(t *testing.T) {
 	scfg.Username = "svr"
 	scfg.Password = "svr"
 	scfg.Concurrent.Max = 10000
-	scfg.MaxSize = 100000
+	scfg.MaxMessageSize = 100000
 	scfg.CA = "./testcert/ca.pem"
 	scfg.Cert = "./testcert/server.pem"
 	scfg.Key = "./testcert/server.key"

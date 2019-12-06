@@ -2,8 +2,7 @@ package link
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	"errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -18,33 +17,19 @@ const (
 	KeySK       = "sk"
 )
 
+var errTokenNotImpl = errors.New("auth token not implemented")
+
 // Authenticator : Authenticate interface
 type Authenticator interface {
 	Authenticate(context.Context) error
 }
 
-// AuthPassword : authenticate by token
-type AuthToken struct {
-	Token string
-}
-
-func (a *AuthToken) Authenticate(ctx context.Context) error {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return status.Errorf(codes.Unauthenticated, "no metadata")
-	}
-	// todo auth by token
-	fmt.Printf("todo AuthToken %v", md)
-	return nil
-}
-
 // AuthPassword : authenticate by username and password
-type AuthPassword struct {
-	Username string
-	Password string
+type AuthAccount struct {
+	Data map[string]string
 }
 
-func (a *AuthPassword) Authenticate(ctx context.Context) error {
+func (a *AuthAccount) Authenticate(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return status.Errorf(codes.Unauthenticated, "no metadata")
@@ -56,8 +41,14 @@ func (a *AuthPassword) Authenticate(ctx context.Context) error {
 	if val, ok := md[KeyPassword]; ok {
 		p = val[0]
 	}
-	if strings.Compare(u, a.Username) != 0 ||
-		strings.Compare(p, a.Password) != 0 {
+	var username, password string
+	if val, ok := a.Data[KeyUsername]; ok {
+		username = val
+	}
+	if val, ok := a.Data[KeyPassword]; ok {
+		password = val
+	}
+	if u != username || p != password {
 		return status.Errorf(codes.Unauthenticated, "username or password not match")
 	}
 	return nil

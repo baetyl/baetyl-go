@@ -98,7 +98,7 @@ var (
 				CA:   "./testcert/ca.pem",
 			},
 		},
-		MaxSize: 4194304,
+		MaxMessageSize: 4194304,
 	}
 
 	linkClientTests = []struct {
@@ -124,7 +124,7 @@ var (
 						CA:   "./testcert/ca.pem",
 					},
 				},
-				MaxSize: 4194304,
+				MaxMessageSize: 4194304,
 			},
 			params: msg{
 				msgCall: msgCall,
@@ -156,7 +156,7 @@ var (
 						CA:   "./testcert/ca.pem",
 					},
 				},
-				MaxSize: 4194304,
+				MaxMessageSize: 4194304,
 			},
 			params: msg{
 				msgCall: msgCall,
@@ -186,7 +186,7 @@ var (
 						CA:   "./testcert/ca.pem",
 					},
 				},
-				MaxSize: 4194304,
+				MaxMessageSize: 4194304,
 			},
 			params: msg{
 				msgCall: msgCall,

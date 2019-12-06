@@ -11,8 +11,8 @@ import (
 func NewServer(c ServerConfig) (*grpc.Server, error) {
 	opts := []grpc.ServerOption{
 		grpc.MaxConcurrentStreams(c.Concurrent.Max),
-		grpc.MaxRecvMsgSize(int(c.MaxSize)),
-		grpc.MaxSendMsgSize(int(c.MaxSize)),
+		grpc.MaxRecvMsgSize(int(c.MaxMessageSize)),
+		grpc.MaxSendMsgSize(int(c.MaxMessageSize)),
 	}
 	tlsCfg, err := utils.NewTLSConfigServer(&c.Certificate)
 	if err != nil {
@@ -25,16 +25,15 @@ func NewServer(c ServerConfig) (*grpc.Server, error) {
 
 	interceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		if len(c.Username) > 0 && len(c.Password) > 0 {
-			auth := &AuthPassword{
-				Username: c.Username,
-				Password: c.Password,
-			}
+			auth := &AuthAccount{Data: map[string]string{
+				KeyUsername: c.Username,
+				KeyPassword: c.Password,
+			}}
 			err = auth.Authenticate(ctx)
 			if err != nil {
 				return resp, err
 			}
 		}
-		// todo auth token
 		return handler(ctx, req)
 	}
 	opts = append(opts, grpc.UnaryInterceptor(interceptor))

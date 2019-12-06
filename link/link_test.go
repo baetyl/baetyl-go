@@ -27,8 +27,8 @@ var (
 				CA:   "./testcert/ca.pem",
 			},
 		},
-		MaxSize: 464471,
-		Ack:     true,
+		MaxMessageSize: 464471,
+		DisableAutoAck: false,
 	}
 
 	msgSend = &Message{
@@ -94,7 +94,7 @@ func TestLink(t *testing.T) {
 				CA:   "./testcert/ca.pem",
 			},
 		},
-		MaxSize: 464471,
+		MaxMessageSize: 464471,
 	}
 	svr, err := NewServer(sc)
 	assert.NoError(t, err)

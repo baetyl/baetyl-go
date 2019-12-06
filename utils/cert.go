@@ -8,11 +8,13 @@ import (
 
 // Certificate certificate config for server
 // Name : serverNameOverride, same to CommonName in server.pem
+// if Name == "" , link would not verifies the server's certificate chain and host name
 // AuthType : declares the policy the server will follow for TLS Client Authentication
 type Certificate struct {
 	CA       string `yaml:"ca" json:"ca"`
 	Key      string `yaml:"key" json:"key"`
 	Cert     string `yaml:"cert" json:"cert"`
+	Name     string `yaml:"name" json:"name"`
 	Insecure bool   `yaml:"insecure" json:"insecure"` // for client, for test purpose
 }
 
