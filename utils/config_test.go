@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -255,62 +256,92 @@ modules:
 	assert.Equal(t, cfg, cfg2)
 }
 
-func TestLengthYAML(t *testing.T) {
-	confString := []string{
-		"max: \n2",
-		"max: 2",
-		"max: 2k",
-		"max: 2m",
-		"max: 2g",
-		"max: 2t",
-		"max: 2p",
-	}
-	confLength := []Length{
-		{2},
-		{2 * 1024},
-		{2 * 1024 * 1024},
-		{2 * 1024 * 1024 * 1024},
-		{2 * 1024 * 1024 * 1024 * 1024},
-		{2 * 1024 * 1024 * 1024 * 1024 * 1024},
-	}
-	result := []interface{}{
-		"yaml: line 3: could not find expected ':'",
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-	}
+func TestUnmarshalYAML(t *testing.T) {
+	confString := "max: 2"
 	l := Length{1}
-	var ll []Length
-	var cfString []string
-	var errs []interface{}
-	for _, v := range confString {
-		unmarshal := func(ls interface{}) error {
-			err := UnmarshalYAML([]byte(v), ls)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-		err := l.UnmarshalYAML(unmarshal)
+	unmarshal := func(ls interface{}) error {
+		err := UnmarshalYAML([]byte(confString), ls)
 		if err != nil {
-			errs = append(errs, err.Error())
-		} else {
-			errs = append(errs, err)
-			ll = append(ll, Length{l.Max})
-			cfString = append(cfString, v[5:])
+			return err
 		}
+		return nil
 	}
-	assert.Equal(t, result, errs)
-	assert.Equal(t, ll, confLength)
+	err := l.UnmarshalYAML(unmarshal)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), l.Max)
 
-	var mConfString []string
-	for _, v := range confLength {
-		res, err := v.MarshalYAML()
-		assert.Nil(t, err)
-		mConfString = append(mConfString, res.(length).Max)
+	confString2 := "max: \n2"
+	unmarshal2 := func(ls interface{}) error {
+		err := UnmarshalYAML([]byte(confString2), ls)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-	assert.Equal(t, mConfString, cfString)
+	err = l.UnmarshalYAML(unmarshal2)
+	assert.Error(t, err)
+}
+
+func TestMarshalYAML(t *testing.T) {
+	type fields struct {
+		Max int64
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name:    "test1",
+			fields:  fields{Max: 2},
+			want:    length{"2"},
+			wantErr: false,
+		},
+		{
+			name:    "test2",
+			fields:  fields{Max: 2 * 1024},
+			want:    length{"2k"},
+			wantErr: false,
+		},
+		{
+			name:    "test3",
+			fields:  fields{Max: 2 * 1024 * 1024},
+			want:    length{"2m"},
+			wantErr: false,
+		},
+		{
+			name:    "test4",
+			fields:  fields{Max: 2 * 1024 * 1024 * 1024},
+			want:    length{"2g"},
+			wantErr: false,
+		},
+		{
+			name:    "test5",
+			fields:  fields{Max: 2 * 1024 * 1024 * 1024 * 1024},
+			want:    length{"2t"},
+			wantErr: false,
+		},
+		{
+			name:    "test6",
+			fields:  fields{Max: 2 * 1024 * 1024 * 1024 * 1024 * 1024},
+			want:    length{"2p"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &Length{
+				Max: tt.fields.Max,
+			}
+			got, err := l.MarshalYAML()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Length.MarshalYAML() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Length.MarshalYAML() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
