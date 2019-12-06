@@ -32,6 +32,7 @@ type Client struct {
 	stream  Link_TalkClient
 	handler Handler
 	log     *log.Logger
+	utils.Tomb
 }
 
 // NewClient creates a new client of functions server
@@ -43,30 +44,24 @@ func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
 		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(cc.MaxMessageSize))),
 	}
-	if cc.Insecure {
-		opts = append(opts, grpc.WithInsecure())
-	} else {
-		tlsCfg, err := utils.NewTLSConfigClient(&cc.Certificate)
-		if err != nil {
-			return nil, err
-		}
-		if tlsCfg != nil {
-			if cc.Name == "" {
-				tlsCfg.InsecureSkipVerify = true // don't verifies the server's certificate chain and host name
-			} else {
-				tlsCfg.ServerName = cc.Name
-			}
-			creds := credentials.NewTLS(tlsCfg)
-			opts = append(opts, grpc.WithTransportCredentials(creds))
-		}
-		// Custom Credential
-		opts = append(opts, grpc.WithPerRPCCredentials(&CustomCred{
-			Data: map[string]string{
-				KeyUsername: cc.Username,
-				KeyPassword: cc.Password,
-			},
-		}))
+	tlsCfg, err := utils.NewTLSConfigClient(&cc.Certificate)
+	if err != nil {
+		return nil, err
 	}
+	if tlsCfg != nil {
+		if !cc.InsecureSkipVerify {
+			tlsCfg.ServerName = cc.Name
+		}
+		creds := credentials.NewTLS(tlsCfg)
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	}
+	// Custom Credential
+	opts = append(opts, grpc.WithPerRPCCredentials(&CustomCred{
+		Data: map[string]string{
+			KeyUsername: cc.Username,
+			KeyPassword: cc.Password,
+		},
+	}))
 
 	conn, err := grpc.DialContext(ctx, cc.Address, opts...)
 	if err != nil {
@@ -84,7 +79,7 @@ func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
 		return nil, err
 	}
 	cli.stream = stream
-	go cli.receiving()
+	cli.Go(cli.receiving)
 	return cli, nil
 }
 

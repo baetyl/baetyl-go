@@ -25,6 +25,7 @@ var (
 				Cert: "./testcert/client.pem",
 				Key:  "./testcert/client.key",
 				CA:   "./testcert/ca.pem",
+				Name: "bd",
 			},
 		},
 		MaxMessageSize: 464471,
