@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/creasty/defaults v1.3.0
-	github.com/cweill/gotests v1.5.3 // indirect
 	github.com/docker/go-units v0.4.0
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/frankban/quicktest v1.7.2 // indirect
