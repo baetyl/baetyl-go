@@ -26,8 +26,7 @@ func NewServer(c ServerConfig) (*grpc.Server, error) {
 	interceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		if len(c.Username) > 0 && len(c.Password) > 0 {
 			auth := &AuthAccount{Data: map[string]string{
-				KeyUsername: c.Username,
-				KeyPassword: c.Password,
+				c.Username: c.Password,
 			}}
 			err = auth.Authenticate(ctx)
 			if err != nil {

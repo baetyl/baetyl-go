@@ -41,14 +41,11 @@ func (a *AuthAccount) Authenticate(ctx context.Context) error {
 	if val, ok := md[KeyPassword]; ok {
 		p = val[0]
 	}
-	var username, password string
-	if val, ok := a.Data[KeyUsername]; ok {
-		username = val
-	}
-	if val, ok := a.Data[KeyPassword]; ok {
+	var password string
+	if val, ok := a.Data[u]; ok {
 		password = val
 	}
-	if u != username || p != password {
+	if p != password {
 		return status.Errorf(codes.Unauthenticated, "username or password not match")
 	}
 	return nil
