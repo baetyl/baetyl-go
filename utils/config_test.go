@@ -255,45 +255,62 @@ modules:
 	assert.Equal(t, cfg, cfg2)
 }
 
-func TestUnmarshalYAML(t *testing.T) {
-	confString := "max: 2"
-	l := Length{1}
-	unmarshal := func(ls interface{}) error {
-		err := UnmarshalYAML([]byte(confString), ls)
-		if err != nil {
-			return err
-		}
-		return nil
+func TestLengthYAML(t *testing.T) {
+	confString := []string{
+		"max: \n2",
+		"max: 2",
+		"max: 2k",
+		"max: 2m",
+		"max: 2g",
+		"max: 2t",
+		"max: 2p",
 	}
-	err := l.UnmarshalYAML(unmarshal)
-	assert.NoError(t, err)
-	assert.Equal(t, int64(2), l.Max)
-
-	confString2 := "max: \n2"
-	unmarshal2 := func(ls interface{}) error {
-		err := UnmarshalYAML([]byte(confString2), ls)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	err = l.UnmarshalYAML(unmarshal2)
-	assert.Error(t, err)
-}
-
-func TestMarshalYAML(t *testing.T) {
-	var result []string
-	ll := []Length{
+	confLength := []Length{
 		{2},
 		{2 * 1024},
 		{2 * 1024 * 1024},
 		{2 * 1024 * 1024 * 1024},
 		{2 * 1024 * 1024 * 1024 * 1024},
+		{2 * 1024 * 1024 * 1024 * 1024 * 1024},
 	}
-	for _, v := range ll {
+	result := []interface{}{
+		"yaml: line 3: could not find expected ':'",
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+	}
+	l := Length{1}
+	var ll []Length
+	var cfString []string
+	var errs []interface{}
+	for _, v := range confString {
+		unmarshal := func(ls interface{}) error {
+			err := UnmarshalYAML([]byte(v), ls)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		err := l.UnmarshalYAML(unmarshal)
+		if err != nil {
+			errs = append(errs, err.Error())
+		} else {
+			errs = append(errs, err)
+			ll = append(ll, Length{l.Max})
+			cfString = append(cfString, v[5:])
+		}
+	}
+	assert.Equal(t, result, errs)
+	assert.Equal(t, ll, confLength)
+
+	var mConfString []string
+	for _, v := range confLength {
 		res, err := v.MarshalYAML()
 		assert.Nil(t, err)
-		result = append(result, res.(length).Max)
+		mConfString = append(mConfString, res.(length).Max)
 	}
-	assert.Equal(t, []string{"2B", "2KiB", "2MiB", "2GiB", "2TiB"}, result)
+	assert.Equal(t, mConfString, cfString)
 }
