@@ -4,8 +4,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/baetyl/baetyl-go/utils/log"
-
+	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

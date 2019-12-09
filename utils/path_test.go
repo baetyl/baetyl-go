@@ -89,28 +89,33 @@ func TestWriteFile(t *testing.T) {
 }
 
 func TestCopyFile(t *testing.T) {
-	err := CopyFile("var/lib/test/service.yml", "var/lib/baetyl/services.yml")
-	assert.NotNil(t, err)
-	assert.Equal(t, "open var/lib/test/service.yml: no such file or directory", err.Error())
+	dir, err := ioutil.TempDir("", t.Name())
+	defer os.RemoveAll(dir)
 
-	dirname, err := ioutil.TempDir("", "test")
-	defer os.RemoveAll(dirname)
-	assert.Nil(t, err)
-	tmpfile, err := ioutil.TempFile(dirname, "example")
-	assert.Nil(t, err)
-	fname := tmpfile.Name() + ".yml"
-	err = CopyFile("log/config.go", fname)
-	assert.Nil(t, err)
+	err = CopyFile("var/lib/test/service.yml", dir)
+	assert.EqualError(t, err, "open var/lib/test/service.yml: no such file or directory")
+
+	src, dest := path.Join(dir, "src.yml"), path.Join(dir, "dest.yml")
+	ioutil.WriteFile(src, []byte("zyx"), 0644)
+	err = CopyFile(src, dest)
+	assert.NoError(t, err)
+	data, err := ioutil.ReadFile(dest)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("zyx"), data)
 }
 
 func TestCalculateMD5(t *testing.T) {
-	md5, err := CalculateFileMD5("var/lib/baetyl/service.yml")
-	assert.NotNil(t, err)
-	assert.Equal(t, "open var/lib/baetyl/service.yml: no such file or directory", err.Error())
-	assert.Equal(t, "", md5)
+	dir, err := ioutil.TempDir("", t.Name())
+	defer os.RemoveAll(dir)
 
-	_, err = CalculateFileMD5("log/config.go")
-	assert.Nil(t, err)
+	_, err = CalculateFileMD5("var/lib/baetyl/service.yml")
+	assert.EqualError(t, err, "open var/lib/baetyl/service.yml: no such file or directory")
+
+	src := path.Join(dir, "src.yml")
+	ioutil.WriteFile(src, []byte("zyx"), 0644)
+	md5, err := CalculateFileMD5(src)
+	assert.NoError(t, err)
+	assert.Equal(t, "+sl+V5Y5vj8Q22caRGLtkQ==", md5)
 }
 
 func TestCreateSymlink(t *testing.T) {
