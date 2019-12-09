@@ -14,7 +14,7 @@ func NewServer(c ServerConfig) (*grpc.Server, error) {
 		grpc.MaxRecvMsgSize(int(c.MaxMessageSize)),
 		grpc.MaxSendMsgSize(int(c.MaxMessageSize)),
 	}
-	tlsCfg, err := utils.NewTLSConfigServer(&c.Certificate)
+	tlsCfg, err := utils.NewTLSConfigServer(c.Certificate)
 	if err != nil {
 		return nil, err
 	}

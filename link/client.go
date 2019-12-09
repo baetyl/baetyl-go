@@ -43,7 +43,7 @@ func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
 		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(cc.MaxMessageSize))),
 	}
-	tlsCfg, err := utils.NewTLSConfigClient(&cc.Certificate)
+	tlsCfg, err := utils.NewTLSConfigClient(cc.Certificate)
 	if err != nil {
 		return nil, err
 	}
