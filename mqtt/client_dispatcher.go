@@ -14,7 +14,7 @@ var ErrDispatcherClosed = fmt.Errorf("dispatcher already closed")
 
 // Dispatcher dispatcher of mqtt client
 type Dispatcher struct {
-	config  ClientInfo
+	config  ClientConfig
 	channel chan Packet
 	backoff *backoff.Backoff
 	tomb    utils.Tomb
@@ -22,7 +22,7 @@ type Dispatcher struct {
 }
 
 // NewDispatcher creates a new dispatcher
-func NewDispatcher(cc ClientInfo) *Dispatcher {
+func NewDispatcher(cc ClientConfig) *Dispatcher {
 	return &Dispatcher{
 		config:  cc,
 		channel: make(chan Packet, cc.BufferSize),

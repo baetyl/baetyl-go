@@ -143,7 +143,7 @@ func (c *Client) receiving() error {
 func packetMsg(src, dest string, qos uint32, content []byte) *Message {
 	return &Message{
 		Content: content,
-		Context: &Context{
+		Context: Context{
 			ID:          uint64(time.Now().UnixNano()),
 			TS:          uint64(time.Now().Unix()),
 			QOS:         qos,
@@ -158,7 +158,7 @@ func packetMsg(src, dest string, qos uint32, content []byte) *Message {
 func packetAckMsg(in *Message) *Message {
 	return &Message{
 		Content: nil,
-		Context: &Context{
+		Context: Context{
 			ID:          in.Context.ID,
 			TS:          uint64(time.Now().Unix()),
 			QOS:         QoS1,

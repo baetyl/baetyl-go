@@ -2,14 +2,24 @@ syntax = "proto3";
 
 package link;
 
-service Link {
-    rpc Talk (stream Message) returns (stream Message) {}
-    rpc Call (Message) returns (Message) {}
-}
+option (gogoproto.sizer_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.benchgen_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+// option (gogoproto.gostring_all) = true;
+// option (gogoproto.verbose_equal_all) = true;
+// option (gogoproto.goproto_stringer_all) = false;
+// option (gogoproto.stringer_all) =  true;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 message Message {
-    Context Context = 1;
-    bytes Content = 2;
+    Context Context = 1 [(gogoproto.nullable) = false];
+    bytes Content   = 2;
 }
 
 message Context {
@@ -17,7 +27,14 @@ message Context {
     uint64 TS          = 2;
     uint32 QOS         = 3;
     uint32 Flags       = 4; // 0x1 retained, 0x2 sync , 0x4 response
-    string Topic       = 5; // $SYS/service/{.BAETYL_SERVICE_NAME}
+    string Topic       = 5; // $SYS/SERVICES/{{.BAETYL_SERVICE_NAME}}
     string Source      = 6;
     string Destination = 7;
 }
+
+service Link {
+    rpc Talk (stream Message) returns (stream Message) {}
+    rpc Call (Message) returns (Message) {}
+}
+
+// protoc -I=. -I=$GOPATH/src -I=$GOPATH/src/github.com/gogo/protobuf/protobuf --gogofaster_out=plugins=grpc:. link.proto
