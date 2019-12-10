@@ -12,7 +12,7 @@ import (
 // A Client connects to a broker and handles the transmission of packets
 type Client struct {
 	conn            Connection
-	config          ClientInfo
+	config          ClientConfig
 	tracker         *Tracker
 	connectFuture   *Future
 	subscribeFuture *Future
@@ -23,7 +23,7 @@ type Client struct {
 }
 
 // NewClient returns a new client
-func NewClient(cc ClientInfo, handler Handler) (*Client, error) {
+func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
 	dialer, err := NewDialer(cc.Certificate, cc.Timeout)
 	if err != nil {
 		return nil, err

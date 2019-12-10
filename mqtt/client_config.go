@@ -6,24 +6,24 @@ import (
 	"github.com/baetyl/baetyl-go/utils"
 )
 
-// TopicInfo with topic and qos
-type TopicInfo struct {
+// QOSTopic topic and qos
+type QOSTopic struct {
 	QOS   uint32 `yaml:"qos" json:"qos" validate:"min=0, max=1"`
 	Topic string `yaml:"topic" json:"topic" validate:"nonzero"`
 }
 
-// ClientInfo mqtt client config
-type ClientInfo struct {
-	Address           string `yaml:"address" json:"address"`
-	Username          string `yaml:"username" json:"username"`
-	Password          string `yaml:"password" json:"password"`
+// ClientConfig mqtt client config
+type ClientConfig struct {
 	utils.Certificate `yaml:",inline" json:",inline"`
+	Address           string        `yaml:"address" json:"address"`
+	Username          string        `yaml:"username" json:"username"`
+	Password          string        `yaml:"password" json:"password"`
 	ClientID          string        `yaml:"clientid" json:"clientid"`
 	CleanSession      bool          `yaml:"cleansession" json:"cleansession"`
 	Timeout           time.Duration `yaml:"timeout" json:"timeout" default:"30s"`
 	Interval          time.Duration `yaml:"interval" json:"interval" default:"1m"`
-	KeepAlive         time.Duration `yaml:"keepalive" json:"keepalive"` // keepalive not start by default
+	KeepAlive         time.Duration `yaml:"keepalive" json:"keepalive"` // keepalive not enabled by default
 	BufferSize        int           `yaml:"buffersize" json:"buffersize" default:"10"`
 	ValidateSubs      bool          `yaml:"validatesubs" json:"validatesubs"`
-	Subscriptions     []TopicInfo   `yaml:"subscriptions" json:"subscriptions" default:"[]"`
+	Subscriptions     []QOSTopic    `yaml:"subscriptions" json:"subscriptions" default:"[]"`
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func TestClientConnectErrorMissingAddress(t *testing.T) {
-	c, err := NewClient(ClientInfo{}, &mockHandler{t: t})
+	c, err := NewClient(ClientConfig{}, &mockHandler{t: t})
 	assert.EqualError(t, err, "parse : empty url")
 	assert.Nil(t, c)
 }
@@ -258,7 +258,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 		return nil
 	}
 	cc := newConfig(port)
-	cc.Subscriptions = []TopicInfo{{Topic: "test"}}
+	cc.Subscriptions = []QOSTopic{{Topic: "test"}}
 	ch := &mockHandler{t: t, expectedProcessPublish: callback}
 	c, err := NewClient(cc, ch)
 	assert.NoError(t, err)
@@ -320,7 +320,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 		return nil
 	}
 	cc := newConfig(port)
-	cc.Subscriptions = []TopicInfo{{Topic: "test", QOS: 1}}
+	cc.Subscriptions = []QOSTopic{{Topic: "test", QOS: 1}}
 	ch := &mockHandler{t: t, expectedProcessPublish: callback1, expectedProcessPuback: callback2}
 	c, err := NewClient(cc, ch)
 	assert.NoError(t, err)
@@ -405,7 +405,7 @@ func TestClientSubscribeFutureTimeout(t *testing.T) {
 
 	cc := newConfig(port)
 	cc.Timeout = time.Millisecond * 50
-	cc.Subscriptions = []TopicInfo{TopicInfo{Topic: "test"}}
+	cc.Subscriptions = []QOSTopic{QOSTopic{Topic: "test"}}
 	ch := &mockHandler{t: t, expectedError: "failed to wait subscribe ack: future timeout"}
 	c, err := NewClient(cc, ch)
 	assert.Nil(t, c)
@@ -434,7 +434,7 @@ func TestClientSubscribeValidate(t *testing.T) {
 
 	cc := newConfig(port)
 	cc.ValidateSubs = true
-	cc.Subscriptions = []TopicInfo{TopicInfo{Topic: "test"}}
+	cc.Subscriptions = []QOSTopic{QOSTopic{Topic: "test"}}
 	ch := &mockHandler{t: t, expectedError: "failed subscription"}
 	c, err := NewClient(cc, ch)
 	assert.Nil(t, c)
@@ -463,7 +463,7 @@ func TestClientSubscribeWithoutValidate(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	cc := newConfig(port)
-	cc.Subscriptions = []TopicInfo{TopicInfo{Topic: "test"}}
+	cc.Subscriptions = []QOSTopic{QOSTopic{Topic: "test"}}
 	c, err := NewClient(cc, &mockHandler{t: t})
 	assert.NotNil(t, c)
 	assert.NoError(t, err)

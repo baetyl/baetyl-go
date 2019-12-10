@@ -49,7 +49,7 @@ func safeReceive(ch chan struct{}) {
 	}
 }
 
-func newConfig(port string) (c ClientInfo) {
+func newConfig(port string) (c ClientConfig) {
 	c.CleanSession = true
 	c.Address = "tcp://localhost:" + port
 	defaults.Set(&c)
