@@ -3,6 +3,7 @@ module github.com/baetyl/baetyl-go
 go 1.13
 
 require (
+	github.com/256dpi/gomqtt v0.13.0
 	github.com/creasty/defaults v1.3.0
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
@@ -10,6 +11,7 @@ require (
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/jpillora/backoff v1.0.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.3.0+incompatible // indirect

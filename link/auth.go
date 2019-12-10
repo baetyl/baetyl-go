@@ -2,33 +2,29 @@ package link
 
 import (
 	"context"
-	"errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
+// all keys
 const (
 	KeyUsername = "username"
 	KeyPassword = "password"
-	KeyToken    = "token"
-	KeyAK       = "ak"
-	KeySK       = "sk"
 )
-
-var errTokenNotImpl = errors.New("auth token not implemented")
 
 // Authenticator : Authenticate interface
 type Authenticator interface {
 	Authenticate(context.Context) error
 }
 
-// AuthPassword : authenticate by username and password
+// AuthAccount : authenticate with username and password
 type AuthAccount struct {
 	Data map[string]string
 }
 
+// Authenticate authenticates account passed by grpc context
 func (a *AuthAccount) Authenticate(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

@@ -20,16 +20,10 @@ type Certificate struct {
 
 // NewTLSConfigServer loads tls config for server
 func NewTLSConfigServer(c Certificate) (*tls.Config, error) {
-	if c.Cert == "" && c.Key == "" {
-		return nil, nil
-	}
 	return tlsconfig.Server(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, ClientAuth: tls.VerifyClientCertIfGiven})
 }
 
 // NewTLSConfigClient loads tls config for client
 func NewTLSConfigClient(c Certificate) (*tls.Config, error) {
-	if c.Cert == "" && c.Key == "" {
-		return nil, nil
-	}
 	return tlsconfig.Client(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, InsecureSkipVerify: c.InsecureSkipVerify})
 }
