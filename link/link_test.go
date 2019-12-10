@@ -33,7 +33,7 @@ var (
 	}
 
 	msgSend = &Message{
-		Context: &Context{
+		Context: Context{
 			QOS:         1,
 			Flags:       0,
 			Topic:       "$SYS/service/video",
@@ -44,7 +44,7 @@ var (
 	}
 
 	msgResp = &Message{
-		Context: &Context{
+		Context: Context{
 			ID:          123,
 			TS:          3213123,
 			QOS:         1,
@@ -57,7 +57,7 @@ var (
 	}
 
 	msgAck = &Message{
-		Context: &Context{
+		Context: Context{
 			QOS:         1,
 			Flags:       4,
 			Topic:       "$SYS/service/video",

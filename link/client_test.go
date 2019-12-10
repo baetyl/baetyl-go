@@ -33,7 +33,7 @@ var (
 		"desc = username or password not match"
 
 	msgCall = &Message{
-		Context: &Context{
+		Context: Context{
 			ID:          0,
 			TS:          1,
 			QOS:         2,
@@ -46,7 +46,7 @@ var (
 	}
 
 	msgCallResp = &Message{
-		Context: &Context{
+		Context: Context{
 			ID:          10,
 			TS:          11,
 			QOS:         12,
@@ -59,7 +59,7 @@ var (
 	}
 
 	msgTalk = &Message{
-		Context: &Context{
+		Context: Context{
 			ID:          20,
 			TS:          21,
 			QOS:         22,
@@ -72,7 +72,7 @@ var (
 	}
 
 	msgTalkResp = &Message{
-		Context: &Context{
+		Context: Context{
 			ID:          30,
 			TS:          31,
 			QOS:         32,
