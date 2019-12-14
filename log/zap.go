@@ -1,8 +1,6 @@
 package log
 
 import (
-	"time"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -29,24 +27,14 @@ const (
 	FatalLevel
 )
 
-// Int constructs a field with the given key and value.
-func Int(key string, val int) Field {
-	return zap.Int(key, val)
+// Any constructs a field with the given key and value
+func Any(key string, val interface{}) Field {
+	return zap.Any(key, val)
 }
 
 // Error is shorthand for the common idiom NamedError("error", err).
 func Error(err error) Field {
 	return zap.Error(err)
-}
-
-// String constructs a field with the given key and value.
-func String(key string, val string) Field {
-	return zap.String(key, val)
-}
-
-// Duration constructs a field with the given key and value
-func Duration(key string, val time.Duration) Field {
-	return zap.Duration(key, val)
 }
 
 // With creates a child logger and adds structured context to it. Fields added

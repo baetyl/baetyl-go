@@ -91,7 +91,7 @@ func parseLevel(lvl string) Level {
 	case "debug":
 		return DebugLevel
 	default:
-		_log.Warn("failed to parse log level, use default level (info)", String("level", lvl))
+		_log.Warn("failed to parse log level, use default level (info)", Any("level", lvl))
 		return InfoLevel
 	}
 }

@@ -7,43 +7,64 @@ import (
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
-	"github.com/256dpi/gomqtt/transport/flow"
+	"github.com/baetyl/baetyl-go/flow"
 	"github.com/creasty/defaults"
 	"github.com/stretchr/testify/assert"
 )
 
-type mockHandler struct {
-	t                      *testing.T
-	expectedError          string
-	expectedProcessPublish func(*packet.Publish) error
-	expectedProcessPuback  func(*packet.Puback) error
+type mockObserver struct {
+	t    *testing.T
+	pkts chan Packet
+	errs chan error
 }
 
-func (h *mockHandler) ProcessPublish(pkt *packet.Publish) error {
-	if h.expectedProcessPublish != nil {
-		return h.expectedProcessPublish(pkt)
+func newMockObserver(t *testing.T) *mockObserver {
+	return &mockObserver{
+		t:    t,
+		pkts: make(chan Packet, 10),
+		errs: make(chan error, 10),
 	}
+}
+
+func (o *mockObserver) OnPublish(pkt *packet.Publish) error {
+	o.pkts <- pkt
 	return nil
 }
 
-func (h *mockHandler) ProcessPuback(pkt *packet.Puback) error {
-	if h.expectedProcessPuback != nil {
-		return h.expectedProcessPuback(pkt)
-	}
+func (o *mockObserver) OnPuback(pkt *packet.Puback) error {
+	o.pkts <- pkt
 	return nil
 }
 
-func (h *mockHandler) ProcessError(err error) {
-	if h.expectedError == "" {
-		assert.NoError(h.t, err)
-	} else {
-		assert.EqualError(h.t, err, h.expectedError)
+func (o *mockObserver) OnError(err error) {
+	o.errs <- err
+}
+
+func (o *mockObserver) assertPkts(pkts ...Packet) {
+	for _, pkt := range pkts {
+		select {
+		case <-time.After(1 * time.Minute):
+			panic("nothing received")
+		case p := <-o.pkts:
+			assert.Equal(o.t, pkt, p)
+		}
+	}
+}
+
+func (o *mockObserver) assertErrs(errs ...error) {
+	for _, err := range errs {
+		select {
+		case <-time.After(1 * time.Second):
+			panic("nothing received")
+		case e := <-o.errs:
+			assert.Equal(o.t, err.Error(), e.Error())
+		}
 	}
 }
 
 func safeReceive(ch chan struct{}) {
 	select {
-	case <-time.After(1 * time.Minute):
+	case <-time.After(1 * time.Second):
 		panic("nothing received")
 	case <-ch:
 	}
@@ -67,7 +88,7 @@ func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {
 			conn, err := server.Accept()
 			assert.NoError(t, err)
 
-			err = flow.Test(conn)
+			err = flow.Test(newWrapper(conn))
 			assert.NoError(t, err)
 		}
 
@@ -79,6 +100,26 @@ func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {
 
 	_, port, _ := net.SplitHostPort(server.Addr().String())
 	return done, port
+}
+
+type wrapper struct {
+	Connection
+}
+
+func newWrapper(conn Connection) flow.Conn {
+	return &wrapper{Connection: conn}
+}
+
+func (c *wrapper) Send(pkt interface{}) error {
+	return c.Connection.Send(pkt.(Packet), false)
+}
+
+func (c *wrapper) Receive() (interface{}, error) {
+	pkt, err := c.Connection.Receive()
+	if err != nil {
+		return nil, err
+	}
+	return pkt.(Packet), nil
 }
 
 func connectPacket() *packet.Connect {

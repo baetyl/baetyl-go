@@ -21,7 +21,7 @@ type ClientConfig struct {
 	ClientID          string        `yaml:"clientid" json:"clientid"`
 	CleanSession      bool          `yaml:"cleansession" json:"cleansession"`
 	Timeout           time.Duration `yaml:"timeout" json:"timeout" default:"30s"`
-	Interval          time.Duration `yaml:"interval" json:"interval" default:"1m"`
+	Interval          time.Duration `yaml:"interval" json:"interval" default:"2m"`
 	KeepAlive         time.Duration `yaml:"keepalive" json:"keepalive"` // keepalive not enabled by default
 	BufferSize        int           `yaml:"buffersize" json:"buffersize" default:"10"`
 	ValidateSubs      bool          `yaml:"validatesubs" json:"validatesubs"`

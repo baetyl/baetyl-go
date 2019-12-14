@@ -2,10 +2,11 @@ package mqtt
 
 import (
 	"crypto/tls"
+	"errors"
 	"net"
 	"time"
 
-	"github.com/256dpi/gomqtt/client"
+	gomqtt "github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/client/future"
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
@@ -57,52 +58,90 @@ type Publish = packet.Publish
 
 // NewPublish creates a new Publish packet
 func NewPublish() *Publish {
-	return packet.NewPublish()
+	return &Publish{}
 }
 
 // Puback the puback packet
 type Puback = packet.Puback
 
+// NewPuback creates a new Puback packet
+func NewPuback() *Puback {
+	return &Puback{}
+}
+
 // Subscribe the subscribe packet
 type Subscribe = packet.Subscribe
+
+// NewSubscribe creates a new Subscribe packet
+func NewSubscribe() *Subscribe {
+	return &Subscribe{}
+}
 
 // Suback the suback packet
 type Suback = packet.Suback
 
+// NewSuback creates a new Suback packet
+func NewSuback() *Suback {
+	return &Suback{}
+}
+
 // Unsuback the unsuback packet
 type Unsuback = packet.Unsuback
+
+// NewUnsuback creates a new Unsuback packet
+func NewUnsuback() *Unsuback {
+	return &Unsuback{}
+}
 
 // Pingreq the pingreq packet
 type Pingreq = packet.Pingreq
 
 // NewPingreq creates a new Pingreq packet.
 func NewPingreq() *Pingreq {
-	return packet.NewPingreq()
+	return &Pingreq{}
 }
 
 // Pingresp the pingresp packet
 type Pingresp = packet.Pingresp
 
+// NewPingresp creates a new Pingresp packet
+func NewPingresp() *Pingresp {
+	return &Pingresp{}
+}
+
 // Unsubscribe the unsubscribe packet
 type Unsubscribe = packet.Unsubscribe
+
+// NewUnsubscribe creates a new Unsubscribe packet
+func NewUnsubscribe() *Unsubscribe {
+	return &Unsubscribe{}
+}
 
 // Connect the connect packet
 type Connect = packet.Connect
 
 // NewConnect creates a new Connect packet
 func NewConnect() *Connect {
-	return packet.NewConnect()
+	return &Connect{
+		CleanSession: true,
+		Version:      4,
+	}
 }
 
 // Connack the connack packet
 type Connack = packet.Connack
+
+// NewConnack creates a new Connack packet
+func NewConnack() *Connack {
+	return &Connack{}
+}
 
 // Disconnect the disconnect packet
 type Disconnect = packet.Disconnect
 
 // NewDisconnect creates a new Disconnect packet
 func NewDisconnect() *Disconnect {
-	return packet.NewDisconnect()
+	return &Disconnect{}
 }
 
 // Subscription the topic and qos of subscription
@@ -125,11 +164,11 @@ func NewTrie() *Trie {
 }
 
 // Tracker keeps track of keep alive intervals
-type Tracker = client.Tracker
+type Tracker = gomqtt.Tracker
 
 // NewTracker creates a new tracker
 func NewTracker(timeout time.Duration) *Tracker {
-	return client.NewTracker(timeout)
+	return gomqtt.NewTracker(timeout)
 }
 
 // Future future
@@ -149,8 +188,8 @@ type Connection = transport.Conn
 // IsBidirectionalAuthentication check bidirectional authentication
 func IsBidirectionalAuthentication(conn Connection) bool {
 	var inner net.Conn
-	if tcps, ok := conn.(*transport.NetConn); ok {
-		inner = tcps.UnderlyingConn()
+	if nc, ok := conn.(*transport.NetConn); ok {
+		inner = nc.UnderlyingConn()
 	} else if wss, ok := conn.(*transport.WebSocketConn); ok {
 		inner = wss.UnderlyingConn().UnderlyingConn()
 	}
@@ -167,11 +206,12 @@ func IsBidirectionalAuthentication(conn Connection) bool {
 
 // all gomqtt client errors
 var (
-	ErrClientAlreadyConnecting = client.ErrClientAlreadyConnecting
-	ErrClientNotConnected      = client.ErrClientNotConnected
-	ErrClientMissingID         = client.ErrClientMissingID
-	ErrClientConnectionDenied  = client.ErrClientConnectionDenied
-	ErrClientMissingPong       = client.ErrClientMissingPong
-	ErrClientExpectedConnack   = client.ErrClientExpectedConnack
-	ErrFailedSubscription      = client.ErrFailedSubscription
+	ErrClientAlreadyConnecting = gomqtt.ErrClientAlreadyConnecting
+	ErrClientNotConnected      = gomqtt.ErrClientNotConnected
+	ErrClientMissingID         = gomqtt.ErrClientMissingID
+	ErrClientConnectionDenied  = gomqtt.ErrClientConnectionDenied
+	ErrClientMissingPong       = gomqtt.ErrClientMissingPong
+	ErrClientExpectedConnack   = gomqtt.ErrClientExpectedConnack
+	ErrFailedSubscription      = gomqtt.ErrFailedSubscription
+	ErrClientAlreadyClosed     = errors.New("client is closed")
 )

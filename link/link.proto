@@ -10,7 +10,7 @@ option (gogoproto.testgen_all) = true;
 option (gogoproto.benchgen_all) = true;
 option (gogoproto.populate_all) = true;
 option (gogoproto.equal_all) = true;
-// option (gogoproto.gostring_all) = true;
+option (gogoproto.gostring_all) = true;
 // option (gogoproto.verbose_equal_all) = true;
 // option (gogoproto.goproto_stringer_all) = false;
 // option (gogoproto.stringer_all) =  true;
@@ -26,7 +26,7 @@ message Context {
     uint64 ID          = 1;
     uint64 TS          = 2;
     uint32 QOS         = 3;
-    uint32 Flags       = 4; // 0x1 retained, 0x2 sync , 0x4 response
+    uint32 Flags       = 4; // 0x1 retain, 0x2 ack
     string Topic       = 5; // $SYS/SERVICES/{{.BAETYL_SERVICE_NAME}}
     string Source      = 6;
     string Destination = 7;
