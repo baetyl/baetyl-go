@@ -1,171 +1,179 @@
 package link
 
 import (
-	"io"
+	"context"
+	"errors"
 	"time"
 
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
-	"golang.org/x/net/context"
+	"github.com/jpillora/backoff"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
-const (
-	QoS0 = 0
-	QoS1 = 1
-	QoS2 = 2
-
-	FlagSync = 0x2
-	FlagAck  = 0x4
-)
-
-type Handler func(*Message) error
+// ErrClientAlreadyClosed client is closed
+var ErrClientAlreadyClosed = errors.New("client is closed")
 
 // Client client of contact server
 type Client struct {
-	cfg  ClientConfig
-	conn *grpc.ClientConn
-	cli  LinkClient
-
-	stream  Link_TalkClient
-	handler Handler
-	log     *log.Logger
-	utils.Tomb
+	cfg   ClientConfig
+	cli   LinkClient
+	obs   Observer
+	conn  *grpc.ClientConn
+	cache chan *Message
+	log   *log.Logger
+	tomb  utils.Tomb
 }
 
 // NewClient creates a new client of functions server
-func NewClient(cc ClientConfig, handler Handler) (*Client, error) {
-	ctx, cel := context.WithTimeout(context.Background(), cc.Timeout)
-	defer cel()
-
+func NewClient(cc ClientConfig, obs Observer) (*Client, error) {
 	opts := []grpc.DialOption{
-		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(cc.MaxMessageSize))),
 	}
-	tlsCfg, err := utils.NewTLSConfigClient(cc.Certificate)
-	if err != nil {
-		return nil, err
-	}
-	if tlsCfg != nil {
-		if !cc.InsecureSkipVerify {
-			tlsCfg.ServerName = cc.Name
+	// enable tls
+	if cc.Certificate.Key != "" || cc.Certificate.Cert != "" {
+		tlsCfg, err := utils.NewTLSConfigClient(cc.Certificate)
+		if err != nil {
+			return nil, err
 		}
-		creds := credentials.NewTLS(tlsCfg)
-		opts = append(opts, grpc.WithTransportCredentials(creds))
+		if tlsCfg != nil {
+			if !cc.InsecureSkipVerify {
+				tlsCfg.ServerName = cc.Name
+			}
+			creds := credentials.NewTLS(tlsCfg)
+			opts = append(opts, grpc.WithTransportCredentials(creds))
+		}
+	} else {
+		opts = append(opts, grpc.WithInsecure())
 	}
-	// Custom Credential
-	opts = append(opts, grpc.WithPerRPCCredentials(&CustomCred{
-		Data: map[string]string{
+
+	//  enable username/password
+	if cc.Username != "" || cc.Password != "" {
+		opts = append(opts, grpc.WithPerRPCCredentials(MD{
 			KeyUsername: cc.Username,
 			KeyPassword: cc.Password,
-		},
-	}))
+		}))
+	}
 
-	conn, err := grpc.DialContext(ctx, cc.Address, opts...)
+	conn, err := grpc.Dial(cc.Address, opts...)
 	if err != nil {
 		return nil, err
 	}
 	cli := &Client{
-		cfg:     cc,
-		conn:    conn,
-		handler: handler,
-		cli:     NewLinkClient(conn),
-		log:     log.With(log.String("link", "client")),
+		cfg:   cc,
+		obs:   obs,
+		conn:  conn,
+		cli:   NewLinkClient(conn),
+		cache: make(chan *Message, cc.MaxCacheMessages),
+		log:   log.With(log.Any("link", "client")),
 	}
-	stream, err := cli.Talk(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	cli.stream = stream
-	cli.Go(cli.receiving)
+	cli.tomb.Go(cli.connecting)
 	return cli, nil
 }
 
-// Call sends request to link server
-func (c *Client) Call(ctx context.Context, req *Message) (*Message, error) {
-	return c.cli.Call(ctx, req, grpc.WaitForReady(true))
+// Call calls a request
+func (c *Client) Call(msg *Message) (*Message, error) {
+	return c.cli.Call(context.Background(), msg, grpc.WaitForReady(true))
 }
 
-// Talk talk to link server
-func (c *Client) Talk(ctx context.Context) (Link_TalkClient, error) {
-	return c.cli.Talk(ctx, grpc.WaitForReady(true))
+// CallContext calls a request with context
+func (c *Client) CallContext(ctx context.Context, msg *Message) (*Message, error) {
+	return c.cli.Call(ctx, msg, grpc.WaitForReady(true))
 }
 
-// Close closes the client
+// Send sends a generic packet
+func (c *Client) Send(msg *Message) error {
+	select {
+	case c.cache <- msg:
+	case <-c.tomb.Dying():
+		return ErrClientAlreadyClosed
+	}
+	return nil
+}
+
+// SendContext sends a message with context
+func (c *Client) SendContext(ctx context.Context, msg *Message) error {
+	select {
+	case c.cache <- msg:
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-c.tomb.Dying():
+		return ErrClientAlreadyClosed
+	}
+	return nil
+}
+
+// Close closes client
 func (c *Client) Close() error {
-	return c.conn.Close()
+	c.log.Info("client is closing")
+	defer c.log.Info("client has closed")
+
+	c.tomb.Kill(nil)
+	err := c.tomb.Wait()
+	c.conn.Close()
+	return err
 }
 
-func (c *Client) Send(src, dest string, qos uint32, content []byte) error {
-	msg := packetMsg(src, dest, qos, content)
-	return c.stream.Send(msg)
-}
+func (c *Client) connecting() error {
+	c.log.Info("client starts to connect")
+	defer c.log.Info("client has stopped connecting")
 
-// receiving implement Talk for receive async message
-func (c *Client) receiving() error {
+	var dying bool
+	var current *Message
+	bf := backoff.Backoff{
+		Min:    time.Second,
+		Max:    c.cfg.Interval,
+		Factor: 1.6,
+	}
+
 	for {
-		in, err := c.stream.Recv()
-		if err == io.EOF {
-			return err
-		}
+		ts := time.Now().UnixNano()
+		ctx, cel := context.WithTimeout(context.Background(), bf.Duration())
+		defer cel()
+		s, err := newStream(ctx, c)
 		if err != nil {
-			c.log.Error("talk stream recv error", log.Error(err))
-			return err
+			if !c.tomb.Alive() {
+				return nil
+			}
+			c.log.Info("next reconnect", log.Any("ts", ts), log.Any("attempt", bf.Attempt()), log.Error(err))
+			continue
 		}
-		c.log.Debug("talk receive msg",
-			log.String("src", in.Context.Source),
-			log.String("dest", in.Context.Destination))
 
-		// check : is ack message
-		if (in.Context.Flags & FlagAck) == FlagAck {
-			c.log.Debug("talk receive ack", log.Int("id", int(in.Context.ID)))
-		} else {
-			if c.handler != nil {
-				err = c.handler(in)
-				if err != nil {
-					c.log.Error("handler exec error", log.Error(err))
-				}
-			} else {
-				c.log.Warn("handler not implemented")
-			}
-			if !c.cfg.DisableAutoAck {
-				msg := packetAckMsg(in)
-				err = c.stream.Send(msg)
-				if err != nil {
-					return err
-				}
-			}
+		bf.Reset()
+		c.log.Debug("stream online", log.Any("ts", ts))
+		current, dying = c.dispatcher(s, current)
+		c.log.Debug("stream offline", log.Any("ts", ts))
+
+		// return goroutine if dying
+		if dying {
+			return nil
 		}
 	}
 }
 
-func packetMsg(src, dest string, qos uint32, content []byte) *Message {
-	return &Message{
-		Content: content,
-		Context: Context{
-			ID:          uint64(time.Now().UnixNano()),
-			TS:          uint64(time.Now().Unix()),
-			QOS:         qos,
-			Flags:       0,
-			Topic:       "$SYS/service/" + dest,
-			Source:      src,
-			Destination: dest,
-		},
-	}
-}
+// reads from the queues and calls the current client
+func (c *Client) dispatcher(s *stream, current *Message) (*Message, bool) {
+	defer s.Close()
 
-func packetAckMsg(in *Message) *Message {
-	return &Message{
-		Content: nil,
-		Context: Context{
-			ID:          in.Context.ID,
-			TS:          uint64(time.Now().Unix()),
-			QOS:         QoS1,
-			Flags:       FlagAck,
-			Topic:       "$SYS/service/" + in.Context.Source,
-			Source:      in.Context.Destination,
-			Destination: in.Context.Source,
-		},
+	if current != nil {
+		err := s.Send(current)
+		if err != nil {
+			return current, false
+		}
+	}
+
+	for {
+		select {
+		case msg := <-c.cache:
+			err := s.Send(msg)
+			if err != nil {
+				return msg, false
+			}
+		case <-s.Dying():
+			return nil, false
+		case <-c.tomb.Dying():
+			return nil, true
+		}
 	}
 }

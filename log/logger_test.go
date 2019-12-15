@@ -17,7 +17,7 @@ import (
 )
 
 func TestLogger(t *testing.T) {
-	log := With(String("height", "122"))
+	log := With(Any("height", "122"))
 	log.Info("test")
 
 	dir, err := ioutil.TempDir("", t.Name())
@@ -48,7 +48,7 @@ func TestLogger(t *testing.T) {
 
 	log, err = Init(cfg)
 	assert.NoError(t, err)
-	log.Info("baetyl", Int("age", 12), Error(errors.New("custom error")), String("icon", "baetyl"), Duration("duration", time.Duration(1)))
+	log.Info("baetyl", Any("age", 12), Error(errors.New("custom error")), Any("icon", "baetyl"), Any("duration", time.Duration(1)))
 	log.Sync()
 	assert.FileExists(t, jsonFile)
 
@@ -70,7 +70,7 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), `"level":"debug"`)
 
-	log = With(String("name", "baetyl"))
+	log = With(Any("name", "baetyl"))
 	log.Info("baetyl")
 
 	bytes, err = ioutil.ReadFile(jsonFile)
@@ -87,7 +87,7 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), `"level":"debug"`)
 
-	log, err = Init(cfg, String("height", "122"))
+	log, err = Init(cfg, Any("height", "122"))
 	assert.NoError(t, err)
 	assert.NotEmpty(t, log)
 	log.Info("baetyl")
@@ -118,7 +118,7 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), "debug")
 
-	log = With(String("name", "baetyl"))
+	log = With(Any("name", "baetyl"))
 	log.Info("baetyl")
 	bytes, err = ioutil.ReadFile(textFile)
 	assert.NoError(t, err)
@@ -133,7 +133,7 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), "debug")
 
-	log, err = Init(cfg, String("height", "122"))
+	log, err = Init(cfg, Any("height", "122"))
 	assert.NoError(t, err)
 	log.Info("baetyl")
 	log.Sync()
@@ -166,24 +166,6 @@ func TestParseLevel(t *testing.T) {
 
 	level = parseLevel("xxx")
 	assert.Equal(t, InfoLevel, level)
-}
-
-func TestField(t *testing.T) {
-	key := "age"
-	m := Int(key, 10)
-	assert.Equal(t, key, m.Key)
-	assert.Equal(t, int64(10), m.Integer)
-
-	m = Error(errors.New("test"))
-	assert.Equal(t, m.Key, "error")
-
-	m = String(key, "baetyl")
-	assert.Equal(t, key, m.Key)
-	assert.Equal(t, "baetyl", m.String)
-
-	m = Duration(key, time.Duration(12))
-	assert.Equal(t, key, m.Key)
-	assert.Equal(t, int64(12), m.Integer)
 }
 
 func TestNewFileHook(t *testing.T) {

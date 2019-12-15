@@ -2,139 +2,252 @@ package link
 
 import (
 	"context"
-	"fmt"
-	"net"
+	"errors"
+	fmt "fmt"
 	"testing"
 	"time"
 
+	"github.com/baetyl/baetyl-go/flow"
+	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
-
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	cc = ClientConfig{
-		Address: "0.0.0.0:8274",
-		Timeout: time.Duration(20) * time.Second,
-		Auth: Auth{
-			Account: Account{
-				Username: "svr",
-				Password: "svr",
-			},
-			Certificate: utils.Certificate{
-				Cert: "./testcert/client.pem",
-				Key:  "./testcert/client.key",
-				CA:   "./testcert/ca.pem",
-				Name: "bd",
-			},
-		},
-		MaxMessageSize: 464471,
-		DisableAutoAck: false,
-	}
+func TestClientConnectErrorMissingAddress(t *testing.T) {
+	cfg := log.Config{}
+	utils.SetDefaults(&cfg)
+	cfg.Level = "debug"
+	log.Init(cfg)
 
-	msgSend = &Message{
-		Context: Context{
-			QOS:         1,
-			Flags:       0,
-			Topic:       "$SYS/service/video",
-			Source:      "timer",
-			Destination: "video",
-		},
-		Content: []byte("timer send"),
-	}
+	obs := newMockObserver(t)
+	c, err := NewClient(ClientConfig{}, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+	defer c.Close()
 
-	msgResp = &Message{
-		Context: Context{
-			ID:          123,
-			TS:          3213123,
-			QOS:         1,
-			Flags:       0,
-			Topic:       "$SYS/service/timer",
-			Source:      "video",
-			Destination: "timer",
-		},
-		Content: []byte("video send"),
-	}
-
-	msgAck = &Message{
-		Context: Context{
-			QOS:         1,
-			Flags:       4,
-			Topic:       "$SYS/service/video",
-			Source:      "timer",
-			Destination: "video",
-		},
-		Content: nil,
-	}
-)
-
-type lkSerLT struct {
-	t *testing.T
+	ctx, cel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel()
+	req := &Message{}
+	res, err := c.CallContext(ctx, req)
+	assert.EqualError(t, err, "rpc error: code = DeadlineExceeded desc = latest connection error: connection error: desc = \"transport: Error while dialing dial tcp: missing address\"")
+	assert.Nil(t, res)
 }
 
-func (l *lkSerLT) Call(ctx context.Context, msg *Message) (*Message, error) {
-	checkMsg(l.t, msg, msgCall)
-	return msgCallResp, nil
+func TestClientConnectErrorWrongPort(t *testing.T) {
+	cc := ClientConfig{Address: "localhost:123456789"}
+	obs := newMockObserver(t)
+	c, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+	defer c.Close()
+
+	ctx, cel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel()
+	req := &Message{}
+	res, err := c.CallContext(ctx, req)
+	assert.EqualError(t, err, "rpc error: code = DeadlineExceeded desc = latest connection error: connection error: desc = \"transport: Error while dialing dial tcp: address 123456789: invalid port\"")
+	assert.Nil(t, res)
 }
 
-func (l *lkSerLT) Talk(stream Link_TalkServer) error {
-	for {
-		in, err := stream.Recv()
-		if err != nil {
-			return err
-		}
-		fmt.Printf("server receive = %v\n", in)
-		if in.Context.Flags != 4 {
-			msgSend.Context.ID = in.Context.ID
-			msgSend.Context.TS = in.Context.TS
-			checkMsg(l.t, in, msgSend)
-			if err = stream.Send(msgResp); err != nil {
-				return err
-			}
-		} else {
-			if err = stream.Send(packetAckMsg(in)); err != nil {
-				return err
-			}
-			return nil
-		}
-	}
+func TestClientConnectCallSend(t *testing.T) {
+	cfg := log.Config{}
+	utils.SetDefaults(&cfg)
+	cfg.Level = "debug"
+	log.Init(cfg)
+
+	msg := &Message{}
+	msg.Context.ID = 1
+	ack := &Message{}
+	ack.Context.ID = 1
+	ack.Context.Flags = 0x2
+
+	server := flow.New().Debug().
+		Receive(msg).
+		Send(msg).
+		Receive(ack).
+		Send(ack).
+		End()
+
+	done := fakeServer(t, server)
+
+	cc := newClientConfig()
+	cc.DisableAutoAck = false
+	obs := newMockObserver(t)
+	c, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+
+	res, err := c.Call(msg)
+	assert.NoError(t, err)
+	assert.Equal(t, msg, res)
+
+	err = c.Send(msg)
+	assert.NoError(t, err)
+	obs.assertMsgs(msg)
+	obs.assertMsgs(ack)
+	assert.NoError(t, c.Close())
+	safeReceive(done)
 }
 
-func TestLink(t *testing.T) {
-	sc := ServerConfig{
-		Auth: Auth{
-			Account: Account{
-				Username: "svr",
-				Password: "svr",
-			},
-			Certificate: utils.Certificate{
-				Cert: "./testcert/server.pem",
-				Key:  "./testcert/server.key",
-				CA:   "./testcert/ca.pem",
-			},
-		},
-		MaxMessageSize: 464471,
-	}
-	svr, err := NewServer(sc)
-	assert.NoError(t, err)
-	s := &lkSerLT{
-		t: t,
-	}
-	RegisterLinkServer(svr, s)
-	lis, err := net.Listen("tcp", "0.0.0.0:8274")
-	assert.NoError(t, err)
-	go svr.Serve(lis)
+func TestClientConnectDisableAutoAck(t *testing.T) {
+	cfg := log.Config{}
+	utils.SetDefaults(&cfg)
+	cfg.Level = "debug"
+	log.Init(cfg)
 
-	ch := make(chan struct{})
-	handler := func(m *Message) error {
-		checkMsg(t, m, msgResp)
-		close(ch)
-		return nil
-	}
-	l, err := NewClient(cc, handler)
+	msg := &Message{}
+	msg.Context.ID = 1
+	ack := &Message{}
+	ack.Context.ID = 1
+	ack.Context.Flags = 0x2
+
+	server := flow.New().Debug().
+		Receive(msg).
+		Send(msg).
+		Receive(ack).
+		Send(ack).
+		End()
+
+	done := fakeServer(t, server)
+
+	cc := newClientConfig()
+	obs := newMockObserver(t)
+	c, err := NewClient(cc, obs)
 	assert.NoError(t, err)
-	defer l.Close()
-	err = l.Send(msgSend.Context.Source, msgSend.Context.Destination, 1, msgSend.Content)
+	assert.NotNil(t, c)
+
+	res, err := c.Call(msg)
 	assert.NoError(t, err)
-	<-ch
+	assert.Equal(t, msg, res)
+
+	err = c.Send(msg)
+	assert.NoError(t, err)
+	obs.assertMsgs(msg)
+
+	err = c.Send(ack)
+	assert.NoError(t, err)
+
+	obs.assertMsgs(ack)
+	assert.NoError(t, c.Close())
+	safeReceive(done)
+}
+
+func TestClientConnectWithoutCredentials(t *testing.T) {
+	cfg := log.Config{}
+	utils.SetDefaults(&cfg)
+	cfg.Level = "debug"
+	log.Init(cfg)
+
+	msg := &Message{}
+	msg.Context.ID = 1
+
+	server := flow.New().Debug().
+		Receive(msg).
+		Send(msg).
+		End()
+
+	done := fakeServer(t, server)
+
+	cc := newClientConfig()
+	cc.Username = ""
+	cc.Password = ""
+
+	obs := newMockObserver(t)
+	c, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+
+	res, err := c.Call(msg)
+	assert.EqualError(t, err, "rpc error: code = Unauthenticated desc = Username is unauthenticated")
+	assert.Nil(t, res)
+
+	err = c.Send(msg)
+	assert.NoError(t, err)
+
+	obs.assertErrs(ErrUnauthenticated)
+	c.Close()
+
+	fmt.Println("--> wrong password <--")
+	time.Sleep(time.Second)
+
+	cc = newClientConfig()
+	cc.Username = "u1"
+	cc.Password = "p2"
+
+	c, err = NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+
+	err = c.Send(msg)
+	assert.NoError(t, err)
+
+	obs.assertErrs(ErrUnauthenticated)
+	c.Close()
+
+	fmt.Println("--> signal server to end <--")
+
+	cc = newClientConfig()
+	c, err = NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+
+	err = c.Send(msg)
+	assert.NoError(t, err)
+	obs.assertMsgs(msg)
+
+	assert.NoError(t, c.Close())
+	safeReceive(done)
+}
+
+func TestClientReconnect(t *testing.T) {
+	cfg := log.Config{}
+	utils.SetDefaults(&cfg)
+	cfg.Level = "debug"
+	log.Init(cfg)
+
+	msg := &Message{}
+	msg.Context.ID = 1
+	ack := &Message{}
+	ack.Context.ID = 1
+	ack.Context.Flags = 0x2
+
+	server := flow.New().Debug().
+		Receive(msg).
+		Send(msg).
+		Close()
+	done := fakeServer(t, server)
+
+	cc := newClientConfig()
+	obs := newMockObserver(t)
+	c, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+
+	res, err := c.Call(msg)
+	assert.NoError(t, err)
+	assert.Equal(t, msg, res)
+
+	err = c.Send(msg)
+	assert.NoError(t, err)
+	obs.assertMsgs(msg)
+
+	obs.assertErrs(errors.New("rpc error: code = Unavailable desc = transport is closing"))
+	safeReceive(done)
+
+	server = flow.New().Debug().
+		Receive(msg).
+		Send(msg).
+		Close()
+	done = fakeServer(t, server)
+
+	time.Sleep(time.Second)
+
+	err = c.Send(msg)
+	assert.NoError(t, err)
+	obs.assertMsgs(msg)
+
+	obs.assertErrs(errors.New("rpc error: code = Unavailable desc = transport is closing"))
+	safeReceive(done)
+
+	assert.NoError(t, c.Close())
 }

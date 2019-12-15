@@ -32,7 +32,7 @@ func NewTransport(endpoints []*Endpoint, cert utils.Certificate) (*Transport, er
 	tp := &Transport{
 		endpoints: endpoints,
 		servers:   make([]Server, 0),
-		log:       log.With(log.String("transport", "mqtt")),
+		log:       log.With(log.Any("transport", "mqtt")),
 	}
 	for _, endpoint := range endpoints {
 		if endpoint.Handle == nil {
@@ -52,7 +52,7 @@ func NewTransport(endpoints []*Endpoint, cert utils.Certificate) (*Transport, er
 
 func (tp *Transport) accepting(svr Server, handle Handle, anonymous bool) {
 	tp.Go(func() error {
-		l := log.With(log.String("server", svr.Addr().String()))
+		l := log.With(log.Any("server", svr.Addr().String()))
 		l.Info("server starts to accept")
 		defer l.Info("server has stopped accepting")
 
