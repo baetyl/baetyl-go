@@ -57,7 +57,8 @@ func (s *stream) Close() error {
 		return nil
 	}
 	s.Kill(nil)
-	return s.close(nil)
+	s.close(nil)
+	return s.Wait()
 }
 
 // closes stream by itself
@@ -69,7 +70,7 @@ func (s *stream) die(err error) {
 	go s.close(err)
 }
 
-func (s *stream) close(err error) error {
+func (s *stream) close(err error) {
 	s.Do(func() {
 		s.log.Info("stream is closing", log.Error(err))
 		defer s.log.Info("stream has closed", log.Error(err))
@@ -77,8 +78,8 @@ func (s *stream) close(err error) error {
 			s.onErr(err)
 		}
 		s.CloseSend()
+		s.Wait()
 	})
-	return s.Wait()
 }
 
 func (s *stream) receiving() error {

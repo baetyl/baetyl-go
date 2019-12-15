@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 )
@@ -30,6 +31,7 @@ type Authenticator interface {
 // NewServer creates a new grpc server
 func NewServer(cfg ServerConfig, auth Authenticator) (*grpc.Server, error) {
 	logger := log.With(log.Any("link", "server"))
+
 	opts := []grpc.ServerOption{
 		grpc.MaxConcurrentStreams(cfg.MaxConcurrent),
 		grpc.MaxRecvMsgSize(int(cfg.MaxMessageSize)),

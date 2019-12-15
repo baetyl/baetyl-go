@@ -110,8 +110,9 @@ func (c *Client) Close() error {
 	defer c.log.Info("client has closed")
 
 	c.tomb.Kill(nil)
+	err := c.tomb.Wait()
 	c.conn.Close()
-	return c.tomb.Wait()
+	return err
 }
 
 func (c *Client) connecting() error {
@@ -135,10 +136,9 @@ func (c *Client) connecting() error {
 			if !c.tomb.Alive() {
 				return nil
 			}
-			c.log.Debug("next reconnect", log.Any("ts", ts), log.Any("attempt", bf.Attempt()))
+			c.log.Info("next reconnect", log.Any("ts", ts), log.Any("attempt", bf.Attempt()), log.Error(err))
 			continue
 		}
-		s.log = s.log.With(log.Any("ts", ts))
 
 		bf.Reset()
 		c.log.Debug("stream online", log.Any("ts", ts))

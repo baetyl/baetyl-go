@@ -1,4 +1,4 @@
-GO_TEST_FLAGS?=
+GO_TEST_FLAGS?=-race
 GO_TEST_PKGS?=$(shell go list ./...)
 
 .PHONY: test

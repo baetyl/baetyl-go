@@ -3,9 +3,7 @@ package link
 import (
 	"context"
 	fmt "fmt"
-	"io"
 	"net"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -17,7 +15,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var testAddr = "127.0.0.1:50006"
+var testAddr = "0.0.0.0:50006"
 
 type mockObserver struct {
 	t    *testing.T
@@ -130,20 +128,23 @@ func (s *mockServer) Talk(stream Link_TalkServer) error {
 	fmt.Println("server starts to talk")
 	defer fmt.Println("server has stopped talking")
 
-	err := s.f.Test(newWrapper(stream))
+	err := s.f.Test(newWrapper(s, stream))
 	assert.NoError(s.t, err)
 
+	s.Close()
+	return nil
+}
+
+func (s *mockServer) Close() error {
 	s.Do(func() {
+		fmt.Println("server stops")
+		s.s.Stop()
 		close(s.q)
 	})
 	return nil
 }
 
-func (s *mockServer) Close() {
-	s.s.Stop()
-}
-
-func fakeServer(t *testing.T, f *flow.Flow) *mockServer {
+func fakeServer(t *testing.T, f *flow.Flow) chan struct{} {
 	ma := mockAuth{
 		"u1": "p1",
 		"u2": "p2",
@@ -156,16 +157,22 @@ func fakeServer(t *testing.T, f *flow.Flow) *mockServer {
 
 	lis, err := net.Listen("tcp", testAddr)
 	assert.NoError(t, err)
+	assert.NotNil(t, lis)
+	if lis == nil {
+		panic("listener cannot be nil")
+
+	}
 	go s.Serve(lis)
-	return ms
+	return ms.q
 }
 
 type wrapper struct {
+	server *mockServer
 	stream Link_TalkServer
 }
 
-func newWrapper(conn Link_TalkServer) flow.Conn {
-	return &wrapper{stream: conn}
+func newWrapper(s *mockServer, conn Link_TalkServer) flow.Conn {
+	return &wrapper{server: s, stream: conn}
 }
 
 func (c *wrapper) Send(msg interface{}) error {
@@ -174,12 +181,13 @@ func (c *wrapper) Send(msg interface{}) error {
 
 func (c *wrapper) Receive() (interface{}, error) {
 	msg, err := c.stream.Recv()
-	if err != nil && strings.Contains(err.Error(), "Canceled") {
-		return nil, io.EOF
+	fmt.Println("server stream received:", msg, err)
+	if err != nil {
+		return nil, err
 	}
 	return msg, nil
 }
 
 func (c *wrapper) Close() error {
-	return nil
+	return c.server.Close()
 }

@@ -2,6 +2,7 @@ package link
 
 import (
 	"context"
+	"errors"
 	fmt "fmt"
 	"testing"
 	"time"
@@ -67,8 +68,7 @@ func TestClientConnectCallSend(t *testing.T) {
 		Send(ack).
 		End()
 
-	ms := fakeServer(t, server)
-	defer ms.Close()
+	done := fakeServer(t, server)
 
 	cc := newClientConfig()
 	cc.DisableAutoAck = false
@@ -84,10 +84,9 @@ func TestClientConnectCallSend(t *testing.T) {
 	err = c.Send(msg)
 	assert.NoError(t, err)
 	obs.assertMsgs(msg)
-
 	obs.assertMsgs(ack)
 	assert.NoError(t, c.Close())
-	safeReceive(ms.q)
+	safeReceive(done)
 }
 
 func TestClientConnectDisableAutoAck(t *testing.T) {
@@ -109,8 +108,7 @@ func TestClientConnectDisableAutoAck(t *testing.T) {
 		Send(ack).
 		End()
 
-	ms := fakeServer(t, server)
-	defer ms.Close()
+	done := fakeServer(t, server)
 
 	cc := newClientConfig()
 	obs := newMockObserver(t)
@@ -131,7 +129,7 @@ func TestClientConnectDisableAutoAck(t *testing.T) {
 
 	obs.assertMsgs(ack)
 	assert.NoError(t, c.Close())
-	safeReceive(ms.q)
+	safeReceive(done)
 }
 
 func TestClientConnectWithoutCredentials(t *testing.T) {
@@ -148,8 +146,7 @@ func TestClientConnectWithoutCredentials(t *testing.T) {
 		Send(msg).
 		End()
 
-	ms := fakeServer(t, server)
-	defer ms.Close()
+	done := fakeServer(t, server)
 
 	cc := newClientConfig()
 	cc.Username = ""
@@ -170,26 +167,22 @@ func TestClientConnectWithoutCredentials(t *testing.T) {
 	obs.assertErrs(ErrUnauthenticated)
 	c.Close()
 
-	// fmt.Println("--> wrong password <--")
-	// time.Sleep(time.Second)
+	fmt.Println("--> wrong password <--")
+	time.Sleep(time.Second)
 
-	// cc = newClientConfig()
-	// cc.Username = "u1"
-	// cc.Password = "p2"
+	cc = newClientConfig()
+	cc.Username = "u1"
+	cc.Password = "p2"
 
-	// c, err = NewClient(cc, obs)
-	// assert.NoError(t, err)
-	// assert.NotNil(t, c)
+	c, err = NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
 
-	// res, err = c.Call(msg)
-	// assert.EqualError(t, err, "rpc error: code = Unauthenticated desc = Username is unauthenticated")
-	// assert.Nil(t, res)
+	err = c.Send(msg)
+	assert.NoError(t, err)
 
-	// err = c.Send(msg)
-	// assert.NoError(t, err)
-
-	// obs.assertErrs(ErrUnauthenticated)
-	// c.Close()
+	obs.assertErrs(ErrUnauthenticated)
+	c.Close()
 
 	fmt.Println("--> signal server to end <--")
 
@@ -203,7 +196,7 @@ func TestClientConnectWithoutCredentials(t *testing.T) {
 	obs.assertMsgs(msg)
 
 	assert.NoError(t, c.Close())
-	safeReceive(ms.q)
+	safeReceive(done)
 }
 
 func TestClientReconnect(t *testing.T) {
@@ -222,7 +215,7 @@ func TestClientReconnect(t *testing.T) {
 		Receive(msg).
 		Send(msg).
 		Close()
-	ms := fakeServer(t, server)
+	done := fakeServer(t, server)
 
 	cc := newClientConfig()
 	obs := newMockObserver(t)
@@ -238,24 +231,23 @@ func TestClientReconnect(t *testing.T) {
 	assert.NoError(t, err)
 	obs.assertMsgs(msg)
 
-	safeReceive(ms.q)
-	fmt.Println("--> close server <--")
-	ms.Close()
+	obs.assertErrs(errors.New("rpc error: code = Unavailable desc = transport is closing"))
+	safeReceive(done)
 
 	server = flow.New().Debug().
 		Receive(msg).
 		Send(msg).
-		End()
-	ms = fakeServer(t, server)
+		Close()
+	done = fakeServer(t, server)
 
-	res, err = c.Call(msg)
-	assert.NoError(t, err)
-	assert.Equal(t, msg, res)
+	time.Sleep(time.Second)
 
 	err = c.Send(msg)
 	assert.NoError(t, err)
 	obs.assertMsgs(msg)
 
+	obs.assertErrs(errors.New("rpc error: code = Unavailable desc = transport is closing"))
+	safeReceive(done)
+
 	assert.NoError(t, c.Close())
-	safeReceive(ms.q)
 }
