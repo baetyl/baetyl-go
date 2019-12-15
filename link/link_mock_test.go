@@ -130,14 +130,13 @@ func (s *mockServer) Talk(stream Link_TalkServer) error {
 
 	err := s.f.Test(newWrapper(s, stream))
 	assert.NoError(s.t, err)
-
-	s.Close()
 	return nil
 }
 
 func (s *mockServer) Close() error {
 	s.Do(func() {
 		fmt.Println("server stops")
+		defer fmt.Println("server has stopped")
 		s.s.Stop()
 		close(s.q)
 	})
