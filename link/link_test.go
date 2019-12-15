@@ -66,7 +66,8 @@ func TestClientConnectCallSend(t *testing.T) {
 		Send(msg).
 		Receive(ack).
 		Send(ack).
-		End()
+		End().
+		Close()
 
 	done := fakeServer(t, server)
 
@@ -106,7 +107,8 @@ func TestClientConnectDisableAutoAck(t *testing.T) {
 		Send(msg).
 		Receive(ack).
 		Send(ack).
-		End()
+		End().
+		Close()
 
 	done := fakeServer(t, server)
 
@@ -144,7 +146,8 @@ func TestClientConnectWithoutCredentials(t *testing.T) {
 	server := flow.New().Debug().
 		Receive(msg).
 		Send(msg).
-		End()
+		End().
+		Close()
 
 	done := fakeServer(t, server)
 
@@ -213,7 +216,6 @@ func TestClientReconnect(t *testing.T) {
 
 	server := flow.New().Debug().
 		Receive(msg).
-		Send(msg).
 		Close()
 	done := fakeServer(t, server)
 
@@ -229,25 +231,28 @@ func TestClientReconnect(t *testing.T) {
 
 	err = c.Send(msg)
 	assert.NoError(t, err)
-	obs.assertMsgs(msg)
+
+	fmt.Println("--> wait error <--")
 
 	obs.assertErrs(errors.New("rpc error: code = Unavailable desc = transport is closing"))
+
+	fmt.Println("--> wait server close <--")
+
 	safeReceive(done)
+
+	fmt.Println("--> start server again <--")
 
 	server = flow.New().Debug().
 		Receive(msg).
 		Send(msg).
+		End().
 		Close()
 	done = fakeServer(t, server)
-
-	time.Sleep(time.Second)
 
 	err = c.Send(msg)
 	assert.NoError(t, err)
 	obs.assertMsgs(msg)
 
-	obs.assertErrs(errors.New("rpc error: code = Unavailable desc = transport is closing"))
-	safeReceive(done)
-
 	assert.NoError(t, c.Close())
+	safeReceive(done)
 }
