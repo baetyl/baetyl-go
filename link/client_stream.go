@@ -2,6 +2,7 @@ package link
 
 import (
 	fmt "fmt"
+	io "io"
 	"sync"
 
 	"github.com/baetyl/baetyl-go/log"
@@ -74,7 +75,7 @@ func (s *stream) close(err error) {
 	s.Do(func() {
 		s.log.Info("stream is closing", log.Error(err))
 		defer s.log.Info("stream has closed", log.Error(err))
-		if err != nil {
+		if err != nil && err != io.EOF {
 			s.onErr(err)
 		}
 		s.CloseSend()
