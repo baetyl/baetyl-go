@@ -111,7 +111,7 @@ func (s *stream) onMsg(msg *Message) error {
 	if s.obs == nil {
 		return nil
 	}
-	if (msg.Context.Flags & FlagAck) == FlagAck {
+	if msg.Ack() {
 		return s.obs.OnAck(msg)
 	}
 	err := s.obs.OnMsg(msg)

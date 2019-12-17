@@ -27,7 +27,7 @@ message Context {
     uint64 TS          = 2;
     uint32 QOS         = 3;
     uint32 Flags       = 4; // 0x1 retain, 0x2 ack
-    string Topic       = 5; // $SYS/SERVICES/{{.BAETYL_SERVICE_NAME}}
+    string Topic       = 5; // $link/services/{{.BAETYL_SERVICE_NAME}}
     string Source      = 6;
     string Destination = 7;
 }
