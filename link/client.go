@@ -3,6 +3,9 @@ package link
 import (
 	"context"
 	"errors"
+	fmt "fmt"
+	io "io"
+	"sync"
 	"time"
 
 	"github.com/baetyl/baetyl-go/log"
@@ -122,7 +125,7 @@ func (c *Client) connecting() error {
 	var dying bool
 	var current *Message
 	bf := backoff.Backoff{
-		Min:    time.Second,
+		Min:    c.cfg.Timeout,
 		Max:    c.cfg.Interval,
 		Factor: 1.6,
 	}
@@ -131,7 +134,7 @@ func (c *Client) connecting() error {
 		ts := time.Now().UnixNano()
 		ctx, cel := context.WithTimeout(context.Background(), bf.Duration())
 		defer cel()
-		s, err := newStream(ctx, c)
+		cs, err := c.cli.Talk(ctx, grpc.WaitForReady(true))
 		if err != nil {
 			if !c.tomb.Alive() {
 				return nil
@@ -141,8 +144,9 @@ func (c *Client) connecting() error {
 		}
 
 		bf.Reset()
+
 		c.log.Debug("stream online", log.Any("ts", ts))
-		current, dying = c.dispatcher(s, current)
+		current, dying = c.dispatcher(cs, current)
 		c.log.Debug("stream offline", log.Any("ts", ts))
 
 		// return goroutine if dying
@@ -153,27 +157,92 @@ func (c *Client) connecting() error {
 }
 
 // reads from the queues and calls the current client
-func (c *Client) dispatcher(s *stream, current *Message) (*Message, bool) {
-	defer s.Close()
+func (c *Client) dispatcher(cs Link_TalkClient, current *Message) (*Message, bool) {
+	c.log.Info("stream starts to send messages")
+	defer c.log.Info("stream has stopped sending messages")
+
+	q := make(chan struct{})
+	var w sync.WaitGroup
+	defer w.Wait()
+	defer cs.CloseSend()
+
+	w.Add(1)
+	go func() {
+		defer w.Done()
+		c.log.Info("stream starts to receive messages")
+		defer c.log.Info("stream has stopped receiving messages")
+		defer close(q)
+
+		for {
+			msg := new(Message)
+			err := cs.RecvMsg(msg)
+			if err != nil {
+				c.onErr("failed to receive message", err)
+				return
+			}
+
+			if ent := c.log.Check(log.DebugLevel, "stream received a message"); ent != nil {
+				ent.Write(log.Any("msg", fmt.Sprintf("%v", msg)))
+			}
+
+			err = c.onMsg(msg)
+			if err != nil {
+				c.onErr("failed to handle message", err)
+				return
+			}
+		}
+	}()
 
 	if current != nil {
-		err := s.Send(current)
+		err := cs.Send(current)
 		if err != nil {
+			c.onErr("failed to send message", err)
 			return current, false
 		}
 	}
-
 	for {
 		select {
 		case msg := <-c.cache:
-			err := s.Send(msg)
+			err := cs.Send(msg)
 			if err != nil {
+				c.onErr("failed to send message", err)
 				return msg, false
 			}
-		case <-s.Dying():
-			return nil, false
 		case <-c.tomb.Dying():
 			return nil, true
+		case <-q:
+			return nil, false
 		}
 	}
+}
+
+func (c *Client) onMsg(msg *Message) error {
+	if c.obs == nil {
+		return nil
+	}
+	if msg.Ack() {
+		return c.obs.OnAck(msg)
+	}
+	err := c.obs.OnMsg(msg)
+	if err != nil {
+		return err
+	}
+	if !c.cfg.DisableAutoAck {
+		ack := &Message{}
+		ack.Context.ID = msg.Context.ID
+		ack.Context.Flags = FlagAck
+		err = c.Send(ack)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Client) onErr(msg string, err error) {
+	if c.obs == nil || err == io.EOF {
+		return
+	}
+	c.log.Error(msg, log.Error(err))
+	c.obs.OnErr(err)
 }
