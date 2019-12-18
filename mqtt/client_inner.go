@@ -43,7 +43,7 @@ func newClient(cc ClientConfig, obs Observer) (*client, error) {
 	}
 	err = c.connect()
 	if err != nil {
-		return nil, c.close(err)
+		return nil, c.Wait()
 	}
 	return c, nil
 }
@@ -73,8 +73,7 @@ func (c *client) connect() (err error) {
 	if len(c.config.Subscriptions) == 0 {
 		err = c.connectFuture.Wait(c.config.Timeout)
 		if err != nil {
-			err = fmt.Errorf("failed to wait connect ack: %s", err.Error())
-			c.die(err)
+			c.die("failed to wait connack", err)
 			return err
 		}
 		return nil
@@ -100,16 +99,14 @@ func (c *client) connect() (err error) {
 
 	err = c.connectFuture.Wait(c.config.Timeout)
 	if err != nil {
-		err = fmt.Errorf("failed to wait connect ack: %s", err.Error())
-		c.die(err)
+		c.die("failed to wait connack", err)
 		return err
 	}
 	c.log.Debug("client is connected")
 
 	err = c.subscribeFuture.Wait(c.config.Timeout)
 	if err != nil {
-		err = fmt.Errorf("failed to wait subscribe ack: %s", err.Error())
-		c.die(err)
+		c.die("failed to wait suback", err)
 		return err
 	}
 	c.log.Debug("topics are subscribed")
@@ -118,34 +115,30 @@ func (c *client) connect() (err error) {
 
 // Send sends a generic packet
 func (c *client) Send(p Packet) (err error) {
-	err = c.send(p, true)
-	if err != nil {
-		c.die(err)
-	}
-	return
+	return c.send(p, true)
 }
 
 // Close closes client
 func (c *client) Close() error {
 	c.log.Info("client is closing")
 	defer c.log.Info("client has closed")
-	c.close(nil)
+	c.close("", nil)
 	return nil
 }
 
 // closes client by itself
-func (c *client) die(err error) {
+func (c *client) die(msg string, err error) {
 	if !c.Alive() {
 		return
 	}
 	go func() {
 		c.log.Info("client is closing by itself", log.Error(err))
-		c.close(err)
+		c.close(msg, err)
 		c.log.Info("client has closed by itself")
 	}()
 }
 
-func (c *client) close(err error) error {
+func (c *client) close(msg string, err error) error {
 	c.Do(func() {
 		c.Kill(err)
 		c.connectFuture.Cancel()
@@ -153,7 +146,7 @@ func (c *client) close(err error) error {
 		if err == nil {
 			c.send(NewDisconnect(), false)
 		} else {
-			c.onError(err)
+			c.onError(msg, err)
 		}
 		if c.conn != nil {
 			c.conn.Close()
@@ -168,7 +161,7 @@ func (c *client) receiving() error {
 
 	pkt, err := c.conn.Receive()
 	if err != nil {
-		c.die(err)
+		c.die("failed to receive packet", err)
 		return err
 	}
 	if ent := c.log.Check(log.DebugLevel, "client received a packet"); ent != nil {
@@ -176,12 +169,12 @@ func (c *client) receiving() error {
 	}
 	p, ok := pkt.(*Connack)
 	if !ok {
-		c.die(ErrClientExpectedConnack)
+		c.die(ErrClientExpectedConnack.Error(), ErrClientExpectedConnack)
 		return ErrClientExpectedConnack
 	}
 	if p.ReturnCode != ConnectionAccepted {
 		err = fmt.Errorf(p.ReturnCode.String())
-		c.die(err)
+		c.die("failed to connect", err)
 		return err
 	}
 
@@ -191,7 +184,7 @@ func (c *client) receiving() error {
 		// get next packet from connection
 		pkt, err := c.conn.Receive()
 		if err != nil {
-			c.die(err)
+			c.die("failed to receive packet", err)
 			return err
 		}
 
@@ -209,7 +202,7 @@ func (c *client) receiving() error {
 				for _, code := range p.ReturnCodes {
 					if code == QOSFailure {
 						err = ErrFailedSubscription
-						c.die(err)
+						c.die("failed to subscribe", err)
 						return err
 					}
 				}
@@ -224,7 +217,7 @@ func (c *client) receiving() error {
 		}
 
 		if err != nil {
-			c.die(err)
+			c.die("failed to handle packet", err)
 			return err
 		}
 	}
@@ -242,14 +235,13 @@ func (c *client) pinging() (err error) {
 		if window < 0 {
 			// check if a pong has already been sent
 			if c.tracker.Pending() {
-				c.die(ErrClientMissingPong)
+				c.die(ErrClientMissingPong.Error(), ErrClientMissingPong)
 				return ErrClientMissingPong
 			}
 
 			// send pingreq packet
 			err = c.send(NewPingreq(), false)
 			if err != nil {
-				c.die(err)
 				return err
 			}
 
@@ -277,7 +269,7 @@ func (c *client) send(pkt Packet, async bool) error {
 	// send packet
 	err := c.conn.Send(pkt, async)
 	if err != nil {
-		c.die(err)
+		c.die("failed to send packet", err)
 		return err
 	}
 
@@ -302,9 +294,10 @@ func (c *client) onPuback(pkt *Puback) error {
 	return c.obs.OnPuback(pkt)
 }
 
-func (c *client) onError(err error) {
+func (c *client) onError(msg string, err error) {
 	if c.obs == nil {
 		return
 	}
+	c.log.Error(msg, log.Error(err))
 	c.obs.OnError(err)
 }

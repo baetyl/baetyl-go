@@ -51,41 +51,31 @@ func (c *Client) connecting() error {
 
 	var dying bool
 	var current Packet
+	config := c.cfg
 	bf := backoff.Backoff{
-		Min:    time.Second,
+		Min:    c.cfg.Timeout,
 		Max:    c.cfg.Interval,
 		Factor: 1.6,
 	}
 
 	for {
-		client, err := newClient(c.cfg, c.obs)
+		ts := time.Now().UnixNano()
+		config.Timeout = bf.Duration()
+		client, err := newClient(config, c.obs)
 		if err != nil {
 			if !c.tomb.Alive() {
 				return nil
 			}
 
-			c.onError(err)
-			c.log.Error("failed to connect", log.Error(err))
-
-			// get backoff duration
-			next := bf.Duration()
-
-			c.log.Debug("delay reconnect", log.Any("next", next))
-
-			// sleep but return on Stop
-			select {
-			case <-time.After(next):
-			case <-c.tomb.Dying():
-				return nil
-			}
-			c.log.Debug("next reconnect", log.Any("attempt", bf.Attempt()))
+			c.onError("failed to connect", err)
+			c.log.Info("next reconnect", log.Any("ts", ts), log.Any("attempt", bf.Attempt()), log.Error(err))
 			continue
 		}
 
 		bf.Reset()
-		c.log.Debug("client online")
+		c.log.Debug("client online", log.Any("ts", ts))
 		current, dying = c.dispatcher(client, current)
-		c.log.Debug("client offline")
+		c.log.Debug("client offline", log.Any("ts", ts))
 
 		// return goroutine if dying
 		if dying {
@@ -118,9 +108,10 @@ func (c *Client) dispatcher(cli *client, current Packet) (Packet, bool) {
 	}
 }
 
-func (c *Client) onError(err error) {
+func (c *Client) onError(msg string, err error) {
 	if c.obs == nil {
 		return
 	}
+	c.log.Error(msg, log.Error(err))
 	c.obs.OnError(err)
 }

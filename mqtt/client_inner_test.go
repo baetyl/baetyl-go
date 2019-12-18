@@ -359,7 +359,7 @@ func TestInnerClientConnackFutureTimeout(t *testing.T) {
 	cc.Timeout = time.Millisecond * 50
 	c, err := newClient(cc, newMockObserver(t))
 	assert.Nil(t, c)
-	assert.EqualError(t, err, "failed to wait connect ack: future timeout")
+	assert.EqualError(t, err, "future timeout")
 
 	safeReceive(done)
 }
@@ -382,7 +382,7 @@ func TestInnerClientSubscribeFutureTimeout(t *testing.T) {
 	cc.Subscriptions = []QOSTopic{QOSTopic{Topic: "test"}}
 	c, err := newClient(cc, newMockObserver(t))
 	assert.Nil(t, c)
-	assert.EqualError(t, err, "failed to wait subscribe ack: future timeout")
+	assert.EqualError(t, err, "future timeout")
 
 	safeReceive(done)
 }

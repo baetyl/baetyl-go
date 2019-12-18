@@ -139,12 +139,12 @@ func (c *Client) connecting() error {
 			if !c.tomb.Alive() {
 				return nil
 			}
+			c.onErr("failed to connect", err)
 			c.log.Info("next reconnect", log.Any("ts", ts), log.Any("attempt", bf.Attempt()), log.Error(err))
 			continue
 		}
 
 		bf.Reset()
-
 		c.log.Debug("stream online", log.Any("ts", ts))
 		current, dying = c.dispatcher(cs, current)
 		c.log.Debug("stream offline", log.Any("ts", ts))

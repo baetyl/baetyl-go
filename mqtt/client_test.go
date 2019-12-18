@@ -375,7 +375,7 @@ func TestClientConnackFutureTimeout(t *testing.T) {
 	c := NewClient(cc, obs)
 	assert.NotNil(t, c)
 
-	obs.assertErrs(errors.New("failed to wait connect ack: future timeout"))
+	obs.assertErrs(errors.New("future timeout"))
 	safeReceive(done)
 }
 
@@ -399,7 +399,7 @@ func TestClientSubscribeFutureTimeout(t *testing.T) {
 	c := NewClient(cc, obs)
 	assert.NotNil(t, c)
 
-	obs.assertErrs(errors.New("failed to wait subscribe ack: future timeout"))
+	obs.assertErrs(errors.New("future timeout"))
 	safeReceive(done)
 }
 
