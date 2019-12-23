@@ -206,12 +206,33 @@ func IsBidirectionalAuthentication(conn Connection) bool {
 
 // all gomqtt client errors
 var (
-	ErrClientAlreadyConnecting = gomqtt.ErrClientAlreadyConnecting
-	ErrClientNotConnected      = gomqtt.ErrClientNotConnected
-	ErrClientMissingID         = gomqtt.ErrClientMissingID
-	ErrClientConnectionDenied  = gomqtt.ErrClientConnectionDenied
-	ErrClientMissingPong       = gomqtt.ErrClientMissingPong
-	ErrClientExpectedConnack   = gomqtt.ErrClientExpectedConnack
-	ErrFailedSubscription      = gomqtt.ErrFailedSubscription
-	ErrClientAlreadyClosed     = errors.New("client is closed")
+	// client's erros
+	ErrClientAlreadyConnecting  = gomqtt.ErrClientAlreadyConnecting
+	ErrClientNotConnected       = gomqtt.ErrClientNotConnected
+	ErrClientMissingID          = gomqtt.ErrClientMissingID
+	ErrClientConnectionDenied   = gomqtt.ErrClientConnectionDenied
+	ErrClientMissingPong        = gomqtt.ErrClientMissingPong
+	ErrClientExpectedConnack    = gomqtt.ErrClientExpectedConnack
+	ErrClientSubscriptionFailed = gomqtt.ErrFailedSubscription
+	ErrClientAlreadyClosed      = errors.New("client is closed")
+
+	// future's errors
+	ErrFutureTimeout  = future.ErrTimeout
+	ErrFutureCanceled = future.ErrCanceled
 )
+
+// The Dialer handles connecting to a server and creating a connection
+type Dialer = transport.Dialer
+
+// NewDialer returns a new Dialer
+func NewDialer(tc *tls.Config, td time.Duration) *Dialer {
+	return transport.NewDialer(transport.DialConfig{TLSConfig: tc, Timeout: td})
+}
+
+// The Launcher helps with launching a server and accepting connections
+type Launcher = transport.Launcher
+
+// NewLauncher returns a new Launcher
+func NewLauncher(tc *tls.Config) *Launcher {
+	return transport.NewLauncher(transport.LaunchConfig{TLSConfig: tc})
+}

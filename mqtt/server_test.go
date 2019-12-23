@@ -28,14 +28,14 @@ func TestMqttTcp(t *testing.T) {
 			Handle:  handle,
 		},
 	}
-	var cert utils.Certificate
+	cert := utils.Certificate{}
 	m, err := NewTransport(endpoints, cert)
 	assert.NoError(t, err)
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 
 	// TODO: test timeout
-	dailer, err := NewDialer(cert, time.Duration(0))
+	dailer := NewDialer(nil, time.Duration(0))
 	pkt := NewConnect()
 	pkt.ClientID = m.servers[0].Addr().String()
 	conn, err := dailer.Dial(getURL(m.servers[0], "tcp"))
@@ -63,17 +63,15 @@ func TestMqttTcpTls(t *testing.T) {
 	handle := func(conn Connection, _ bool) {
 		c := atomic.AddInt32(&count, 1)
 		p, err := conn.Receive()
-		fmt.Println(c, err, p)
+		fmt.Println(p, err)
+		if c == 1 {
+			assert.EqualError(t, err, "remote error: tls: bad certificate")
+			assert.Nil(t, p)
+			return
+		}
 		assert.NoError(t, err)
 		assert.NotNil(t, p)
-
-		ok := IsBidirectionalAuthentication(conn)
-		if c == 3 {
-			assert.Truef(t, ok, "count: %d", c)
-		} else {
-			assert.Falsef(t, ok, "count: %d", c)
-		}
-
+		assert.True(t, IsBidirectionalAuthentication(conn))
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
@@ -98,45 +96,30 @@ func TestMqttTcpTls(t *testing.T) {
 	pkt.ClientID = m.servers[0].Addr().String()
 
 	// count: 1
-	dailer, err := NewDialer(utils.Certificate{InsecureSkipVerify: true}, time.Duration(0))
-	assert.NoError(t, err)
+	dailer := NewDialer(nil, time.Duration(0))
 	conn, err := dailer.Dial(url)
-	assert.NoError(t, err)
-	err = conn.Send(pkt, false)
-	assert.NoError(t, err)
-	res, err := conn.Receive()
-	assert.NoError(t, err)
-	assert.Equal(t, pkt.String(), res.String())
-	conn.Close()
+	assert.Nil(t, conn)
+	switch err.Error() {
+	case "x509: certificate signed by unknown authority":
+	case "x509: cannot validate certificate for 127.0.0.1 because it doesn't contain any IP SANs":
+	default:
+		assert.FailNow(t, "error expected")
+	}
 
 	// count: 2
-	dailer, err = NewDialer(utils.Certificate{
-		CA:                 "./testcert/ca.pem",
-		InsecureSkipVerify: true,
-	}, time.Duration(0))
-	assert.NoError(t, err)
-	conn, err = dailer.Dial(url)
-	assert.NoError(t, err)
-	err = conn.Send(pkt, false)
-	assert.NoError(t, err)
-	res, err = conn.Receive()
-	assert.NoError(t, err)
-	assert.Equal(t, pkt.String(), res.String())
-	conn.Close()
-
-	// count: 3
-	dailer, err = NewDialer(utils.Certificate{
+	ctc, err := utils.NewTLSConfigClient(utils.Certificate{
 		CA:                 "./testcert/ca.pem",
 		Key:                "./testcert/testssl2.key",
 		Cert:               "./testcert/testssl2.pem",
 		InsecureSkipVerify: true,
-	}, time.Duration(0))
+	})
 	assert.NoError(t, err)
+	dailer = NewDialer(ctc, time.Duration(0))
 	conn, err = dailer.Dial(url)
 	assert.NoError(t, err)
 	err = conn.Send(pkt, false)
 	assert.NoError(t, err)
-	res, err = conn.Receive()
+	res, err := conn.Receive()
 	assert.NoError(t, err)
 	assert.Equal(t, pkt.String(), res.String())
 	conn.Close()
@@ -165,8 +148,7 @@ func TestMqttWebSocket(t *testing.T) {
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 
-	dailer, err := NewDialer(utils.Certificate{InsecureSkipVerify: true}, time.Duration(0))
-	assert.NoError(t, err)
+	dailer := NewDialer(nil, time.Duration(0))
 	pkt := NewConnect()
 	pkt.ClientID = m.servers[0].Addr().String()
 	conn, err := dailer.Dial(getURL(m.servers[0], "ws"))
@@ -200,21 +182,12 @@ func TestMqttWebSocket(t *testing.T) {
 }
 
 func TestMqttWebSocketTls(t *testing.T) {
-	count := int32(0)
 	handle := func(conn Connection, _ bool) {
-		c := atomic.AddInt32(&count, 1)
-		fmt.Println(count, conn.LocalAddr())
 		p, err := conn.Receive()
+		fmt.Println(p, err)
 		assert.NoError(t, err)
 		assert.NotNil(t, p)
-
-		ok := IsBidirectionalAuthentication(conn)
-		if c == 3 {
-			assert.Truef(t, ok, "count: %d", c)
-		} else {
-			assert.Falsef(t, ok, "count: %d", c)
-		}
-
+		assert.True(t, IsBidirectionalAuthentication(conn))
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
@@ -238,9 +211,8 @@ func TestMqttWebSocketTls(t *testing.T) {
 	pkt := NewConnect()
 	pkt.ClientID = m.servers[0].Addr().String()
 
-	cert = utils.Certificate{}
-	dailer, err := NewDialer(cert, time.Duration(0))
-	assert.NoError(t, err)
+	// count: 1
+	dailer := NewDialer(nil, time.Duration(0))
 	conn, err := dailer.Dial(url)
 	assert.Nil(t, conn)
 	switch err.Error() {
@@ -250,44 +222,20 @@ func TestMqttWebSocketTls(t *testing.T) {
 		assert.FailNow(t, "error expected")
 	}
 
-	// count: 1
-	dailer, err = NewDialer(utils.Certificate{InsecureSkipVerify: true}, time.Duration(0))
+	// count: 2
+	ctc, err := utils.NewTLSConfigClient(utils.Certificate{
+		CA:                 "./testcert/ca.pem",
+		Key:                "./testcert/testssl2.key",
+		Cert:               "./testcert/testssl2.pem",
+		InsecureSkipVerify: true,
+	})
 	assert.NoError(t, err)
+	dailer = NewDialer(ctc, time.Duration(0))
 	conn, err = dailer.Dial(url)
 	assert.NoError(t, err)
 	err = conn.Send(pkt, false)
 	assert.NoError(t, err)
 	res, err := conn.Receive()
-	assert.NoError(t, err)
-	conn.Close()
-
-	// count: 2
-	dailer, err = NewDialer(utils.Certificate{
-		CA:                 "./testcert/ca.pem",
-		InsecureSkipVerify: true,
-	}, time.Duration(0))
-	assert.NoError(t, err)
-	conn, err = dailer.Dial(url)
-	assert.NoError(t, err)
-	err = conn.Send(pkt, false)
-	assert.NoError(t, err)
-	res, err = conn.Receive()
-	assert.NoError(t, err)
-	conn.Close()
-
-	// count: 3
-	dailer, err = NewDialer(utils.Certificate{
-		CA:                 "./testcert/ca.pem",
-		Key:                "./testcert/testssl2.key",
-		Cert:               "./testcert/testssl2.pem",
-		InsecureSkipVerify: true,
-	}, time.Duration(0))
-	assert.NoError(t, err)
-	conn, err = dailer.Dial(url)
-	assert.NoError(t, err)
-	err = conn.Send(pkt, false)
-	assert.NoError(t, err)
-	res, err = conn.Receive()
 	assert.NoError(t, err)
 	assert.Equal(t, pkt.String(), res.String())
 	conn.Close()

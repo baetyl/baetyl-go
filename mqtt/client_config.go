@@ -24,6 +24,4 @@ type ClientConfig struct {
 	Interval          time.Duration `yaml:"interval" json:"interval" default:"2m"`
 	KeepAlive         time.Duration `yaml:"keepalive" json:"keepalive"` // keepalive not enabled by default
 	BufferSize        int           `yaml:"buffersize" json:"buffersize" default:"10"`
-	ValidateSubs      bool          `yaml:"validatesubs" json:"validatesubs"`
-	Subscriptions     []QOSTopic    `yaml:"subscriptions" json:"subscriptions" default:"[]"`
 }

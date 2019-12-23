@@ -72,47 +72,6 @@ func TestClientConnectCallSend(t *testing.T) {
 	done := fakeServer(t, server)
 
 	cc := newClientConfig()
-	cc.DisableAutoAck = false
-	obs := newMockObserver(t)
-	c, err := NewClient(cc, obs)
-	assert.NoError(t, err)
-	assert.NotNil(t, c)
-
-	res, err := c.Call(msg)
-	assert.NoError(t, err)
-	assert.Equal(t, msg, res)
-
-	err = c.Send(msg)
-	assert.NoError(t, err)
-	obs.assertMsgs(msg)
-	obs.assertMsgs(ack)
-	assert.NoError(t, c.Close())
-	safeReceive(done)
-}
-
-func TestClientConnectDisableAutoAck(t *testing.T) {
-	cfg := log.Config{}
-	utils.SetDefaults(&cfg)
-	cfg.Level = "debug"
-	log.Init(cfg)
-
-	msg := &Message{}
-	msg.Context.ID = 1
-	ack := &Message{}
-	ack.Context.ID = 1
-	ack.Context.Flags = 0x2
-
-	server := flow.New().Debug().
-		Receive(msg).
-		Send(msg).
-		Receive(ack).
-		Send(ack).
-		End().
-		Close()
-
-	done := fakeServer(t, server)
-
-	cc := newClientConfig()
 	obs := newMockObserver(t)
 	c, err := NewClient(cc, obs)
 	assert.NoError(t, err)
@@ -220,6 +179,7 @@ func TestClientReconnect(t *testing.T) {
 	done := fakeServer(t, server)
 
 	cc := newClientConfig()
+	cc.Timeout = time.Millisecond * 100
 	obs := newMockObserver(t)
 	c, err := NewClient(cc, obs)
 	assert.NoError(t, err)

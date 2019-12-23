@@ -171,7 +171,7 @@ func (f *Flow) test(conn Conn, action action) error {
 		// send all saved packets
 		for _, pkt := range action.packets {
 			if f.debug {
-				fmt.Printf("sending packet: %v...\n", pkt)
+				fmt.Println(time.Now(), "sending packet:", pkt, "...")
 			}
 
 			// send a single packet
@@ -191,7 +191,7 @@ func (f *Flow) test(conn Conn, action action) error {
 		// keep going until we have all packets
 		for len(store) > 0 {
 			if f.debug {
-				fmt.Printf("receiving packet...\n")
+				fmt.Println(time.Now(), "receiving packet ...")
 			}
 
 			// wait for next packet
@@ -201,7 +201,7 @@ func (f *Flow) test(conn Conn, action action) error {
 			}
 
 			if f.debug {
-				fmt.Println("received packet:", pkt)
+				fmt.Println(time.Now(), "received packet:", pkt)
 			}
 
 			// check packet
