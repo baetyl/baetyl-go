@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -27,23 +28,26 @@ func newMockObserver(t *testing.T) *mockObserver {
 }
 
 func (o *mockObserver) OnPublish(pkt *packet.Publish) error {
+	fmt.Println("--> OnPublish:", pkt)
 	o.pkts <- pkt
 	return nil
 }
 
 func (o *mockObserver) OnPuback(pkt *packet.Puback) error {
+	fmt.Println("--> OnPuback:", pkt)
 	o.pkts <- pkt
 	return nil
 }
 
 func (o *mockObserver) OnError(err error) {
+	fmt.Println("--> OnError:", err)
 	o.errs <- err
 }
 
 func (o *mockObserver) assertPkts(pkts ...Packet) {
 	for _, pkt := range pkts {
 		select {
-		case <-time.After(1 * time.Minute):
+		case <-time.After(6 * time.Minute):
 			panic("nothing received")
 		case p := <-o.pkts:
 			assert.Equal(o.t, pkt, p)
@@ -54,7 +58,7 @@ func (o *mockObserver) assertPkts(pkts ...Packet) {
 func (o *mockObserver) assertErrs(errs ...error) {
 	for _, err := range errs {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-time.After(6 * time.Second):
 			panic("nothing received")
 		case e := <-o.errs:
 			assert.Equal(o.t, err.Error(), e.Error())

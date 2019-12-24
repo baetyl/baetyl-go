@@ -12,65 +12,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClientConnectErrorMissingAddress(t *testing.T) {
+func TestMqttClientConnectErrorMissingAddress(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
 	log.Init(cfg)
 
 	obs := newMockObserver(t)
-	c := NewClient(ClientConfig{}, obs)
-	assert.NotNil(t, c)
-	defer c.Close()
+	cli, err := NewClient(ClientConfig{}, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
+	defer cli.Close()
 
 	obs.assertErrs(errors.New("parse : empty url"))
 }
 
-func TestClientConnectErrorWrongPort(t *testing.T) {
+func TestMqttClientConnectErrorWrongPort(t *testing.T) {
 	cc := newConfig("1234567")
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
-	defer c.Close()
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
+	defer cli.Close()
 
 	obs.assertErrs(errors.New("dial tcp: address 1234567: invalid port"))
 }
 
-func TestClientConnect(t *testing.T) {
-	broker := flow.New().Debug().
-		Receive(connectPacket()).
-		Send(connackPacket()).
-		Receive(disconnectPacket()).
-		End()
-
-	done, port := fakeBroker(t, broker)
-
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
-	assert.NoError(t, c.Close())
-	safeReceive(done)
-}
-
-func TestClientConnectCustomDialer(t *testing.T) {
-	broker := flow.New().Debug().
-		Receive(connectPacket()).
-		Send(connackPacket()).
-		Receive(disconnectPacket()).
-		End()
-
-	done, port := fakeBroker(t, broker)
-
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
-	assert.NoError(t, c.Close())
-	safeReceive(done)
-}
-
-func TestClientConnectWithCredentials(t *testing.T) {
+func TestMqttClientConnectWithCredentials(t *testing.T) {
 	connect := connectPacket()
 	connect.Username = "test"
 	connect.Password = "test"
@@ -89,15 +57,16 @@ func TestClientConnectWithCredentials(t *testing.T) {
 	cc.Username = "test"
 	cc.Password = "test"
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
-	defer c.Close()
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
+	defer cli.Close()
 
 	obs.assertErrs(errors.New("connection refused: bad user name or password"))
 	safeReceive(done)
 }
 
-func TestClientConnectionDenied(t *testing.T) {
+func TestMqttClientConnectionDenied(t *testing.T) {
 	connack := connackPacket()
 	connack.ReturnCode = NotAuthorized
 
@@ -110,15 +79,16 @@ func TestClientConnectionDenied(t *testing.T) {
 
 	cc := newConfig(port)
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
-	defer c.Close()
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
+	defer cli.Close()
 
 	obs.assertErrs(errors.New("connection refused: not authorized"))
 	safeReceive(done)
 }
 
-func TestClientExpectedConnack(t *testing.T) {
+func TestMqttClientExpectedConnack(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
 		Send(NewPingresp()).
@@ -128,15 +98,16 @@ func TestClientExpectedConnack(t *testing.T) {
 
 	cc := newConfig(port)
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
-	defer c.Close()
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
+	defer cli.Close()
 
 	obs.assertErrs(ErrClientExpectedConnack)
 	safeReceive(done)
 }
 
-func TestClientNotExpectedConnack(t *testing.T) {
+func TestMqttClientNotExpectedConnack(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
@@ -152,21 +123,26 @@ func TestClientNotExpectedConnack(t *testing.T) {
 
 	cc := newConfig(port)
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
 	obs.assertErrs(ErrClientAlreadyConnecting)
+	assert.NoError(t, cli.Close())
 	safeReceive(done)
-	assert.NoError(t, c.Close())
 }
 
-func TestClientKeepAlive(t *testing.T) {
+func TestMqttClientKeepAlive(t *testing.T) {
+	cfg := log.Config{}
+	utils.SetDefaults(&cfg)
+	cfg.Level = "debug"
+	log.Init(cfg)
+
 	connect := connectPacket()
-	connect.KeepAlive = 0
+	connect.KeepAlive = 1
 
 	pingreq := NewPingreq()
 	pingresp := NewPingresp()
-
 	broker := flow.New().Debug().
 		Receive(connect).
 		Send(connackPacket()).
@@ -182,46 +158,43 @@ func TestClientKeepAlive(t *testing.T) {
 	cc := newConfig(port)
 	cc.KeepAlive = time.Millisecond * 100
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
-	<-time.After(250 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 
-	assert.NoError(t, c.Close())
+	assert.NoError(t, cli.Close())
 	safeReceive(done)
 }
 
-func TestClientKeepAliveTimeout(t *testing.T) {
+func TestMqttClientKeepAliveTimeout(t *testing.T) {
 	connect := connectPacket()
-	connect.KeepAlive = 0
-
-	pingreq := NewPingreq()
+	connect.KeepAlive = 1
 
 	broker := flow.New().Debug().
 		Receive(connect).
 		Send(connackPacket()).
-		Receive(pingreq).
+		Receive(NewPingreq()).
 		End()
 
 	done, port := fakeBroker(t, broker)
 
 	cc := newConfig(port)
-	cc.KeepAlive = time.Millisecond * 5
+	cc.KeepAlive = time.Millisecond * 100
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
 	safeReceive(done)
 	obs.assertErrs(ErrClientMissingPong)
-	assert.NoError(t, c.Close())
+	assert.NoError(t, cli.Close())
 }
 
-func TestClientKeepAliveNone(t *testing.T) {
-	connect := connectPacket()
-	connect.KeepAlive = 0
-
+func TestMqttClientKeepAliveNone(t *testing.T) {
 	broker := flow.New().Debug().
-		Receive(connect).
+		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(disconnectPacket()).
 		End()
@@ -229,18 +202,18 @@ func TestClientKeepAliveNone(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	cc := newConfig(port)
-	cc.KeepAlive = -1
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
-	<-time.After(250 * time.Millisecond)
+	<-time.After(time.Second)
 
-	assert.NoError(t, c.Close())
+	assert.NoError(t, cli.Close())
 	safeReceive(done)
 }
 
-func TestClientPublishSubscribeQOS0(t *testing.T) {
+func TestMqttClientPublishSubscribeQOS0(t *testing.T) {
 	subscribe := NewSubscribe()
 	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
 	subscribe.ID = 1
@@ -266,20 +239,23 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	cc := newConfig(port)
-	cc.Subscriptions = []QOSTopic{{Topic: "test"}}
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
-	err := c.Send(publish)
+	err = cli.Subscribe([]Subscription{Subscription{Topic: "test"}})
+	assert.NoError(t, err)
+
+	err = cli.Publish(publish.Message.QOS, publish.Message.Topic, publish.Message.Payload, publish.ID, publish.Message.Retain, publish.Dup)
 	assert.NoError(t, err)
 	obs.assertPkts(publish)
 
-	assert.NoError(t, c.Close())
+	assert.NoError(t, cli.Close())
 	safeReceive(done)
 }
 
-func TestClientPublishSubscribeQOS1(t *testing.T) {
+func TestMqttClientPublishSubscribeQOS1(t *testing.T) {
 	subscribe := NewSubscribe()
 	subscribe.Subscriptions = []Subscription{{Topic: "test", QOS: 1}}
 	subscribe.ID = 1
@@ -312,23 +288,26 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	cc := newConfig(port)
-	cc.Subscriptions = []QOSTopic{{Topic: "test", QOS: 1}}
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
-	err := c.Send(publish)
+	err = cli.Subscribe([]Subscription{Subscription{Topic: "test", QOS: 1}})
+	assert.NoError(t, err)
+
+	err = cli.Publish(publish.Message.QOS, publish.Message.Topic, publish.Message.Payload, publish.ID, publish.Message.Retain, publish.Dup)
 	assert.NoError(t, err)
 
 	obs.assertPkts(puback, publish)
 
-	err = c.Send(puback)
+	err = cli.Send(puback)
 	assert.NoError(t, err)
-	assert.NoError(t, c.Close())
+	assert.NoError(t, cli.Close())
 	safeReceive(done)
 }
 
-func TestClientUnexpectedClose(t *testing.T) {
+func TestMqttClientUnexpectedClose(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
@@ -338,15 +317,16 @@ func TestClientUnexpectedClose(t *testing.T) {
 
 	cc := newConfig(port)
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
 	safeReceive(done)
 	obs.assertErrs(io.EOF)
-	assert.NoError(t, c.Close())
+	assert.NoError(t, cli.Close())
 }
 
-func TestClientConnackFutureCancellation(t *testing.T) {
+func TestMqttClientConnackTimeout1(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
 		Close()
@@ -355,113 +335,68 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 
 	cc := newConfig(port)
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
 	obs.assertErrs(io.EOF)
 	safeReceive(done)
+	cli.Close()
 }
 
-func TestClientConnackFutureTimeout(t *testing.T) {
+func TestMqttClientConnackTimeout2(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
-		End()
-
-	done, port := fakeBroker(t, broker)
-
-	cc := newConfig(port)
-	cc.Timeout = time.Millisecond * 50
-	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
-
-	obs.assertErrs(errors.New("failed to wait connect ack: future timeout"))
-	safeReceive(done)
-}
-
-func TestClientSubscribeFutureTimeout(t *testing.T) {
-	subscribe := NewSubscribe()
-	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
-	subscribe.ID = 1
-
-	broker := flow.New().Debug().
-		Receive(connectPacket()).
-		Send(connackPacket()).
-		Receive(subscribe).
-		End()
-
-	done, port := fakeBroker(t, broker)
-
-	cc := newConfig(port)
-	cc.Timeout = time.Millisecond * 50
-	cc.Subscriptions = []QOSTopic{QOSTopic{Topic: "test"}}
-	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
-
-	obs.assertErrs(errors.New("failed to wait subscribe ack: future timeout"))
-	safeReceive(done)
-}
-
-func TestClientSubscribeValidate(t *testing.T) {
-	subscribe := NewSubscribe()
-	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
-	subscribe.ID = 1
-
-	suback := NewSuback()
-	suback.ReturnCodes = []QOS{QOSFailure}
-	suback.ID = 1
-
-	broker := flow.New().Debug().
-		Receive(connectPacket()).
-		Send(connackPacket()).
-		Receive(subscribe).
-		Send(suback).
-		End()
-
-	done, port := fakeBroker(t, broker)
-
-	cc := newConfig(port)
-	cc.ValidateSubs = true
-	cc.Subscriptions = []QOSTopic{QOSTopic{Topic: "test"}}
-	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
-
-	obs.assertErrs(errors.New("failed subscription"))
-	safeReceive(done)
-}
-
-func TestClientSubscribeWithoutValidate(t *testing.T) {
-	subscribe := NewSubscribe()
-	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
-	subscribe.ID = 1
-
-	suback := NewSuback()
-	suback.ReturnCodes = []QOS{QOSFailure}
-	suback.ID = 1
-
-	broker := flow.New().Debug().
-		Receive(connectPacket()).
-		Send(connackPacket()).
-		Receive(subscribe).
-		Send(suback).
 		Receive(disconnectPacket()).
 		End()
 
 	done, port := fakeBroker(t, broker)
 
 	cc := newConfig(port)
-	cc.Subscriptions = []QOSTopic{QOSTopic{Topic: "test"}}
+	cc.Timeout = time.Millisecond * 100
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
-	assert.NoError(t, c.Close())
+	obs.assertErrs(errors.New("future timeout"))
+	cli.Close()
 	safeReceive(done)
 }
 
-func TestClientReconnect(t *testing.T) {
+func TestMqttClientSubscribe(t *testing.T) {
+	subscribe := NewSubscribe()
+	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
+	subscribe.ID = 1
+
+	suback := NewSuback()
+	suback.ReturnCodes = []QOS{QOSFailure}
+	suback.ID = 1
+
+	broker := flow.New().Debug().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	cc := newConfig(port)
+	obs := newMockObserver(t)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
+
+	err = cli.Subscribe([]Subscription{Subscription{Topic: "test"}})
+	assert.NoError(t, err)
+	obs.assertErrs(errors.New("failed subscription"))
+
+	assert.NoError(t, cli.Close())
+	safeReceive(done)
+}
+
+func TestMqttClientReconnect(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
@@ -483,22 +418,83 @@ func TestClientReconnect(t *testing.T) {
 		Send(connackPacket()).
 		Receive(publish).
 		Send(publish).
+		Close()
+
+	broker3 := flow.New().Debug().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(publish).
+		Send(publish).
 		Receive(disconnectPacket()).
 		End()
 
-	done, port := fakeBroker(t, broker1, broker2)
+	done, port := fakeBroker(t, broker1, broker2, broker3)
 
 	cc := newConfig(port)
+	cc.Timeout = time.Second
 	obs := newMockObserver(t)
-	c := NewClient(cc, obs)
-	assert.NotNil(t, c)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
 
-	c.Send(publish)
+	cli.Send(publish)
 	obs.assertPkts(publish)
 	obs.assertErrs(io.EOF)
-	c.Send(publish)
+
+	cli.Send(publish)
+	obs.assertPkts(publish)
+	obs.assertErrs(io.EOF)
+
+	cli.Send(publish)
 	obs.assertPkts(publish)
 
-	assert.NoError(t, c.Close())
+	assert.NoError(t, cli.Close())
+	safeReceive(done)
+}
+
+func TestMqttClientReconnect2(t *testing.T) {
+	cfg := log.Config{}
+	utils.SetDefaults(&cfg)
+	cfg.Level = "debug"
+	log.Init(cfg)
+
+	publish := NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+
+	broker1 := flow.New().Debug().
+		Receive(connectPacket()).
+		Close()
+
+	broker2 := flow.New().Debug().
+		Receive(connectPacket()).
+		Close()
+
+	broker3 := flow.New().Debug().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(publish).
+		Send(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker1, broker2, broker3)
+
+	cc := newConfig(port)
+	cc.Timeout = time.Second
+	obs := newMockObserver(t)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
+
+	obs.assertErrs(io.EOF)
+	obs.assertErrs(ErrFutureCanceled)
+	obs.assertErrs(io.EOF)
+	obs.assertErrs(ErrFutureCanceled)
+
+	cli.Send(publish)
+	obs.assertPkts(publish)
+
+	assert.NoError(t, cli.Close())
 	safeReceive(done)
 }

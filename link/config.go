@@ -21,7 +21,6 @@ type ClientConfig struct {
 	Interval          time.Duration `yaml:"interval" json:"interval" default:"2m"`
 	MaxMessageSize    utils.Size    `yaml:"maxMessageSize" json:"maxMessageSize" default:"4m"`
 	MaxCacheMessages  int           `yaml:"maxCacheMessages" json:"maxCacheMessages" default:"10"`
-	DisableAutoAck    bool          `yaml:"disableAutoAck" json:"disableAutoAck"`
 	Username          string        `yaml:"username" json:"username"`
 	Password          string        `yaml:"password" json:"password"`
 	utils.Certificate `yaml:",inline" json:",inline"`

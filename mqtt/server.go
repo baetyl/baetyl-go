@@ -1,6 +1,8 @@
 package mqtt
 
 import (
+	"crypto/tls"
+
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
 )
@@ -25,14 +27,19 @@ type Transport struct {
 
 // NewTransport creates a new transport
 func NewTransport(endpoints []*Endpoint, cert utils.Certificate) (*Transport, error) {
-	launcher, err := NewLauncher(cert)
-	if err != nil {
-		return nil, err
+	var err error
+	var tc *tls.Config
+	if cert.Key != "" || cert.Cert != "" {
+		tc, err = utils.NewTLSConfigServer(cert)
+		if err != nil {
+			return nil, err
+		}
 	}
+	launcher := NewLauncher(tc)
 	tp := &Transport{
 		endpoints: endpoints,
 		servers:   make([]Server, 0),
-		log:       log.With(log.Any("transport", "mqtt")),
+		log:       log.With(log.Any("mqtt", "transport")),
 	}
 	for _, endpoint := range endpoints {
 		if endpoint.Handle == nil {

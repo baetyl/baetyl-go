@@ -32,17 +32,19 @@ func newMockObserver(t *testing.T) *mockObserver {
 }
 
 func (o *mockObserver) OnMsg(msg *Message) error {
+	fmt.Printf("--> OnMsg: %v <--\n", msg)
 	o.msgs <- msg
 	return nil
 }
 
 func (o *mockObserver) OnAck(msg *Message) error {
+	fmt.Printf("--> OnAck: %v <--\n", msg)
 	o.msgs <- msg
 	return nil
 }
 
 func (o *mockObserver) OnErr(err error) {
-	fmt.Printf("--> OnErr: %s <--\n", err.Error())
+	fmt.Printf("--> OnErr: %v <--\n", err)
 	o.errs <- err
 }
 
@@ -86,7 +88,6 @@ func newClientConfig() (c ClientConfig) {
 	c.Address = testAddr
 	c.Username = "u1"
 	c.Password = "p1"
-	c.DisableAutoAck = true
 	defaults.Set(&c)
 	return
 }
@@ -129,6 +130,7 @@ func (s *mockServer) Talk(stream Link_TalkServer) error {
 	defer fmt.Println("server has stopped talking")
 
 	err := s.f.Test(newWrapper(s, stream))
+	fmt.Println("server test error:", err)
 	assert.NoError(s.t, err)
 	return nil
 }
