@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClientConnectErrorMissingAddress(t *testing.T) {
+func TestMqttClientConnectErrorMissingAddress(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
@@ -27,7 +27,7 @@ func TestClientConnectErrorMissingAddress(t *testing.T) {
 	obs.assertErrs(errors.New("parse : empty url"))
 }
 
-func TestClientConnectErrorWrongPort(t *testing.T) {
+func TestMqttClientConnectErrorWrongPort(t *testing.T) {
 	cc := newConfig("1234567")
 	obs := newMockObserver(t)
 	cli, err := NewClient(cc, obs)
@@ -38,7 +38,7 @@ func TestClientConnectErrorWrongPort(t *testing.T) {
 	obs.assertErrs(errors.New("dial tcp: address 1234567: invalid port"))
 }
 
-func TestClientConnectWithCredentials(t *testing.T) {
+func TestMqttClientConnectWithCredentials(t *testing.T) {
 	connect := connectPacket()
 	connect.Username = "test"
 	connect.Password = "test"
@@ -66,7 +66,7 @@ func TestClientConnectWithCredentials(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientConnectionDenied(t *testing.T) {
+func TestMqttClientConnectionDenied(t *testing.T) {
 	connack := connackPacket()
 	connack.ReturnCode = NotAuthorized
 
@@ -88,7 +88,7 @@ func TestClientConnectionDenied(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientExpectedConnack(t *testing.T) {
+func TestMqttClientExpectedConnack(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
 		Send(NewPingresp()).
@@ -107,7 +107,7 @@ func TestClientExpectedConnack(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientNotExpectedConnack(t *testing.T) {
+func TestMqttClientNotExpectedConnack(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
@@ -132,7 +132,7 @@ func TestClientNotExpectedConnack(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientKeepAlive(t *testing.T) {
+func TestMqttClientKeepAlive(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
@@ -168,7 +168,7 @@ func TestClientKeepAlive(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientKeepAliveTimeout(t *testing.T) {
+func TestMqttClientKeepAliveTimeout(t *testing.T) {
 	connect := connectPacket()
 	connect.KeepAlive = 1
 
@@ -192,7 +192,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 	assert.NoError(t, cli.Close())
 }
 
-func TestClientKeepAliveNone(t *testing.T) {
+func TestMqttClientKeepAliveNone(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
@@ -213,7 +213,7 @@ func TestClientKeepAliveNone(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientPublishSubscribeQOS0(t *testing.T) {
+func TestMqttClientPublishSubscribeQOS0(t *testing.T) {
 	subscribe := NewSubscribe()
 	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
 	subscribe.ID = 1
@@ -255,7 +255,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientPublishSubscribeQOS1(t *testing.T) {
+func TestMqttClientPublishSubscribeQOS1(t *testing.T) {
 	subscribe := NewSubscribe()
 	subscribe.Subscriptions = []Subscription{{Topic: "test", QOS: 1}}
 	subscribe.ID = 1
@@ -307,7 +307,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientUnexpectedClose(t *testing.T) {
+func TestMqttClientUnexpectedClose(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
@@ -326,7 +326,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 	assert.NoError(t, cli.Close())
 }
 
-func TestClientConnackTimeout1(t *testing.T) {
+func TestMqttClientConnackTimeout1(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
 		Close()
@@ -344,7 +344,7 @@ func TestClientConnackTimeout1(t *testing.T) {
 	cli.Close()
 }
 
-func TestClientConnackTimeout2(t *testing.T) {
+func TestMqttClientConnackTimeout2(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
 		Receive(disconnectPacket()).
@@ -364,7 +364,7 @@ func TestClientConnackTimeout2(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientSubscribe(t *testing.T) {
+func TestMqttClientSubscribe(t *testing.T) {
 	subscribe := NewSubscribe()
 	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
 	subscribe.ID = 1
@@ -396,7 +396,7 @@ func TestClientSubscribe(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientReconnect(t *testing.T) {
+func TestMqttClientReconnect(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
@@ -452,7 +452,7 @@ func TestClientReconnect(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientReconnect2(t *testing.T) {
+func TestMqttClientReconnect2(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"

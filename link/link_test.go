@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClientConnectErrorMissingAddress(t *testing.T) {
+func TestLinkClientConnectErrorMissingAddress(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
@@ -33,7 +33,7 @@ func TestClientConnectErrorMissingAddress(t *testing.T) {
 	assert.Nil(t, res)
 }
 
-func TestClientConnectErrorWrongPort(t *testing.T) {
+func TestLinkClientConnectErrorWrongPort(t *testing.T) {
 	cc := ClientConfig{Address: "localhost:123456789"}
 	obs := newMockObserver(t)
 	c, err := NewClient(cc, obs)
@@ -49,7 +49,7 @@ func TestClientConnectErrorWrongPort(t *testing.T) {
 	assert.Nil(t, res)
 }
 
-func TestClientConnectCallSend(t *testing.T) {
+func TestLinkClientConnectCallSend(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
@@ -93,7 +93,7 @@ func TestClientConnectCallSend(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientConnectWithoutCredentials(t *testing.T) {
+func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
@@ -161,7 +161,7 @@ func TestClientConnectWithoutCredentials(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestClientReconnect(t *testing.T) {
+func TestLinkClientReconnect(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
