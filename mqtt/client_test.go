@@ -282,6 +282,7 @@ func TestMqttClientPublishSubscribeQOS1(t *testing.T) {
 		Send(puback).
 		Send(publish).
 		Receive(puback).
+		Send(publish).
 		Receive(disconnectPacket()).
 		End()
 
@@ -303,6 +304,9 @@ func TestMqttClientPublishSubscribeQOS1(t *testing.T) {
 
 	err = cli.Send(puback)
 	assert.NoError(t, err)
+
+	obs.assertPkts(publish)
+
 	assert.NoError(t, cli.Close())
 	safeReceive(done)
 }
