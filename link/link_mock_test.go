@@ -33,19 +33,28 @@ func newMockObserver(t *testing.T) *mockObserver {
 
 func (o *mockObserver) OnMsg(msg *Message) error {
 	fmt.Printf("--> OnMsg: %v <--\n", msg)
-	o.msgs <- msg
+	select {
+	case o.msgs <- msg:
+	default:
+	}
 	return nil
 }
 
 func (o *mockObserver) OnAck(msg *Message) error {
 	fmt.Printf("--> OnAck: %v <--\n", msg)
-	o.msgs <- msg
+	select {
+	case o.msgs <- msg:
+	default:
+	}
 	return nil
 }
 
 func (o *mockObserver) OnErr(err error) {
 	fmt.Printf("--> OnErr: %v <--\n", err)
-	o.errs <- err
+	select {
+	case o.errs <- err:
+	default:
+	}
 }
 
 func (o *mockObserver) assertMsgs(msgs ...*Message) {

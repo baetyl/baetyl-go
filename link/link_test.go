@@ -107,7 +107,6 @@ func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 		Send(msg).
 		End().
 		Close()
-
 	done := fakeServer(t, server)
 
 	fmt.Println("--> no password <--")
@@ -116,20 +115,16 @@ func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 	cc.Username = ""
 	cc.Password = ""
 
-	obs := newMockObserver(t)
-	c, err := NewClient(cc, obs)
+	o1 := newMockObserver(t)
+	c1, err := NewClient(cc, o1)
 	assert.NoError(t, err)
-	assert.NotNil(t, c)
+	assert.NotNil(t, c1)
 
-	res, err := c.Call(msg)
+	res, err := c1.Call(msg)
 	assert.EqualError(t, err, "rpc error: code = Unauthenticated desc = Username is unauthenticated")
 	assert.Nil(t, res)
-
-	err = c.Send(msg)
-	assert.NoError(t, err)
-
-	obs.assertErrs(ErrUnauthenticated)
-	c.Close()
+	o1.assertErrs(ErrUnauthenticated)
+	c1.Close()
 
 	fmt.Println("--> wrong password <--")
 
@@ -137,28 +132,29 @@ func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 	cc.Username = "u1"
 	cc.Password = "p2"
 
-	c, err = NewClient(cc, obs)
+	o2 := newMockObserver(t)
+	c2, err := NewClient(cc, o2)
 	assert.NoError(t, err)
-	assert.NotNil(t, c)
+	assert.NotNil(t, c2)
 
-	err = c.Send(msg)
+	err = c2.Send(msg)
 	assert.NoError(t, err)
-
-	obs.assertErrs(ErrUnauthenticated)
-	c.Close()
+	o2.assertErrs(ErrUnauthenticated)
+	c2.Close()
 
 	fmt.Println("--> signal server to end <--")
 
+	o3 := newMockObserver(t)
 	cc = newClientConfig()
-	c, err = NewClient(cc, obs)
+	c3, err := NewClient(cc, o3)
 	assert.NoError(t, err)
-	assert.NotNil(t, c)
+	assert.NotNil(t, c3)
 
-	err = c.Send(msg)
+	err = c3.Send(msg)
 	assert.NoError(t, err)
-	obs.assertMsgs(msg)
+	o3.assertMsgs(msg)
+	c3.Close()
 
-	assert.NoError(t, c.Close())
 	safeReceive(done)
 }
 
