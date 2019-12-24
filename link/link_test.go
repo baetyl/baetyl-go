@@ -110,6 +110,8 @@ func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 
 	done := fakeServer(t, server)
 
+	fmt.Println("--> no password <--")
+
 	cc := newClientConfig()
 	cc.Username = ""
 	cc.Password = ""
@@ -130,7 +132,6 @@ func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 	c.Close()
 
 	fmt.Println("--> wrong password <--")
-	time.Sleep(time.Second)
 
 	cc = newClientConfig()
 	cc.Username = "u1"

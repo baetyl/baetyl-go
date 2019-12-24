@@ -6,7 +6,7 @@
 *.dylib
 /.idea
 /.vscode
-/**/cover*.html
+/**/coverage.*
 /**/.DS_Store
 /**/*.log
 
