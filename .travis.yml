@@ -4,9 +4,13 @@ language: go
 
 go:
   - "1.13"
+  - tip
 
-install: true
+before_install:
+  - env GO111MODULE=on GOPROXY=https://goproxy.baidu.com go mod tidy
+
 script:
-  - echo "baetyl-go unit test begin"
-  - env GO111MODULE=on GOPROXY=https://goproxy.cn make test GO_TEST_FLAGS=--race
-  - echo "baetyl-go unit test end"
+  - env GO111MODULE=on GOPROXY=https://goproxy.baidu.com go test -race -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
