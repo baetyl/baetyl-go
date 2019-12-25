@@ -105,6 +105,7 @@ func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 	server := flow.New().Debug().
 		Receive(msg).
 		Send(msg).
+		Receive(msg).
 		End().
 		Close()
 	done := fakeServer(t, server)
@@ -153,6 +154,8 @@ func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 	err = c3.Send(msg)
 	assert.NoError(t, err)
 	o3.assertMsgs(msg)
+	err = c3.Send(msg)
+	assert.NoError(t, err)
 	c3.Close()
 
 	safeReceive(done)
