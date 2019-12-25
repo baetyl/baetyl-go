@@ -97,7 +97,7 @@ func (c *Client) connecting() error {
 	timer := time.NewTimer(0)
 	defer timer.Stop()
 	bf := backoff.Backoff{
-		Min:    c.cfg.Timeout,
+		Min:    time.Second,
 		Max:    c.cfg.Interval,
 		Factor: 1.6,
 	}
