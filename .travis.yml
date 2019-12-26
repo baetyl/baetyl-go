@@ -6,7 +6,7 @@ go:
   - "1.13"
 
 before_install:
-  - env GO111MODULE=on GOPROXY=https://goproxy.baidu.com go mod tidy
+  - env GO111MODULE=on GOPROXY=https://goproxy.baidu.com go mod download
 
 script:
   - env GO111MODULE=on GOPROXY=https://goproxy.baidu.com go test ./... -race -coverprofile=coverage.txt -covermode=atomic
