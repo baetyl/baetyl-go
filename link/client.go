@@ -72,17 +72,17 @@ func NewClient(cc ClientConfig, obs Observer) (*Client, error) {
 	return cli, nil
 }
 
-// Call calls a request
+// Call calls a request synchronously
 func (c *Client) Call(msg *Message) (*Message, error) {
 	return c.cli.Call(context.Background(), msg, grpc.WaitForReady(true))
 }
 
-// CallContext calls a request with context
+// CallContext calls a request with context synchronously
 func (c *Client) CallContext(ctx context.Context, msg *Message) (*Message, error) {
 	return c.cli.Call(ctx, msg, grpc.WaitForReady(true))
 }
 
-// Send sends a generic packet
+// Send sends a message asynchronously
 func (c *Client) Send(msg *Message) error {
 	select {
 	case c.cache <- msg:
@@ -92,7 +92,7 @@ func (c *Client) Send(msg *Message) error {
 	return nil
 }
 
-// SendContext sends a message with context
+// SendContext sends a message with context asynchronously
 func (c *Client) SendContext(ctx context.Context, msg *Message) error {
 	select {
 	case c.cache <- msg:
