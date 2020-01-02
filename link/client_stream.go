@@ -86,10 +86,13 @@ func (s *stream) receiving() error {
 			ent.Write(log.Any("msg", fmt.Sprintf("%v", msg)))
 		}
 
-		if msg.Ack() {
-			err = s.cli.onAck(msg)
-		} else {
+		switch msg.Context.Type {
+		case Msg, MsgRtn:
 			err = s.cli.onMsg(msg)
+		case Ack:
+			err = s.cli.onAck(msg)
+		default:
+			err = ErrClientMessageTypeInvalid
 		}
 		if err != nil {
 			s.die("failed to handle message", err)

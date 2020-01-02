@@ -12,8 +12,11 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// ErrClientAlreadyClosed client is closed
-var ErrClientAlreadyClosed = errors.New("client is closed")
+// ErrClientAlreadyClosed the client is closed
+var ErrClientAlreadyClosed = errors.New("The client is closed")
+
+// ErrClientMessageTypeInvalid the message type is invalid
+var ErrClientMessageTypeInvalid = errors.New("The message type is invalid")
 
 // Client client of contact server
 type Client struct {
