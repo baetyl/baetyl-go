@@ -10,6 +10,7 @@ require (
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang/mock v1.3.1
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/jpillora/backoff v1.0.0
 	github.com/mholt/archiver v3.1.1+incompatible
