@@ -59,7 +59,7 @@ func TestLinkClientConnectCallSend(t *testing.T) {
 	msg.Context.ID = 1
 	ack := &Message{}
 	ack.Context.ID = 1
-	ack.Context.Flags = 0x2
+	ack.Context.Type = Ack
 
 	server := flow.New().Debug().
 		Receive(msg).
@@ -69,7 +69,7 @@ func TestLinkClientConnectCallSend(t *testing.T) {
 		End().
 		Close()
 
-	done := fakeServer(t, server)
+	done := FakeServer(t, server, nil)
 
 	cc := newClientConfig()
 	obs := newMockObserver(t)
@@ -108,7 +108,7 @@ func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 		Receive(msg).
 		End().
 		Close()
-	done := fakeServer(t, server)
+	done := FakeServer(t, server, &FakeAuth{"u1": "p1", "u2": "p2"})
 
 	fmt.Println("--> no password <--")
 
@@ -171,12 +171,12 @@ func TestLinkClientReconnect(t *testing.T) {
 	msg.Context.ID = 1
 	ack := &Message{}
 	ack.Context.ID = 1
-	ack.Context.Flags = 0x2
+	ack.Context.Type = Ack
 
 	server := flow.New().Debug().
 		Receive(msg).
 		Close()
-	done := fakeServer(t, server)
+	done := FakeServer(t, server, nil)
 
 	cc := newClientConfig()
 	cc.Timeout = time.Millisecond * 100
@@ -207,7 +207,7 @@ func TestLinkClientReconnect(t *testing.T) {
 		Send(msg).
 		End().
 		Close()
-	done = fakeServer(t, server)
+	done = FakeServer(t, server, nil)
 
 	err = c.Send(msg)
 	assert.NoError(t, err)
