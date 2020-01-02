@@ -101,9 +101,11 @@ func newClientConfig() (c ClientConfig) {
 	return
 }
 
-type mockAuth map[string]string
+// FakeAuth the fake of auth
+type FakeAuth map[string]string
 
-func (ma mockAuth) Authenticate(ctx context.Context) error {
+// Authenticate authenticates username and password
+func (ma FakeAuth) Authenticate(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return ErrUnauthenticated
@@ -154,12 +156,9 @@ func (s *mockServer) Close() error {
 	return nil
 }
 
-func fakeServer(t *testing.T, f *flow.Flow) chan struct{} {
-	ma := mockAuth{
-		"u1": "p1",
-		"u2": "p2",
-	}
-	s, err := NewServer(newServerConfig(), ma)
+// FakeServer the fake of link server for test only
+func FakeServer(t *testing.T, f *flow.Flow, a Authenticator) chan struct{} {
+	s, err := NewServer(newServerConfig(), a)
 	assert.NoError(t, err)
 
 	ms := &mockServer{t: t, s: s, f: f, q: make(chan struct{})}
@@ -170,7 +169,6 @@ func fakeServer(t *testing.T, f *flow.Flow) chan struct{} {
 	assert.NotNil(t, lis)
 	if lis == nil {
 		panic("listener cannot be nil")
-
 	}
 	go s.Serve(lis)
 	return ms.q

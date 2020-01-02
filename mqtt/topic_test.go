@@ -19,6 +19,7 @@ func TestCheckTopic(t *testing.T) {
 		{name: "6", topic: "a/b/c/d/e/f/g/h/i", wildcard: true, want: true},
 		{name: "7", topic: "$baidu/a/b/c/d/e/f/g/h/i", wildcard: true, want: true},
 
+		{name: "8-0", topic: "", wildcard: false, want: false},
 		{name: "8", topic: "+", wildcard: false, want: false},
 		{name: "9", topic: "#", wildcard: false, want: false},
 		{name: "10", topic: "topic/+", wildcard: false, want: false},
