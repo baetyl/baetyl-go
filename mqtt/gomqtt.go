@@ -56,6 +56,9 @@ type Packet = packet.Generic
 // Publish the publish packet
 type Publish = packet.Publish
 
+// Message the mqtt message
+type Message = packet.Message
+
 // NewPublish creates a new Publish packet
 func NewPublish() *Publish {
 	return &Publish{}

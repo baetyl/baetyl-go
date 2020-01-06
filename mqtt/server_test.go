@@ -12,24 +12,18 @@ import (
 )
 
 func TestMqttTcp(t *testing.T) {
-	handle := func(conn Connection, _ bool) {
+	handle := func(conn Connection) {
 		p, err := conn.Receive()
 		assert.NoError(t, err)
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
-	endpoints := []*Endpoint{
-		&Endpoint{
-			Address: "tcp://:0",
-			Handle:  handle,
-		},
-		&Endpoint{
-			Address: "tcp://127.0.0.1:0",
-			Handle:  handle,
-		},
-	}
-	cert := utils.Certificate{}
-	m, err := NewTransport(endpoints, cert)
+	svccfg := ServerConfig{
+		Addresses: []string{
+			"tcp://:0",
+			"tcp://127.0.0.1:0",
+		}}
+	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
@@ -60,7 +54,7 @@ func TestMqttTcp(t *testing.T) {
 
 func TestMqttTcpTls(t *testing.T) {
 	count := int32(0)
-	handle := func(conn Connection, _ bool) {
+	handle := func(conn Connection) {
 		c := atomic.AddInt32(&count, 1)
 		p, err := conn.Receive()
 		fmt.Println(p, err)
@@ -75,18 +69,17 @@ func TestMqttTcpTls(t *testing.T) {
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
-	endpoints := []*Endpoint{
-		&Endpoint{
-			Address: "ssl://localhost:0",
-			Handle:  handle,
+	svccfg := ServerConfig{
+		Addresses: []string{
+			"ssl://localhost:0",
+		},
+		Certificate: utils.Certificate{
+			CA:   "./testcert/ca.pem",
+			Key:  "./testcert/server.key",
+			Cert: "./testcert/server.pem",
 		},
 	}
-	cert := utils.Certificate{
-		CA:   "./testcert/ca.pem",
-		Key:  "./testcert/server.key",
-		Cert: "./testcert/server.pem",
-	}
-	m, err := NewTransport(endpoints, cert)
+	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
@@ -126,24 +119,18 @@ func TestMqttTcpTls(t *testing.T) {
 }
 
 func TestMqttWebSocket(t *testing.T) {
-	handle := func(conn Connection, _ bool) {
+	handle := func(conn Connection) {
 		p, err := conn.Receive()
 		assert.NoError(t, err)
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
-	endpoints := []*Endpoint{
-		&Endpoint{
-			Address: "ws://localhost:0",
-			Handle:  handle,
-		},
-		&Endpoint{
-			Address: "ws://127.0.0.1:0/mqtt",
-			Handle:  handle,
-		},
-	}
-	var cert utils.Certificate
-	m, err := NewTransport(endpoints, cert)
+	svccfg := ServerConfig{
+		Addresses: []string{
+			"ws://localhost:0",
+			"ws://127.0.0.1:0/mqtt",
+		}}
+	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
@@ -182,7 +169,7 @@ func TestMqttWebSocket(t *testing.T) {
 }
 
 func TestMqttWebSocketTls(t *testing.T) {
-	handle := func(conn Connection, _ bool) {
+	handle := func(conn Connection) {
 		p, err := conn.Receive()
 		fmt.Println(p, err)
 		assert.NoError(t, err)
@@ -191,18 +178,17 @@ func TestMqttWebSocketTls(t *testing.T) {
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
-	endpoints := []*Endpoint{
-		&Endpoint{
-			Address: "wss://localhost:0/mqtt",
-			Handle:  handle,
+	svccfg := ServerConfig{
+		Addresses: []string{
+			"wss://localhost:0/mqtt",
+		},
+		Certificate: utils.Certificate{
+			CA:   "./testcert/ca.pem",
+			Key:  "./testcert/server.key",
+			Cert: "./testcert/server.pem",
 		},
 	}
-	cert := utils.Certificate{
-		CA:   "./testcert/ca.pem",
-		Key:  "./testcert/server.key",
-		Cert: "./testcert/server.pem",
-	}
-	m, err := NewTransport(endpoints, cert)
+	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
@@ -242,25 +228,19 @@ func TestMqttWebSocketTls(t *testing.T) {
 }
 
 func TestServerException(t *testing.T) {
-	handle := func(conn Connection, _ bool) {
+	handle := func(conn Connection) {
 		p, err := conn.Receive()
 		assert.NoError(t, err)
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
-	endpoints := []*Endpoint{
-		&Endpoint{
-			Address: "tcp://:28767",
-			Handle:  handle,
-		},
-		&Endpoint{
-			Address: "tcp://:28767",
-			Handle:  handle,
-		},
-	}
 
-	var cert utils.Certificate
-	_, err := NewTransport(endpoints, cert)
+	svccfg := ServerConfig{
+		Addresses: []string{
+			"tcp://:28767",
+			"tcp://:28767",
+		}}
+	_, err := NewTransport(svccfg, handle)
 	switch err.Error() {
 	case "listen tcp :28767: bind: address already in use":
 	case "listen tcp :28767: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.":
@@ -268,43 +248,25 @@ func TestServerException(t *testing.T) {
 		assert.FailNow(t, "error expected")
 	}
 
-	endpoints = []*Endpoint{
-		&Endpoint{
-			Address: "tcp://:28767",
-			Handle:  handle,
-		},
-		&Endpoint{
-			Address: "ssl://:28767",
-			Handle:  handle,
-		},
+	svccfg.Addresses = []string{
+		"tcp://:28767",
+		"ssl://:28767",
 	}
-	_, err = NewTransport(endpoints, cert)
+	_, err = NewTransport(svccfg, handle)
 	assert.EqualError(t, err, "tls: neither Certificates nor GetCertificate set in Config")
 
-	endpoints = []*Endpoint{
-		&Endpoint{
-			Address: "ws://:28767/v1",
-			Handle:  handle,
-		},
-		&Endpoint{
-			Address: "wss://:28767/v2",
-			Handle:  handle,
-		},
+	svccfg.Addresses = []string{
+		"ws://:28767/v1",
+		"wss://:28767/v2",
 	}
-	_, err = NewTransport(endpoints, cert)
+	_, err = NewTransport(svccfg, handle)
 	assert.EqualError(t, err, "tls: neither Certificates nor GetCertificate set in Config")
 
-	endpoints = []*Endpoint{
-		&Endpoint{
-			Address: "ws://:28767/v1",
-			Handle:  handle,
-		},
-		&Endpoint{
-			Address: "ws://:28767/v1",
-			Handle:  handle,
-		},
+	svccfg.Addresses = []string{
+		"ws://:28767/v1",
+		"ws://:28767/v1",
 	}
-	_, err = NewTransport(endpoints, cert)
+	_, err = NewTransport(svccfg, handle)
 	switch err.Error() {
 	case "listen tcp :28767: bind: address already in use":
 	case "listen tcp :28767: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.":
@@ -313,8 +275,8 @@ func TestServerException(t *testing.T) {
 	}
 
 	// TODO: test more special case
-	// endpoints = []string{"ws://:28767/v1", "ws://0.0.0.0:28767/v2"}
-	// endpoints = []string{"ws://localhost:28767/v1", "ws://127.0.0.1:28767/v2"}
+	// svccfg = []string{"ws://:28767/v1", "ws://0.0.0.0:28767/v2"}
+	// svccfg = []string{"ws://localhost:28767/v1", "ws://127.0.0.1:28767/v2"}
 }
 
 func getPort(s Server) string {

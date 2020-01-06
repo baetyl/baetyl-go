@@ -8,56 +8,47 @@ import (
 )
 
 // Handle handles connection
-type Handle func(Connection, bool)
-
-// Endpoint the endpoint
-type Endpoint struct {
-	Address   string
-	Anonymous bool
-	Handle    Handle
-}
+type Handle func(Connection)
 
 // Transport transport
 type Transport struct {
-	endpoints []*Endpoint
-	servers   []Server
-	log       *log.Logger
+	servers []Server
+	log     *log.Logger
 	utils.Tomb
 }
 
 // NewTransport creates a new transport
-func NewTransport(endpoints []*Endpoint, cert utils.Certificate) (*Transport, error) {
+func NewTransport(cfg ServerConfig, handle Handle) (*Transport, error) {
+	if handle == nil {
+		panic("mqtt transport handle cannot be nil")
+	}
 	var err error
-	var tc *tls.Config
-	if cert.Key != "" || cert.Cert != "" {
-		tc, err = utils.NewTLSConfigServer(cert)
+	var tlsconf *tls.Config
+	if cfg.Certificate.Key != "" || cfg.Certificate.Cert != "" {
+		tlsconf, err = utils.NewTLSConfigServer(cfg.Certificate)
 		if err != nil {
 			return nil, err
 		}
 	}
-	launcher := NewLauncher(tc)
 	tp := &Transport{
-		endpoints: endpoints,
-		servers:   make([]Server, 0),
-		log:       log.With(log.Any("mqtt", "transport")),
+		servers: make([]Server, 0),
+		log:     log.With(log.Any("mqtt", "server")),
 	}
-	for _, endpoint := range endpoints {
-		if endpoint.Handle == nil {
-			panic("endpoint handle cannot be nil")
-		}
-		svr, err := launcher.Launch(endpoint.Address)
+	launcher := NewLauncher(tlsconf)
+	for _, address := range cfg.Addresses {
+		svr, err := launcher.Launch(address)
 		if err != nil {
 			tp.Close()
 			return nil, err
 		}
 		tp.servers = append(tp.servers, svr)
-		tp.accepting(svr, endpoint.Handle, endpoint.Anonymous)
+		tp.accepting(svr, handle)
 	}
 	tp.log.Info("transport has initialized")
 	return tp, nil
 }
 
-func (tp *Transport) accepting(svr Server, handle Handle, anonymous bool) {
+func (tp *Transport) accepting(svr Server, handle Handle) {
 	tp.Go(func() error {
 		l := log.With(log.Any("server", svr.Addr().String()))
 		l.Info("server starts to accept")
@@ -73,7 +64,7 @@ func (tp *Transport) accepting(svr Server, handle Handle, anonymous bool) {
 				l.Error("failed to accept connection", log.Error(err))
 				return err
 			}
-			handle(conn, anonymous)
+			handle(conn)
 		}
 	})
 }
