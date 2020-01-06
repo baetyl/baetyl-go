@@ -13,10 +13,10 @@ import (
 )
 
 // ErrClientAlreadyClosed the client is closed
-var ErrClientAlreadyClosed = errors.New("The client is closed")
+var ErrClientAlreadyClosed = errors.New("client is closed")
 
 // ErrClientMessageTypeInvalid the message type is invalid
-var ErrClientMessageTypeInvalid = errors.New("The message type is invalid")
+var ErrClientMessageTypeInvalid = errors.New("message type is invalid")
 
 // Client client of contact server
 type Client struct {
@@ -31,35 +31,7 @@ type Client struct {
 
 // NewClient creates a new client of functions server
 func NewClient(cc ClientConfig, obs Observer) (*Client, error) {
-	opts := []grpc.DialOption{
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(cc.MaxMessageSize))),
-	}
-	// enable tls
-	if cc.Certificate.Key != "" || cc.Certificate.Cert != "" {
-		tlsCfg, err := utils.NewTLSConfigClient(cc.Certificate)
-		if err != nil {
-			return nil, err
-		}
-		if tlsCfg != nil {
-			if !cc.InsecureSkipVerify {
-				tlsCfg.ServerName = cc.Name
-			}
-			creds := credentials.NewTLS(tlsCfg)
-			opts = append(opts, grpc.WithTransportCredentials(creds))
-		}
-	} else {
-		opts = append(opts, grpc.WithInsecure())
-	}
-
-	//  enable username/password
-	if cc.Username != "" || cc.Password != "" {
-		opts = append(opts, grpc.WithPerRPCCredentials(MD{
-			KeyUsername: cc.Username,
-			KeyPassword: cc.Password,
-		}))
-	}
-
-	conn, err := grpc.Dial(cc.Address, opts...)
+	conn, err := NewClientConn(cc)
 	if err != nil {
 		return nil, err
 	}
@@ -183,4 +155,38 @@ func (c *Client) onErr(msg string, err error) {
 	}
 	c.log.Error(msg, log.Error(err))
 	c.obs.OnErr(err)
+}
+
+// NewClientConn creates a new grpc client connection
+func NewClientConn(cc ClientConfig) (*grpc.ClientConn, error) {
+	opts := []grpc.DialOption{
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(cc.MaxMessageSize))),
+	}
+	// enable tls
+	if cc.Certificate.Key != "" || cc.Certificate.Cert != "" {
+		tlsCfg, err := utils.NewTLSConfigClient(cc.Certificate)
+		if err != nil {
+			return nil, err
+		}
+		if tlsCfg != nil {
+			// TODO: thing auth
+			if !cc.Certificate.InsecureSkipVerify {
+				tlsCfg.ServerName = cc.Certificate.Name
+			}
+			creds := credentials.NewTLS(tlsCfg)
+			opts = append(opts, grpc.WithTransportCredentials(creds))
+		}
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+
+	//  enable username/password
+	if cc.Username != "" || cc.Password != "" {
+		opts = append(opts, grpc.WithPerRPCCredentials(MD{
+			KeyUsername: cc.Username,
+			KeyPassword: cc.Password,
+		}))
+	}
+
+	return grpc.Dial(cc.Address, opts...)
 }
