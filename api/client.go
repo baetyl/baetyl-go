@@ -2,12 +2,10 @@ package api
 
 import (
 	"github.com/baetyl/baetyl-go/link"
-	"github.com/baetyl/baetyl-go/utils"
 )
 
 // NewClient creates a new client
 func NewClient(conf ClientConfig) (*Client, error) {
-	utils.SetDefaults(&conf)
 	conn, err := link.NewClientConn(link.ClientConfig(conf))
 	if err != nil {
 		return nil, err

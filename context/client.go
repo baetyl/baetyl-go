@@ -3,9 +3,10 @@ package context
 import (
 	"context"
 	"fmt"
+	"github.com/baetyl/baetyl-go/utils"
 	"os"
 
-	"github.com/baetyl/baetyl-go/context/api"
+	"github.com/baetyl/baetyl-go/api"
 	"google.golang.org/grpc"
 )
 
@@ -27,6 +28,7 @@ func NewEnvClient() (*Client, error) {
 		Username: name,
 		Password: token,
 	}
+	utils.SetDefaults(&cc)
 	api, err := api.NewClient(cc)
 	if err != nil {
 		return nil, err

@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/context/api"
+	"github.com/baetyl/baetyl-go/api"
+	"github.com/baetyl/baetyl-go/link"
 	"github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestNewEnvClient(t *testing.T) {
@@ -16,175 +18,117 @@ func TestNewEnvClient(t *testing.T) {
 	assert.EqualError(t, err, "Env (BAETYL_API_ADDRESS) not found")
 	assert.Nil(t, cli)
 
-	server, err := api.NewServer(api.ServerConfig{
-		Address: "tcp://127.0.0.1:52060",
-	}, &mockMaster{})
-	assert.NoError(t, err)
-	defer server.Close()
-	kvService := &mockKVService{
-		m: make(map[string][]byte),
-	}
-	server.RegisterKVService(kvService)
-	err = server.Start()
-	assert.NoError(t, err)
+	port := "52006"
+	svr := api.FakeServer(t, port, new(mockAuthenticator))
 
-	os.Setenv(EnvKeyAPIAddress, "127.0.0.1:52060")
+	// new
+	os.Setenv(EnvKeyAPIAddress, "localhost:"+port)
+	os.Setenv(EnvKeyServiceName, "baetyl")
+	os.Setenv(EnvKeyServiceToken, "baetyl")
 	cli, err = NewEnvClient()
 	assert.NoError(t, err)
 	assert.NotNil(t, cli)
 
-	master := new(mockMaster)
-	confs := []struct {
-		serverConf api.ServerConfig
-		cliConf    api.ClientConfig
-	}{
-		{
-			serverConf: api.ServerConfig{
-				Address: "tcp://127.0.0.1:51060",
-			},
-			cliConf: api.ClientConfig{
-				Address:  "127.0.0.1:51060",
-				Timeout:  10 * time.Second,
-				Username: "baetyl",
-				Password: "baetyl",
-			},
-		},
-		{
-			serverConf: api.ServerConfig{
-				Address: "unix:///tmp/baetyl/run/api.sock",
-			},
-			cliConf: api.ClientConfig{
-				Address:  "unix:///tmp/baetyl/run/api.sock",
-				Timeout:  10 * time.Second,
-				Username: "baetyl",
-				Password: "baetyl",
-			},
-		},
+	a := api.KV{
+		Key:   []byte("name"),
+		Value: []byte("baetyl"),
 	}
-	for _, conf := range confs {
-		server, err := api.NewServer(api.ServerConfig{Address: conf.serverConf.Address, Certificate: conf.serverConf.Certificate}, master)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, server)
-		kvService.m = make(map[string][]byte)
-		server.RegisterKVService(kvService)
-		err = server.Start()
-		assert.NoError(t, err)
+	_, err = cli.GetKV(a.Key)
+	assert.NoError(t, err)
 
-		// new
-		os.Setenv(EnvKeyAPIAddress, conf.cliConf.Address)
-		os.Setenv(EnvKeyServiceName, conf.cliConf.Username)
-		os.Setenv(EnvKeyServiceToken, conf.cliConf.Password)
-		cli, err := NewEnvClient()
-		assert.NoError(t, err)
-		assert.NotNil(t, cli)
+	err = cli.SetKV(a)
+	assert.NoError(t, err)
 
-		a := api.KV{
-			Key:   []byte("name"),
-			Value: []byte("baetyl"),
-		}
-		_, err = cli.GetKV(a.Key)
-		assert.NoError(t, err)
+	resp, err := cli.GetKV(a.Key)
+	assert.NoError(t, err)
+	assert.Equal(t, resp.Value, a.Value)
 
-		err = cli.SetKV(a)
-		assert.NoError(t, err)
+	err = cli.DelKV(a.Key)
+	assert.NoError(t, err)
 
-		resp, err := cli.GetKV(a.Key)
-		assert.NoError(t, err)
-		assert.Equal(t, resp.Value, a.Value)
+	err = cli.SetKV(a)
+	assert.NoError(t, err)
 
-		err = cli.DelKV(a.Key)
-		assert.NoError(t, err)
+	a.Key = []byte("bb")
+	err = cli.SetKV(a)
+	assert.NoError(t, err)
 
-		err = cli.SetKV(a)
-		assert.NoError(t, err)
+	respa, err := cli.ListKV([]byte(""))
+	assert.NoError(t, err)
+	assert.Len(t, respa, 2)
 
-		a.Key = []byte("bb")
-		err = cli.SetKV(a)
-		assert.NoError(t, err)
+	ctx0, cel0 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel0()
+	err = cli.SetKVConext(ctx0, a)
+	assert.NoError(t, err)
 
-		respa, err := cli.ListKV([]byte(""))
-		assert.NoError(t, err)
-		assert.Len(t, respa, 2)
+	svr.GracefulStop()
 
-		ctx0, cel0 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel0()
-		err = cli.SetKVConext(ctx0, a)
-		assert.NoError(t, err)
+	ctx1, cel1 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel1()
+	_, err = cli.GetKVConext(ctx1, a.Key)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "DeadlineExceeded desc")
 
-		server.Close()
+	ctx2, cel2 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel2()
+	err = cli.SetKVConext(ctx2, a)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "DeadlineExceeded desc")
 
-		ctx1, cel1 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel1()
-		_, err = cli.GetKVConext(ctx1, a.Key)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "DeadlineExceeded desc")
+	ctx3, cel3 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel3()
+	resp, err = cli.GetKVConext(ctx3, a.Key)
+	assert.Contains(t, err.Error(), "DeadlineExceeded desc")
 
-		ctx2, cel2 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel2()
-		err = cli.SetKVConext(ctx2, a)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "DeadlineExceeded desc")
+	ctx4, cel4 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel4()
+	err = cli.DelKVConext(ctx4, a.Key)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "DeadlineExceeded desc")
 
-		ctx3, cel3 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel3()
-		resp, err = cli.GetKVConext(ctx3, a.Key)
-		assert.Contains(t, err.Error(), "DeadlineExceeded desc")
+	ctx5, cel5 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel5()
+	respa, err = cli.ListKVContext(ctx5, []byte(""))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "DeadlineExceeded desc")
 
-		ctx4, cel4 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel4()
-		err = cli.DelKVConext(ctx4, a.Key)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "DeadlineExceeded desc")
+	svr = api.FakeServer(t, port, new(mockAuthenticator))
 
-		ctx5, cel5 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel5()
-		respa, err = cli.ListKVContext(ctx5, []byte(""))
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "DeadlineExceeded desc")
+	a.Key = []byte("aa")
+	err = cli.SetKV(a)
+	assert.NoError(t, err)
 
-		server, err = api.NewServer(api.ServerConfig{Address: conf.serverConf.Address, Certificate: conf.serverConf.Certificate}, master)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, server)
-		kvService.m = make(map[string][]byte)
-		server.RegisterKVService(kvService)
-		err = server.Start()
-		assert.NoError(t, err)
+	ctx6, cel6 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel6()
+	resp, err = cli.GetKVConext(ctx6, a.Key)
+	assert.NoError(t, err)
+	assert.Equal(t, resp.Value, a.Value)
 
-		a.Key = []byte("aa")
-		err = cli.SetKV(a)
-		assert.NoError(t, err)
+	ctx7, cel7 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel7()
+	err = cli.DelKVConext(ctx7, a.Key)
+	assert.NoError(t, err)
 
-		ctx6, cel6 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel6()
-		resp, err = cli.GetKVConext(ctx6, a.Key)
-		assert.NoError(t, err)
-		assert.Equal(t, resp.Value, a.Value)
+	ctx8, cel8 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel8()
+	err = cli.SetKVConext(ctx8, a)
+	assert.NoError(t, err)
 
-		ctx7, cel7 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel7()
-		err = cli.DelKVConext(ctx7, a.Key)
-		assert.NoError(t, err)
+	ctx9, cel9 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel9()
+	a.Key = []byte("bb")
+	err = cli.SetKVConext(ctx9, a)
+	assert.NoError(t, err)
 
-		ctx8, cel8 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel8()
-		err = cli.SetKVConext(ctx8, a)
-		assert.NoError(t, err)
+	ctx10, cel10 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cel10()
+	respa, err = cli.ListKVContext(ctx10, []byte(""))
+	assert.NoError(t, err)
+	assert.Len(t, respa, 2)
 
-		ctx9, cel9 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel9()
-		a.Key = []byte("bb")
-		err = cli.SetKVConext(ctx9, a)
-		assert.NoError(t, err)
-
-		ctx10, cel10 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cel10()
-		respa, err = cli.ListKVContext(ctx10, []byte(""))
-		assert.NoError(t, err)
-		assert.Len(t, respa, 2)
-
-		server.Close()
-		cli.Close()
-	}
+	svr.GracefulStop()
+	cli.Close()
 }
 
 type mockMaster struct{}
@@ -233,4 +177,24 @@ func (s *mockKVService) List(ctx context.Context, kv *api.KV) (*api.KVs, error) 
 		})
 	}
 	return &kvs, nil
+}
+
+type mockAuthenticator struct{}
+
+func (auth mockAuthenticator) Authenticate(ctx context.Context) error {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return link.ErrUnauthenticated
+	}
+	var u, p string
+	if val, ok := md[link.KeyUsername]; ok {
+		u = val[0]
+	}
+	if val, ok := md[link.KeyPassword]; ok {
+		p = val[0]
+	}
+	if u != "baetyl" || p != "baetyl" {
+		return link.ErrUnauthenticated
+	}
+	return nil
 }

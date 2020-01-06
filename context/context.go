@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/baetyl/baetyl-go/context/api"
+	"github.com/baetyl/baetyl-go/api"
 	"github.com/baetyl/baetyl-go/link"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/mqtt"
@@ -23,16 +23,15 @@ const (
 // Env keys
 const (
 	// new envs
-	EnvKeyHostID                 = "BAETYL_HOST_ID"
-	EnvKeyHostOS                 = "BAETYL_HOST_OS"
-	EnvKeyHostSN                 = "BAETYL_HOST_SN"
-	EnvKeyAPISocket              = "BAETYL_API_SOCKET"
-	EnvKeyAPIAddress             = "BAETYL_API_ADDRESS"
-	EnvKeyServiceMode            = "BAETYL_SERVICE_MODE"
-	EnvKeyServiceName            = "BAETYL_SERVICE_NAME"
-	EnvKeyServiceToken           = "BAETYL_SERVICE_TOKEN"
-	EnvKeyServiceInstanceName    = "BAETYL_SERVICE_INSTANCE_NAME"
-	EnvKeyServiceInstanceAddress = "BAETYL_SERVICE_INSTANCE_ADDRESS"
+	EnvKeyHostID              = "BAETYL_HOST_ID"
+	EnvKeyHostOS              = "BAETYL_HOST_OS"
+	EnvKeyHostSN              = "BAETYL_HOST_SN"
+	EnvKeyAPISocket           = "BAETYL_API_SOCKET"
+	EnvKeyAPIAddress          = "BAETYL_API_ADDRESS"
+	EnvKeyServiceMode         = "BAETYL_SERVICE_MODE"
+	EnvKeyServiceName         = "BAETYL_SERVICE_NAME"
+	EnvKeyServiceToken        = "BAETYL_SERVICE_TOKEN"
+	EnvKeyServiceInstanceName = "BAETYL_SERVICE_INSTANCE_NAME"
 )
 
 // Path keys
@@ -60,10 +59,6 @@ const (
 	DefaultRunDir = "var/run/baetyl"
 	// DefaultLogDir  log dir of the service by default
 	DefaultLogDir = "var/log/baetyl"
-	// DefaultMasterConfDir master config dir by default
-	DefaultMasterConfDir = "etc/baetyl"
-	// DefaultMasterConfFile master config file by default
-	DefaultMasterConfFile = "etc/baetyl/conf.yml"
 )
 
 // Context of service

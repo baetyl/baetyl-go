@@ -5,14 +5,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type ServerConfig link.ServerConfig
 type ClientConfig link.ClientConfig
-
-// Server server to handle grpc message
-type Server struct {
-	conf ServerConfig
-	svr  *grpc.Server
-}
 
 // Client server to handle grpc message
 type Client struct {
