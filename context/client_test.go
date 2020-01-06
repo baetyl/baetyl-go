@@ -72,6 +72,8 @@ func TestNewEnvClient(t *testing.T) {
 
 		// new
 		os.Setenv(EnvKeyAPIAddress, conf.cliConf.Address)
+		os.Setenv(EnvKeyServiceName, conf.cliConf.Username)
+		os.Setenv(EnvKeyServiceToken, conf.cliConf.Password)
 		cli, err := NewEnvClient()
 		assert.NoError(t, err)
 		assert.NotNil(t, cli)
@@ -188,7 +190,10 @@ func TestNewEnvClient(t *testing.T) {
 type mockMaster struct{}
 
 func (*mockMaster) Auth(u, p string) bool {
-	return true
+	if u == "baetyl" && p == "baetyl" {
+		return true
+	}
+	return false
 }
 
 // KVService kv server

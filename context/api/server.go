@@ -7,13 +7,10 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/baetyl/baetyl-go/link"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
 // Master interface
@@ -23,36 +20,12 @@ type Master interface {
 
 // NewServer creates a new server
 func NewServer(conf ServerConfig, m Master) (*Server, error) {
-	var opts []grpc.ServerOption
-	if conf.Key != "" || conf.Cert != "" {
-		tlsCfg, err := utils.NewTLSConfigServer(conf.Certificate)
-		if err != nil {
-			return nil, err
-		}
-		creds := credentials.NewTLS(tlsCfg)
-		opts = append(opts, grpc.Creds(creds))
-	} else {
-		interceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-			md, ok := metadata.FromIncomingContext(ctx)
-			if !ok {
-				return false, status.Errorf(codes.Unauthenticated, "missing authentication information")
-			}
-			var u, p string
-			if val, ok := md[headerKeyUsername]; ok {
-				u = val[0]
-			}
-			if val, ok := md[headerKeyPassword]; ok {
-				p = val[0]
-			}
-			ok = m.Auth(u, p)
-			if !ok {
-				return false, status.Errorf(codes.Unauthenticated, "forbidden")
-			}
-			return handler(ctx, req)
-		}
-		opts = append(opts, grpc.UnaryInterceptor(interceptor))
+	utils.SetDefaults(&conf)
+	svr, err := link.NewServer(link.ServerConfig(conf), Authenticator{m: m})
+	if err != nil {
+		return nil, err
 	}
-	return &Server{conf: conf, svr: grpc.NewServer(opts...)}, nil
+	return &Server{conf: conf, svr: svr}, nil
 }
 
 // RegisterKVService register kv service
@@ -97,4 +70,26 @@ func (s *Server) Close() {
 	if s.svr != nil {
 		s.svr.GracefulStop()
 	}
+}
+
+type Authenticator struct {
+	m Master
+}
+
+func (a Authenticator) Authenticate(ctx context.Context) error {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return link.ErrUnauthenticated
+	}
+	var u, p string
+	if val, ok := md[link.KeyUsername]; ok {
+		u = val[0]
+	}
+	if val, ok := md[link.KeyPassword]; ok {
+		p = val[0]
+	}
+	if ok := a.m.Auth(u, p); !ok {
+		return link.ErrUnauthenticated
+	}
+	return nil
 }

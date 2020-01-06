@@ -1,31 +1,12 @@
 package api
 
 import (
-	"time"
-
-	"github.com/baetyl/baetyl-go/utils"
+	"github.com/baetyl/baetyl-go/link"
 	"google.golang.org/grpc"
 )
 
-const (
-	headerKeyUsername = "x-baetyl-username"
-	headerKeyPassword = "x-baetyl-password"
-)
-
-// ServerConfig api server config
-type ServerConfig struct {
-	Address           string `yaml:"address" json:"address"`
-	utils.Certificate `yaml:",inline" json:",inline"`
-}
-
-// ClientConfig api client config
-type ClientConfig struct {
-	Address           string        `yaml:"address" json:"address"`
-	Timeout           time.Duration `yaml:"timeout" json:"timeout" default:"30s"`
-	Username          string        `yaml:"username" json:"username"`
-	Password          string        `yaml:"password" json:"password"`
-	utils.Certificate `yaml:",inline" json:",inline"`
-}
+type ServerConfig link.ServerConfig
+type ClientConfig link.ClientConfig
 
 // Server server to handle grpc message
 type Server struct {

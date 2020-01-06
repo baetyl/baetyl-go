@@ -161,9 +161,11 @@ func (c *ctx) NewMQTTClient(cid string, obs mqtt.Observer, topics []mqtt.QOSTopi
 	for _, topic := range topics {
 		subs = append(subs, mqtt.Subscription{Topic: topic.Topic, QOS: mqtt.QOS(topic.QOS)})
 	}
-	err = cli.Subscribe(subs)
-	if err != nil {
-		return nil, err
+	if len(subs) > 0 {
+		err = cli.Subscribe(subs)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return cli, nil
 }

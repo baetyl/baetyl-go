@@ -54,7 +54,7 @@ func Test_APIServer(t *testing.T) {
 
 	_, err = cli.KV.Get(context.Background(), &KV{Key: []byte("")})
 	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "rpc error: code = Unauthenticated desc = forbidden")
+	assert.Equal(t, err.Error(), "rpc error: code = Unauthenticated desc = Username is unauthenticated")
 
 	server.Close()
 	cli.Close()
@@ -77,7 +77,7 @@ func Test_APIServer(t *testing.T) {
 
 	_, err = cli.KV.Get(context.Background(), &KV{Key: []byte("")})
 	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "rpc error: code = Unauthenticated desc = forbidden")
+	assert.Equal(t, err.Error(), "rpc error: code = Unauthenticated desc = Username is unauthenticated")
 
 	server.Close()
 	cli.Close()
