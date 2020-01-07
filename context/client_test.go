@@ -6,11 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/api"
-	"github.com/baetyl/baetyl-go/link"
-	"github.com/gogo/protobuf/types"
+	"github.com/baetyl/baetyl-go/kv"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc/metadata"
 )
 
 func TestNewEnvClient(t *testing.T) {
@@ -19,7 +16,7 @@ func TestNewEnvClient(t *testing.T) {
 	assert.Nil(t, cli)
 
 	port := "52006"
-	svr := api.FakeServer(t, port, new(mockAuthenticator))
+	svr := FakeServer(t, port, new(mockAuthenticator))
 
 	// new
 	os.Setenv(EnvKeyAPIAddress, "localhost:"+port)
@@ -29,7 +26,7 @@ func TestNewEnvClient(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cli)
 
-	a := api.KV{
+	a := kv.KV{
 		Key:   []byte("name"),
 		Value: []byte("baetyl"),
 	}
@@ -93,7 +90,7 @@ func TestNewEnvClient(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "DeadlineExceeded desc")
 
-	svr = api.FakeServer(t, port, new(mockAuthenticator))
+	svr = FakeServer(t, port, new(mockAuthenticator))
 
 	a.Key = []byte("aa")
 	err = cli.SetKV(a)
@@ -129,72 +126,4 @@ func TestNewEnvClient(t *testing.T) {
 
 	svr.GracefulStop()
 	cli.Close()
-}
-
-type mockMaster struct{}
-
-func (*mockMaster) Auth(u, p string) bool {
-	if u == "baetyl" && p == "baetyl" {
-		return true
-	}
-	return false
-}
-
-// KVService kv server
-type mockKVService struct {
-	m map[string][]byte
-}
-
-// Set set kv
-func (s *mockKVService) Set(ctx context.Context, kv *api.KV) (*types.Empty, error) {
-	s.m[string(kv.Key)] = kv.Value
-	return new(types.Empty), nil
-}
-
-// Get get kv
-func (s *mockKVService) Get(ctx context.Context, kv *api.KV) (*api.KV, error) {
-	return &api.KV{
-		Key:   kv.Key,
-		Value: s.m[string(kv.Key)],
-	}, nil
-}
-
-// Del del kv
-func (s *mockKVService) Del(ctx context.Context, kv *api.KV) (*types.Empty, error) {
-	delete(s.m, string(kv.Key))
-	return new(types.Empty), nil
-}
-
-// List list kvs with prefix
-func (s *mockKVService) List(ctx context.Context, kv *api.KV) (*api.KVs, error) {
-	kvs := api.KVs{
-		Kvs: []*api.KV{},
-	}
-	for k, v := range s.m {
-		kvs.Kvs = append(kvs.Kvs, &api.KV{
-			Key:   []byte(k),
-			Value: v,
-		})
-	}
-	return &kvs, nil
-}
-
-type mockAuthenticator struct{}
-
-func (auth mockAuthenticator) Authenticate(ctx context.Context) error {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return link.ErrUnauthenticated
-	}
-	var u, p string
-	if val, ok := md[link.KeyUsername]; ok {
-		u = val[0]
-	}
-	if val, ok := md[link.KeyPassword]; ok {
-		p = val[0]
-	}
-	if u != "baetyl" || p != "baetyl" {
-		return link.ErrUnauthenticated
-	}
-	return nil
 }
