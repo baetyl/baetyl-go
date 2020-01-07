@@ -65,7 +65,9 @@ func TestMqttTcpTls(t *testing.T) {
 		}
 		assert.NoError(t, err)
 		assert.NotNil(t, p)
-		assert.True(t, IsBidirectionalAuthentication(conn))
+		tlsconn := GetTLSConn(conn)
+		assert.NotNil(t, tlsconn)
+		assert.True(t, IsBidirectionalAuthentication(tlsconn))
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
@@ -115,6 +117,11 @@ func TestMqttTcpTls(t *testing.T) {
 	res, err := conn.Receive()
 	assert.NoError(t, err)
 	assert.Equal(t, pkt.String(), res.String())
+	tlsconn := GetTLSConn(conn)
+	assert.NotNil(t, tlsconn)
+	cn := GetCommonName(tlsconn)
+	assert.NotNil(t, cn)
+	assert.Equal(t, "c3c4f4002ea84376ba2bd49aca2185b2.b5de14a0ffa648f9a662ab3f106edd17.iot.edge.baidubce.com", cn)
 	conn.Close()
 }
 
@@ -174,7 +181,9 @@ func TestMqttWebSocketTls(t *testing.T) {
 		fmt.Println(p, err)
 		assert.NoError(t, err)
 		assert.NotNil(t, p)
-		assert.True(t, IsBidirectionalAuthentication(conn))
+		tlsconn := GetTLSConn(conn)
+		assert.NotNil(t, tlsconn)
+		assert.True(t, IsBidirectionalAuthentication(tlsconn))
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
@@ -224,6 +233,11 @@ func TestMqttWebSocketTls(t *testing.T) {
 	res, err := conn.Receive()
 	assert.NoError(t, err)
 	assert.Equal(t, pkt.String(), res.String())
+	tlsconn := GetTLSConn(conn)
+	assert.NotNil(t, tlsconn)
+	cn := GetCommonName(tlsconn)
+	assert.NotNil(t, cn)
+	assert.Equal(t, "c3c4f4002ea84376ba2bd49aca2185b2.b5de14a0ffa648f9a662ab3f106edd17.iot.edge.baidubce.com", cn)
 	conn.Close()
 }
 

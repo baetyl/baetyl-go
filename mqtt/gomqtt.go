@@ -31,6 +31,7 @@ const (
 	ServerUnavailable
 	BadUsernameOrPassword
 	NotAuthorized
+	InvalidClientCertificate
 )
 
 // QOS the quality of service levels
@@ -189,7 +190,31 @@ type Server = transport.Server
 type Connection = transport.Conn
 
 // IsBidirectionalAuthentication check bidirectional authentication
-func IsBidirectionalAuthentication(conn Connection) bool {
+func IsBidirectionalAuthentication(conn *tls.Conn) bool {
+	state := conn.ConnectionState()
+	if !state.HandshakeComplete {
+		return false
+	}
+	return len(state.PeerCertificates) > 0
+}
+
+// GetCommonName gets commonName of cert
+func GetCommonName(conn *tls.Conn) string {
+	var cn string
+	state := conn.ConnectionState()
+	if !state.HandshakeComplete {
+		return cn
+	}
+	length := len(state.PeerCertificates)
+	if length == 0 {
+		return cn
+	}
+	cn = state.PeerCertificates[len(state.PeerCertificates)-1].Subject.CommonName
+	return cn
+}
+
+// GetTLSConn gets TLSConn
+func GetTLSConn(conn Connection) *tls.Conn {
 	var inner net.Conn
 	if nc, ok := conn.(*transport.NetConn); ok {
 		inner = nc.UnderlyingConn()
@@ -198,13 +223,9 @@ func IsBidirectionalAuthentication(conn Connection) bool {
 	}
 	tlsconn, ok := inner.(*tls.Conn)
 	if !ok {
-		return false
+		return nil
 	}
-	state := tlsconn.ConnectionState()
-	if !state.HandshakeComplete {
-		return false
-	}
-	return len(state.PeerCertificates) > 0
+	return tlsconn
 }
 
 // all gomqtt client errors
