@@ -5,7 +5,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/baetyl/baetyl-go/api"
+	"github.com/baetyl/baetyl-go/kv"
 	"github.com/baetyl/baetyl-go/link"
 	"github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ func FakeServer(t *testing.T, port string, auth link.Authenticator) *grpc.Server
 	}
 	svr := grpc.NewServer(opts...)
 
-	api.RegisterKVServiceServer(svr, &mockKVService{
+	kv.RegisterKVServiceServer(svr, &mockKVService{
 		m: make(map[string][]byte),
 	})
 	lis, err := net.Listen("tcp", ":"+port)
@@ -41,32 +41,32 @@ type mockKVService struct {
 }
 
 // Set set kv
-func (s *mockKVService) Set(ctx context.Context, kv *api.KV) (*types.Empty, error) {
-	s.m[string(kv.Key)] = kv.Value
+func (s *mockKVService) Set(ctx context.Context, _kv *kv.KV) (*types.Empty, error) {
+	s.m[string(_kv.Key)] = _kv.Value
 	return new(types.Empty), nil
 }
 
 // Get get kv
-func (s *mockKVService) Get(ctx context.Context, kv *api.KV) (*api.KV, error) {
-	return &api.KV{
-		Key:   kv.Key,
-		Value: s.m[string(kv.Key)],
+func (s *mockKVService) Get(ctx context.Context, _kv *kv.KV) (*kv.KV, error) {
+	return &kv.KV{
+		Key:   _kv.Key,
+		Value: s.m[string(_kv.Key)],
 	}, nil
 }
 
 // Del del kv
-func (s *mockKVService) Del(ctx context.Context, kv *api.KV) (*types.Empty, error) {
-	delete(s.m, string(kv.Key))
+func (s *mockKVService) Del(ctx context.Context, _kv *kv.KV) (*types.Empty, error) {
+	delete(s.m, string(_kv.Key))
 	return new(types.Empty), nil
 }
 
 // List list kvs with prefix
-func (s *mockKVService) List(ctx context.Context, kv *api.KV) (*api.KVs, error) {
-	kvs := api.KVs{
-		Kvs: []*api.KV{},
+func (s *mockKVService) List(ctx context.Context, _kv *kv.KV) (*kv.KVs, error) {
+	kvs := kv.KVs{
+		Kvs: []*kv.KV{},
 	}
 	for k, v := range s.m {
-		kvs.Kvs = append(kvs.Kvs, &api.KV{
+		kvs.Kvs = append(kvs.Kvs, &kv.KV{
 			Key:   []byte(k),
 			Value: v,
 		})

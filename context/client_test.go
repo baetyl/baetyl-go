@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/api"
+	"github.com/baetyl/baetyl-go/kv"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +26,7 @@ func TestNewEnvClient(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cli)
 
-	a := api.KV{
+	a := kv.KV{
 		Key:   []byte("name"),
 		Value: []byte("baetyl"),
 	}

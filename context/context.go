@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/baetyl/baetyl-go/api"
+	"github.com/baetyl/baetyl-go/kv"
 	"github.com/baetyl/baetyl-go/link"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/mqtt"
@@ -83,21 +83,21 @@ type Context interface {
 	// Master KV API
 
 	// set kv
-	SetKV(kv api.KV) error
+	SetKV(kv kv.KV) error
 	// set kv which supports context
-	SetKVConext(ctx context.Context, kv api.KV) error
+	SetKVConext(ctx context.Context, kv kv.KV) error
 	// get kv
-	GetKV(k []byte) (*api.KV, error)
+	GetKV(k []byte) (*kv.KV, error)
 	// get kv which supports context
-	GetKVConext(ctx context.Context, k []byte) (*api.KV, error)
+	GetKVConext(ctx context.Context, k []byte) (*kv.KV, error)
 	// del kv
 	DelKV(k []byte) error
 	// del kv which supports context
 	DelKVConext(ctx context.Context, k []byte) error
 	// list kv with prefix
-	ListKV(p []byte) ([]*api.KV, error)
+	ListKV(p []byte) ([]*kv.KV, error)
 	// list kv with prefix which supports context
-	ListKVContext(ctx context.Context, p []byte) ([]*api.KV, error)
+	ListKVContext(ctx context.Context, p []byte) ([]*kv.KV, error)
 }
 
 type ctx struct {

@@ -1,13 +1,14 @@
 package context
 
 import (
+	"os"
+	"testing"
+
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/baetyl/baetyl-go/link"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/mqtt"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 func TestContext(t *testing.T) {
