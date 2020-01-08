@@ -92,7 +92,7 @@ func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {
 			conn, err := server.Accept()
 			assert.NoError(t, err)
 
-			err = flow.Test(newWrapper(conn))
+			err = flow.Test(newWrapper(Connection{conn}))
 			assert.NoError(t, err)
 		}
 

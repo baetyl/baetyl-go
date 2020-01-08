@@ -31,7 +31,6 @@ const (
 	ServerUnavailable
 	BadUsernameOrPassword
 	NotAuthorized
-	InvalidClientCertificate
 )
 
 // QOS the quality of service levels
@@ -187,31 +186,32 @@ func NewFuture() *Future {
 type Server = transport.Server
 
 // Connection the connection between a client and a server
-type Connection = transport.Conn
+type Connection struct {
+	transport.Conn
+}
 
-// IsBidirectionalAuthentication check bidirectional authentication and return commonName
-func IsBidirectionalAuthentication(conn Connection) (bool, string) {
+// GetTLSCommonName check bidirectional authentication and return commonName
+func (c *Connection) GetTLSCommonName() (cn string, ok bool) {
 	var inner net.Conn
-	var cn string
-	if nc, ok := conn.(*transport.NetConn); ok {
+	if nc, ok := c.Conn.(*transport.NetConn); ok {
 		inner = nc.UnderlyingConn()
-	} else if wss, ok := conn.(*transport.WebSocketConn); ok {
+	} else if wss, ok := c.Conn.(*transport.WebSocketConn); ok {
 		inner = wss.UnderlyingConn().UnderlyingConn()
 	}
 	tlsconn, ok := inner.(*tls.Conn)
 	if !ok {
-		return false, cn
+		return cn, false
 	}
 	state := tlsconn.ConnectionState()
 	if !state.HandshakeComplete {
-		return false, cn
+		return cn, false
 	}
 	length := len(state.PeerCertificates)
 	if length == 0 {
-		return false, cn
+		return cn, false
 	}
 	cn = state.PeerCertificates[length-1].Subject.CommonName
-	return true, cn
+	return cn, true
 }
 
 // all gomqtt client errors

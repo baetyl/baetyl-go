@@ -65,7 +65,7 @@ func TestMqttTcpTls(t *testing.T) {
 		}
 		assert.NoError(t, err)
 		assert.NotNil(t, p)
-		isBidAuth, cn := IsBidirectionalAuthentication(conn)
+		cn, isBidAuth := conn.GetTLSCommonName()
 		assert.True(t, isBidAuth)
 		assert.NotNil(t, cn)
 		assert.Equal(t, "client.example.org", cn)
@@ -177,7 +177,7 @@ func TestMqttWebSocketTls(t *testing.T) {
 		fmt.Println(p, err)
 		assert.NoError(t, err)
 		assert.NotNil(t, p)
-		isBidAuth, cn := IsBidirectionalAuthentication(conn)
+		cn, isBidAuth := conn.GetTLSCommonName()
 		assert.True(t, isBidAuth)
 		assert.NotNil(t, cn)
 		assert.Equal(t, "client.example.org", cn)

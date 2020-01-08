@@ -43,7 +43,7 @@ func (c *Client) connect() (*stream, error) {
 
 	s := &stream{
 		cli:     c,
-		conn:    conn,
+		conn:    Connection{conn},
 		future:  NewFuture(),
 		tracker: NewTracker(c.cfg.KeepAlive),
 	}
