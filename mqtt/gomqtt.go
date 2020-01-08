@@ -244,3 +244,18 @@ type Launcher = transport.Launcher
 func NewLauncher(tc *tls.Config) *Launcher {
 	return transport.NewLauncher(transport.LaunchConfig{TLSConfig: tc})
 }
+
+// MatchTopicQOS if topic matched, return the lowest qos
+func MatchTopicQOS(t *Trie, topic string) (bool, uint32) {
+	ss := t.Match(topic)
+	ok := len(ss) != 0
+	qos := uint32(1)
+	for _, s := range ss {
+		us := uint32(s.(QOS))
+		if us < qos {
+			qos = us
+			break
+		}
+	}
+	return ok, qos
+}

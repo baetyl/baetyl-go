@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"math/rand"
 	"testing"
 )
 
@@ -9,86 +10,106 @@ func TestCheckTopic(t *testing.T) {
 		name     string
 		topic    string
 		wildcard bool
-		want     bool
+		want1    bool
+		want2    bool
 	}{
-		{name: "1", topic: "topic", wildcard: false, want: true},
-		{name: "2", topic: "topic/a", wildcard: false, want: true},
-		{name: "3", topic: "topic/a/b", wildcard: false, want: true},
-		{name: "4", topic: "$baidu/services/a", wildcard: false, want: true},
-		{name: "5", topic: "$link/services/a", wildcard: false, want: true},
-		{name: "6", topic: "a/b/c/d/e/f/g/h/i", wildcard: true, want: true},
-		{name: "7", topic: "$baidu/a/b/c/d/e/f/g/h/i", wildcard: true, want: true},
+		// disable wildcard
+		{name: "11", topic: "topic", wildcard: false, want1: true, want2: true},
+		{name: "12", topic: "topic/a", wildcard: false, want1: true, want2: true},
+		{name: "13", topic: "topic/a/b", wildcard: false, want1: true, want2: true},
+		{name: "14", topic: "$baidu/services/a", wildcard: false, want1: true, want2: true},
+		{name: "15", topic: "$link/services/a", wildcard: false, want1: true, want2: true},
+		{name: "16", topic: "a/b/c/d/e/f/g/h/i", wildcard: false, want1: true, want2: true},
+		{name: "17", topic: "$baidu/a/b/c/d/e/f/g/h/i", wildcard: true, want1: true, want2: true},
+		{name: "18", topic: genRandomString(255), wildcard: false, want1: true, want2: true},
 
-		{name: "8-0", topic: "", wildcard: false, want: false},
-		{name: "8", topic: "+", wildcard: false, want: false},
-		{name: "9", topic: "#", wildcard: false, want: false},
-		{name: "10", topic: "topic/+", wildcard: false, want: false},
-		{name: "11", topic: "topic/#", wildcard: false, want: false},
-		{name: "12", topic: "$SYS", wildcard: false, want: false},
-		{name: "13", topic: "$SYS/services/a", wildcard: false, want: false},
-		{name: "14", topic: "$SYS+/a", wildcard: false, want: false},
-		{name: "15", topic: "$SYS/+", wildcard: false, want: false},
-		{name: "16", topic: "$SYS#/a", wildcard: false, want: false},
-		{name: "17", topic: "$SYS/#", wildcard: false, want: false},
-		{name: "18", topic: "$baidu", wildcard: false, want: false},
-		{name: "19", topic: "$baidu+/a", wildcard: false, want: false},
-		{name: "20", topic: "$baidu/+", wildcard: false, want: false},
-		{name: "21", topic: "$baidu/#", wildcard: false, want: false},
-		{name: "22", topic: "$link", wildcard: false, want: false},
-		{name: "23", topic: "$link+/a", wildcard: false, want: false},
-		{name: "24", topic: "$link/+", wildcard: false, want: false},
-		{name: "25", topic: "$link/#", wildcard: false, want: false},
-		{name: "26", topic: "a/b/c/d/e/f/g/h/i/", wildcard: false, want: false},
-		{name: "27", topic: "a/b/c/d/e/f/g/h/i/j", wildcard: false, want: false},
-		{name: "28", topic: "$baidu/a/b/c/d/e/f/g/h/i/j", wildcard: false, want: false},
+		{name: "21", topic: "$SYS/services/a", wildcard: false, want1: true, want2: false},
 
-		{name: "29", topic: "topic", wildcard: true, want: true},
-		{name: "30", topic: "topic/a", wildcard: true, want: true},
-		{name: "31", topic: "topic/a/b", wildcard: true, want: true},
-		{name: "32", topic: "+", wildcard: true, want: true},
-		{name: "33", topic: "#", wildcard: true, want: true},
-		{name: "34", topic: "topic/+", wildcard: true, want: true},
-		{name: "35", topic: "topic/#", wildcard: true, want: true},
-		{name: "36", topic: "topic/+/b", wildcard: true, want: true},
-		{name: "37", topic: "topic/a/+", wildcard: true, want: true},
-		{name: "38", topic: "topic/a/#", wildcard: true, want: true},
-		{name: "39", topic: "+/a/#", wildcard: true, want: true},
-		{name: "40", topic: "+/+/#", wildcard: true, want: true},
-		{name: "41", topic: "$baidu/+/a", wildcard: true, want: true},
-		{name: "42", topic: "$baidu/+/#", wildcard: true, want: true},
-		{name: "43", topic: "$baidu/services/a", wildcard: true, want: true},
-		{name: "44", topic: "$link/+/a", wildcard: true, want: true},
-		{name: "45", topic: "$link/+/#", wildcard: true, want: true},
-		{name: "46", topic: "$link/services/a", wildcard: true, want: true},
-		{name: "47", topic: "a/b/c/d/e/f/g/h/i", wildcard: true, want: true},
-		{name: "48", topic: "$baidu/a/b/c/d/e/f/g/h/i", wildcard: true, want: true},
+		{name: "31", topic: "$baidu", wildcard: false, want1: false, want2: false},
+		{name: "32", topic: "$link", wildcard: false, want1: false, want2: false},
+		{name: "33", topic: "$SYS", wildcard: false, want1: false, want2: false},
+		{name: "35", topic: "", wildcard: false, want1: false, want2: false},
+		{name: "36", topic: "+", wildcard: false, want1: false, want2: false},
+		{name: "37", topic: "#", wildcard: false, want1: false, want2: false},
+		{name: "38", topic: "topic/+", wildcard: false, want1: false, want2: false},
+		{name: "39", topic: "topic/#", wildcard: false, want1: false, want2: false},
+		{name: "40", topic: "$SYS+/a", wildcard: false, want1: false, want2: false},
+		{name: "41", topic: "$SYS/+", wildcard: false, want1: false, want2: false},
+		{name: "42", topic: "$SYS#/a", wildcard: false, want1: false, want2: false},
+		{name: "43", topic: "$SYS/#", wildcard: false, want1: false, want2: false},
+		{name: "44", topic: "$baidu+/a", wildcard: false, want1: false, want2: false},
+		{name: "45", topic: "$baidu/+", wildcard: false, want1: false, want2: false},
+		{name: "46", topic: "$baidu/#", wildcard: false, want1: false, want2: false},
+		{name: "47", topic: "$link+/a", wildcard: false, want1: false, want2: false},
+		{name: "48", topic: "$link/+", wildcard: false, want1: false, want2: false},
+		{name: "49", topic: "$link/#", wildcard: false, want1: false, want2: false},
+		{name: "50", topic: "a/b/c/d/e/f/g/h/i/", wildcard: false, want1: false, want2: false},
+		{name: "52", topic: "a/b/c/d/e/f/g/h/i/j", wildcard: false, want1: false, want2: false},
+		{name: "53", topic: "$baidu/a/b/c/d/e/f/g/h/i/j", wildcard: false, want1: false, want2: false},
+		{name: "54", topic: genRandomString(256), wildcard: false, want1: false, want2: false},
 
-		{name: "49", topic: "", wildcard: true, want: false},
-		{name: "50", topic: "++", wildcard: true, want: false},
-		{name: "51", topic: "##", wildcard: true, want: false},
-		{name: "52", topic: "#/+", wildcard: true, want: false},
-		{name: "53", topic: "#/#", wildcard: true, want: false},
-		{name: "54", topic: "$baidu", wildcard: false, want: false},
-		{name: "55", topic: "$link", wildcard: false, want: false},
-		{name: "56", topic: "$SYS", wildcard: false, want: false},
-		{name: "57", topic: "$SYS/+", wildcard: false, want: false},
-		{name: "58", topic: "$SYS/#", wildcard: false, want: false},
-		{name: "59", topic: "$SYS/services/a", wildcard: false, want: false},
-		{name: "60", topic: "$+", wildcard: true, want: false},
-		{name: "61", topic: "$#", wildcard: true, want: false},
-		{name: "62", topic: "$+/a", wildcard: true, want: false},
-		{name: "63", topic: "$#/a", wildcard: true, want: false},
-		{name: "64", topic: "a/b/c/d/e/f/g/h/i/", wildcard: false, want: false},
-		{name: "65", topic: "a/b/c/d/e/f/g/h/i/j", wildcard: false, want: false},
-		{name: "66", topic: "$baidu/a/b/c/d/e/f/g/h/i/j", wildcard: false, want: false},
+		// enable wildcard
+		{name: "111", topic: "topic", wildcard: true, want1: true, want2: true},
+		{name: "112", topic: "topic/a", wildcard: true, want1: true, want2: true},
+		{name: "113", topic: "topic/a/b", wildcard: true, want1: true, want2: true},
+		{name: "114", topic: "+", wildcard: true, want1: true, want2: true},
+		{name: "115", topic: "#", wildcard: true, want1: true, want2: true},
+		{name: "116", topic: "topic/+", wildcard: true, want1: true, want2: true},
+		{name: "117", topic: "topic/#", wildcard: true, want1: true, want2: true},
+		{name: "118", topic: "topic/+/b", wildcard: true, want1: true, want2: true},
+		{name: "119", topic: "topic/a/+", wildcard: true, want1: true, want2: true},
+		{name: "120", topic: "topic/a/#", wildcard: true, want1: true, want2: true},
+		{name: "121", topic: "+/a/#", wildcard: true, want1: true, want2: true},
+		{name: "122", topic: "+/+/#", wildcard: true, want1: true, want2: true},
+		{name: "123", topic: "$baidu/+/a", wildcard: true, want1: true, want2: true},
+		{name: "124", topic: "$baidu/+/#", wildcard: true, want1: true, want2: true},
+		{name: "125", topic: "$baidu/services/a", wildcard: true, want1: true, want2: true},
+		{name: "126", topic: "$link/+/a", wildcard: true, want1: true, want2: true},
+		{name: "127", topic: "$link/+/#", wildcard: true, want1: true, want2: true},
+		{name: "128", topic: "$link/services/a", wildcard: true, want1: true, want2: true},
+		{name: "129", topic: "a/b/c/d/e/f/g/h/i", wildcard: true, want1: true, want2: true},
+		{name: "130", topic: "$baidu/a/b/c/d/e/f/g/h/i", wildcard: true, want1: true, want2: true},
+
+		{name: "141", topic: "$SYS/+", wildcard: true, want1: true, want2: false},
+		{name: "142", topic: "$SYS/#", wildcard: true, want1: true, want2: false},
+		{name: "143", topic: "$SYS/services/a", wildcard: false, want1: true, want2: false},
+
+		{name: "151", topic: "$baidu", wildcard: true, want1: false, want2: false},
+		{name: "152", topic: "$link", wildcard: true, want1: false, want2: false},
+		{name: "153", topic: "$SYS", wildcard: true, want1: false, want2: false},
+		{name: "154", topic: "", wildcard: true, want1: false, want2: false},
+		{name: "155", topic: "++", wildcard: true, want1: false, want2: false},
+		{name: "156", topic: "##", wildcard: true, want1: false, want2: false},
+		{name: "157", topic: "#/+", wildcard: true, want1: false, want2: false},
+		{name: "158", topic: "#/#", wildcard: true, want1: false, want2: false},
+		{name: "160", topic: "$+", wildcard: true, want1: false, want2: false},
+		{name: "161", topic: "$#", wildcard: true, want1: false, want2: false},
+		{name: "162", topic: "$+/a", wildcard: true, want1: false, want2: false},
+		{name: "163", topic: "$#/a", wildcard: true, want1: false, want2: false},
+		{name: "164", topic: "a/b/c/d/e/f/g/h/i/", wildcard: true, want1: false, want2: false},
+		{name: "165", topic: "a/b/c/d/e/f/g/h/i/j", wildcard: true, want1: false, want2: false},
+		{name: "166", topic: "$baidu/a/b/c/d/e/f/g/h/i/j", wildcard: true, want1: false, want2: false},
 	}
 
-	tc := NewTopicChecker([]string{"$baidu", "$link"})
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tc.CheckTopic(tt.topic, tt.wildcard); got != tt.want {
-				t.Errorf("topic = %s CheckTopic() = %v, want %v", tt.topic, got, tt.want)
+			tc := NewTopicChecker(nil)
+			if got := tc.CheckTopic(tt.topic, tt.wildcard); got != tt.want1 {
+				t.Errorf("topic = %s CheckTopic() = %v, want1 %v", tt.topic, got, tt.want1)
+			}
+			tc = NewTopicChecker([]string{"$baidu", "$link"})
+			if got := tc.CheckTopic(tt.topic, tt.wildcard); got != tt.want2 {
+				t.Errorf("topic = %s CheckTopic() = %v, want2 %v", tt.topic, got, tt.want2)
 			}
 		})
 	}
+}
+
+func genRandomString(n int) string {
+	c := []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = c[rand.Intn(len(c))]
+	}
+	return string(b)
 }
