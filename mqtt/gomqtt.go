@@ -198,15 +198,15 @@ func GetTLSCommonName(conn Connection) (cn string, ok bool) {
 	}
 	tlsconn, ok := inner.(*tls.Conn)
 	if !ok {
-		return cn, false
+		return
 	}
 	state := tlsconn.ConnectionState()
 	if !state.HandshakeComplete {
-		return cn, false
+		return
 	}
 	length := len(state.PeerCertificates)
 	if length == 0 {
-		return cn, false
+		return
 	}
 	cn = state.PeerCertificates[length-1].Subject.CommonName
 	return cn, true
