@@ -7,9 +7,6 @@ import (
 const (
 	maxTopicLevels = 9
 	maxTopicLength = 255
-	// topicSeparator    = "/"
-	// singleWildcard    = "+"
-	// multipleWildcard  = "#"
 )
 
 // TopicChecker checks topic
@@ -41,8 +38,14 @@ func (tc *TopicChecker) CheckTopic(topic string, wildcard bool) bool {
 		if len(segments) < 2 {
 			return false
 		}
-		if _, ok := tc.sysTopics[segments[0]]; !ok {
-			return false
+		if len(tc.sysTopics) == 0 {
+			if strings.Contains(segments[0], "+") || strings.Contains(segments[0], "#") {
+				return false
+			}
+		} else {
+			if _, ok := tc.sysTopics[segments[0]]; !ok {
+				return false
+			}
 		}
 		segments = segments[1:]
 	}
