@@ -189,7 +189,7 @@ type Server = transport.Server
 type Connection transport.Conn
 
 // GetTLSCommonName check bidirectional authentication and return commonName
-func GetTLSCommonName(conn Connection) (cn string, ok bool) {
+func GetTLSCommonName(conn Connection) (string, bool) {
 	var inner net.Conn
 	if nc, ok := conn.(*transport.NetConn); ok {
 		inner = nc.UnderlyingConn()
@@ -198,17 +198,17 @@ func GetTLSCommonName(conn Connection) (cn string, ok bool) {
 	}
 	tlsconn, ok := inner.(*tls.Conn)
 	if !ok {
-		return
+		return "", false
 	}
 	state := tlsconn.ConnectionState()
 	if !state.HandshakeComplete {
-		return
+		return "", false
 	}
 	length := len(state.PeerCertificates)
 	if length == 0 {
-		return
+		return "", false
 	}
-	cn = state.PeerCertificates[length-1].Subject.CommonName
+	cn := state.PeerCertificates[length-1].Subject.CommonName
 	return cn, true
 }
 
