@@ -9,24 +9,12 @@ const (
 	maxTopicLength = 255
 )
 
-// TopicChecker checks topic
-type TopicChecker struct {
-	sysTopics map[string]struct{}
+// CheckTopic check topic
+func CheckTopic(topic string, wildcard bool) bool {
+	return checkTopic(topic, wildcard, nil)
 }
 
-// NewTopicChecker create topicChecker
-func NewTopicChecker(sysTopics []string) *TopicChecker {
-	tc := &TopicChecker{
-		sysTopics: make(map[string]struct{}),
-	}
-	for _, t := range sysTopics {
-		tc.sysTopics[t] = struct{}{}
-	}
-	return tc
-}
-
-// CheckTopic checks the topic
-func (tc *TopicChecker) CheckTopic(topic string, wildcard bool) bool {
+func checkTopic(topic string, wildcard bool, sysTopics map[string]struct{}) bool {
 	if topic == "" {
 		return false
 	}
@@ -38,12 +26,12 @@ func (tc *TopicChecker) CheckTopic(topic string, wildcard bool) bool {
 		if len(segments) < 2 {
 			return false
 		}
-		if len(tc.sysTopics) == 0 {
+		if len(sysTopics) == 0 {
 			if strings.Contains(segments[0], "+") || strings.Contains(segments[0], "#") {
 				return false
 			}
 		} else {
-			if _, ok := tc.sysTopics[segments[0]]; !ok {
+			if _, ok := sysTopics[segments[0]]; !ok {
 				return false
 			}
 		}
@@ -71,17 +59,23 @@ func (tc *TopicChecker) CheckTopic(topic string, wildcard bool) bool {
 	return true
 }
 
-// MatchTopicQOS if topic matched, return the lowest qos
-func MatchTopicQOS(t *Trie, topic string) (bool, uint32) {
-	ss := t.Match(topic)
-	ok := len(ss) != 0
-	qos := uint32(1)
-	for _, s := range ss {
-		us := uint32(s.(QOS))
-		if us < qos {
-			qos = us
-			break
-		}
+// TopicChecker checks topic
+type TopicChecker struct {
+	sysTopics map[string]struct{}
+}
+
+// NewTopicChecker create topicChecker
+func NewTopicChecker(sysTopics []string) *TopicChecker {
+	tc := &TopicChecker{
+		sysTopics: make(map[string]struct{}),
 	}
-	return ok, qos
+	for _, t := range sysTopics {
+		tc.sysTopics[t] = struct{}{}
+	}
+	return tc
+}
+
+// CheckTopic checks the topic
+func (tc *TopicChecker) CheckTopic(topic string, wildcard bool) bool {
+	return checkTopic(topic, wildcard, tc.sysTopics)
 }

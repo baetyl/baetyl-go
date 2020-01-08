@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"math/rand"
 	"testing"
 )
 
@@ -20,6 +21,7 @@ func TestCheckTopic(t *testing.T) {
 		{name: "15", topic: "$link/services/a", wildcard: false, want1: true, want2: true},
 		{name: "16", topic: "a/b/c/d/e/f/g/h/i", wildcard: false, want1: true, want2: true},
 		{name: "17", topic: "$baidu/a/b/c/d/e/f/g/h/i", wildcard: true, want1: true, want2: true},
+		{name: "18", topic: genRandomString(255), wildcard: false, want1: true, want2: true},
 
 		{name: "21", topic: "$SYS/services/a", wildcard: false, want1: true, want2: false},
 
@@ -44,6 +46,7 @@ func TestCheckTopic(t *testing.T) {
 		{name: "50", topic: "a/b/c/d/e/f/g/h/i/", wildcard: false, want1: false, want2: false},
 		{name: "52", topic: "a/b/c/d/e/f/g/h/i/j", wildcard: false, want1: false, want2: false},
 		{name: "53", topic: "$baidu/a/b/c/d/e/f/g/h/i/j", wildcard: false, want1: false, want2: false},
+		{name: "54", topic: genRandomString(256), wildcard: false, want1: false, want2: false},
 
 		// enable wildcard
 		{name: "111", topic: "topic", wildcard: true, want1: true, want2: true},
@@ -100,4 +103,13 @@ func TestCheckTopic(t *testing.T) {
 			}
 		})
 	}
+}
+
+func genRandomString(n int) string {
+	c := []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = c[rand.Intn(len(c))]
+	}
+	return string(b)
 }
