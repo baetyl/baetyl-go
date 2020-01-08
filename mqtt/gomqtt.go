@@ -189,33 +189,10 @@ type Server = transport.Server
 // Connection the connection between a client and a server
 type Connection = transport.Conn
 
-// IsBidirectionalAuthentication check bidirectional authentication
-func IsBidirectionalAuthentication(conn *tls.Conn) bool {
-	state := conn.ConnectionState()
-	if !state.HandshakeComplete {
-		return false
-	}
-	return len(state.PeerCertificates) > 0
-}
-
-// GetCommonName gets commonName of cert
-func GetCommonName(conn *tls.Conn) string {
-	var cn string
-	state := conn.ConnectionState()
-	if !state.HandshakeComplete {
-		return cn
-	}
-	length := len(state.PeerCertificates)
-	if length == 0 {
-		return cn
-	}
-	cn = state.PeerCertificates[len(state.PeerCertificates)-1].Subject.CommonName
-	return cn
-}
-
-// GetTLSConn gets TLSConn
-func GetTLSConn(conn Connection) *tls.Conn {
+// IsBidirectionalAuthentication check bidirectional authentication and return commonName
+func IsBidirectionalAuthentication(conn Connection) (bool, string) {
 	var inner net.Conn
+	var cn string
 	if nc, ok := conn.(*transport.NetConn); ok {
 		inner = nc.UnderlyingConn()
 	} else if wss, ok := conn.(*transport.WebSocketConn); ok {
@@ -223,9 +200,18 @@ func GetTLSConn(conn Connection) *tls.Conn {
 	}
 	tlsconn, ok := inner.(*tls.Conn)
 	if !ok {
-		return nil
+		return false, cn
 	}
-	return tlsconn
+	state := tlsconn.ConnectionState()
+	if !state.HandshakeComplete {
+		return false, cn
+	}
+	length := len(state.PeerCertificates)
+	if length == 0 {
+		return false, cn
+	}
+	cn = state.PeerCertificates[length-1].Subject.CommonName
+	return true, cn
 }
 
 // all gomqtt client errors
