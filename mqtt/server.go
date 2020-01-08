@@ -64,7 +64,7 @@ func (tp *Transport) accepting(svr Server, handle Handle) {
 				l.Error("failed to accept connection", log.Error(err))
 				return err
 			}
-			handle(Connection{conn})
+			handle(conn)
 		}
 	})
 }

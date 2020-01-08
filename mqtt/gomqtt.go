@@ -186,16 +186,14 @@ func NewFuture() *Future {
 type Server = transport.Server
 
 // Connection the connection between a client and a server
-type Connection struct {
-	transport.Conn
-}
+type Connection transport.Conn
 
 // GetTLSCommonName check bidirectional authentication and return commonName
-func (c *Connection) GetTLSCommonName() (cn string, ok bool) {
+func GetTLSCommonName(conn Connection) (cn string, ok bool) {
 	var inner net.Conn
-	if nc, ok := c.Conn.(*transport.NetConn); ok {
+	if nc, ok := conn.(*transport.NetConn); ok {
 		inner = nc.UnderlyingConn()
-	} else if wss, ok := c.Conn.(*transport.WebSocketConn); ok {
+	} else if wss, ok := conn.(*transport.WebSocketConn); ok {
 		inner = wss.UnderlyingConn().UnderlyingConn()
 	}
 	tlsconn, ok := inner.(*tls.Conn)
