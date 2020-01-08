@@ -65,7 +65,10 @@ func TestMqttTcpTls(t *testing.T) {
 		}
 		assert.NoError(t, err)
 		assert.NotNil(t, p)
-		assert.True(t, IsBidirectionalAuthentication(conn))
+		cn, isBidAuth := GetTLSCommonName(conn)
+		assert.True(t, isBidAuth)
+		assert.NotNil(t, cn)
+		assert.Equal(t, "client.example.org", cn)
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
@@ -74,7 +77,7 @@ func TestMqttTcpTls(t *testing.T) {
 			"ssl://localhost:0",
 		},
 		Certificate: utils.Certificate{
-			CA:   "./testcert/ca.pem",
+			CA:   "./testcert/ca.chain.pem",
 			Key:  "./testcert/server.key",
 			Cert: "./testcert/server.pem",
 		},
@@ -101,9 +104,9 @@ func TestMqttTcpTls(t *testing.T) {
 
 	// count: 2
 	ctc, err := utils.NewTLSConfigClient(utils.Certificate{
-		CA:                 "./testcert/ca.pem",
-		Key:                "./testcert/testssl2.key",
-		Cert:               "./testcert/testssl2.pem",
+		CA:                 "./testcert/ca.chain.pem",
+		Key:                "./testcert/client.key",
+		Cert:               "./testcert/client.pem",
 		InsecureSkipVerify: true,
 	})
 	assert.NoError(t, err)
@@ -174,7 +177,10 @@ func TestMqttWebSocketTls(t *testing.T) {
 		fmt.Println(p, err)
 		assert.NoError(t, err)
 		assert.NotNil(t, p)
-		assert.True(t, IsBidirectionalAuthentication(conn))
+		cn, isBidAuth := GetTLSCommonName(conn)
+		assert.True(t, isBidAuth)
+		assert.NotNil(t, cn)
+		assert.Equal(t, "client.example.org", cn)
 		err = conn.Send(p, false)
 		assert.NoError(t, err)
 	}
@@ -183,7 +189,7 @@ func TestMqttWebSocketTls(t *testing.T) {
 			"wss://localhost:0/mqtt",
 		},
 		Certificate: utils.Certificate{
-			CA:   "./testcert/ca.pem",
+			CA:   "./testcert/ca.chain.pem",
 			Key:  "./testcert/server.key",
 			Cert: "./testcert/server.pem",
 		},
@@ -210,9 +216,9 @@ func TestMqttWebSocketTls(t *testing.T) {
 
 	// count: 2
 	ctc, err := utils.NewTLSConfigClient(utils.Certificate{
-		CA:                 "./testcert/ca.pem",
-		Key:                "./testcert/testssl2.key",
-		Cert:               "./testcert/testssl2.pem",
+		CA:                 "./testcert/ca.chain.pem",
+		Key:                "./testcert/client.key",
+		Cert:               "./testcert/client.pem",
 		InsecureSkipVerify: true,
 	})
 	assert.NoError(t, err)

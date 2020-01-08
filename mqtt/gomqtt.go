@@ -186,10 +186,10 @@ func NewFuture() *Future {
 type Server = transport.Server
 
 // Connection the connection between a client and a server
-type Connection = transport.Conn
+type Connection transport.Conn
 
-// IsBidirectionalAuthentication check bidirectional authentication
-func IsBidirectionalAuthentication(conn Connection) bool {
+// GetTLSCommonName check bidirectional authentication and return commonName
+func GetTLSCommonName(conn Connection) (string, bool) {
 	var inner net.Conn
 	if nc, ok := conn.(*transport.NetConn); ok {
 		inner = nc.UnderlyingConn()
@@ -198,13 +198,18 @@ func IsBidirectionalAuthentication(conn Connection) bool {
 	}
 	tlsconn, ok := inner.(*tls.Conn)
 	if !ok {
-		return false
+		return "", false
 	}
 	state := tlsconn.ConnectionState()
 	if !state.HandshakeComplete {
-		return false
+		return "", false
 	}
-	return len(state.PeerCertificates) > 0
+	length := len(state.PeerCertificates)
+	if length == 0 {
+		return "", false
+	}
+	cn := state.PeerCertificates[length-1].Subject.CommonName
+	return cn, true
 }
 
 // all gomqtt client errors
