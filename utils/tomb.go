@@ -12,6 +12,12 @@ const (
 	gos = int32(1)
 )
 
+//  all errors
+var (
+	ErrStillAlive = tb.ErrStillAlive
+	ErrDying      = tb.ErrDying
+)
+
 // Tomb wraps tomb.Tomb
 type Tomb struct {
 	t tb.Tomb
@@ -46,6 +52,11 @@ func (t *Tomb) Dying() <-chan struct{} {
 	return t.t.Dying()
 }
 
+// Dead returns the channel that can be used to wait until all goroutines have finished running.
+func (t *Tomb) Dead() <-chan struct{} {
+	return t.t.Dead()
+}
+
 // Wait blocks until all goroutines have finished running, and
 // then returns the reason for their death.
 //
@@ -62,4 +73,9 @@ func (t *Tomb) Wait() (err error) {
 // Alive returns true if the tomb is not in a dying or dead state.
 func (t *Tomb) Alive() bool {
 	return t.t.Alive()
+}
+
+// Err returns the death reason, or ErrStillAlive if the tomb is not in a dying or dead state.
+func (t *Tomb) Err() (reason error) {
+	return t.t.Err()
 }
