@@ -25,7 +25,7 @@ func TestMqttTcp(t *testing.T) {
 		}}
 	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
-	assert.Equal(t, m.servers, m.GetServers())
+	assert.Equal(t, 2, len(m.GetServers()))
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 
@@ -84,7 +84,7 @@ func TestMqttTcpTls(t *testing.T) {
 	}
 	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
-	assert.Equal(t, m.servers, m.GetServers())
+	assert.Equal(t, 1, len(m.GetServers()))
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 
@@ -136,7 +136,7 @@ func TestMqttWebSocket(t *testing.T) {
 		}}
 	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
-	assert.Equal(t, m.servers, m.GetServers())
+	assert.Equal(t, 2, len(m.GetServers()))
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 
@@ -197,7 +197,7 @@ func TestMqttWebSocketTls(t *testing.T) {
 	}
 	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
-	assert.Equal(t, m.servers, m.GetServers())
+	assert.Equal(t, 1, len(m.GetServers()))
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 
