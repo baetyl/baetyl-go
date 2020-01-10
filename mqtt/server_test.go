@@ -25,7 +25,7 @@ func TestMqttTcp(t *testing.T) {
 		}}
 	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
-	assert.Equal(t, m.servers, m.GetServer())
+	assert.Equal(t, m.servers, m.GetServers())
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 
@@ -58,7 +58,6 @@ func TestMqttTcpTls(t *testing.T) {
 	handle := func(conn Connection) {
 		c := atomic.AddInt32(&count, 1)
 		p, err := conn.Receive()
-		fmt.Println(p, err)
 		if c == 1 {
 			assert.EqualError(t, err, "remote error: tls: bad certificate")
 			assert.Nil(t, p)
@@ -85,7 +84,7 @@ func TestMqttTcpTls(t *testing.T) {
 	}
 	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
-	assert.Equal(t, m.servers, m.GetServer())
+	assert.Equal(t, m.servers, m.GetServers())
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 
@@ -137,7 +136,7 @@ func TestMqttWebSocket(t *testing.T) {
 		}}
 	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
-	assert.Equal(t, m.servers, m.GetServer())
+	assert.Equal(t, m.servers, m.GetServers())
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 
@@ -177,7 +176,6 @@ func TestMqttWebSocket(t *testing.T) {
 func TestMqttWebSocketTls(t *testing.T) {
 	handle := func(conn Connection) {
 		p, err := conn.Receive()
-		fmt.Println(p, err)
 		assert.NoError(t, err)
 		assert.NotNil(t, p)
 		cn, isBidAuth := GetTLSCommonName(conn)
@@ -199,7 +197,7 @@ func TestMqttWebSocketTls(t *testing.T) {
 	}
 	m, err := NewTransport(svccfg, handle)
 	assert.NoError(t, err)
-	assert.Equal(t, m.servers, m.GetServer())
+	assert.Equal(t, m.servers, m.GetServers())
 	defer m.Close()
 	time.Sleep(time.Millisecond * 100)
 

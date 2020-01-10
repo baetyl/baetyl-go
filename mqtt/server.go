@@ -48,8 +48,8 @@ func NewTransport(cfg ServerConfig, handle Handle) (*Transport, error) {
 	return tp, nil
 }
 
-// GetServer gets transport server
-func (tp *Transport) GetServer() []Server {
+// GetServers gets transport server
+func (tp *Transport) GetServers() []Server {
 	return tp.servers
 }
 
