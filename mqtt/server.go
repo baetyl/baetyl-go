@@ -48,6 +48,11 @@ func NewTransport(cfg ServerConfig, handle Handle) (*Transport, error) {
 	return tp, nil
 }
 
+// GetServers gets transport server
+func (tp *Transport) GetServers() []Server {
+	return tp.servers
+}
+
 func (tp *Transport) accepting(svr Server, handle Handle) {
 	tp.Go(func() error {
 		l := log.With(log.Any("server", svr.Addr().String()))
