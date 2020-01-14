@@ -31,6 +31,7 @@ func init() {
 // Init init and return logger
 func Init(c Config, fields ...Field) (*Logger, error) {
 	config := zap.NewProductionConfig()
+	config.Sampling = nil
 	if c.Path != "" {
 		config.OutputPaths = append(config.OutputPaths, "lumberjack:?"+c.String())
 	}
