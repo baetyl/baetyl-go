@@ -6,15 +6,15 @@ import (
 )
 
 func TestNewTLSConfigServer(t *testing.T) {
-	tls, err := NewTLSConfigServer(Certificate{Key: "testcert/server.key"})
+	tls, err := NewTLSConfigServer(Certificate{Key: "../example/var/lib/baetyl/testcert/server.key"})
 	assert.Error(t, err)
 
-	tls, err = NewTLSConfigServer(Certificate{Cert: "testcert/server.pem"})
+	tls, err = NewTLSConfigServer(Certificate{Cert: "../example/var/lib/baetyl/testcert/server.pem"})
 	assert.Error(t, err)
 
 	c := Certificate{
-		Key:  "testcert/server.key",
-		Cert: "testcert/server.pem",
+		Key:  "../example/var/lib/baetyl/testcert/server.key",
+		Cert: "../example/var/lib/baetyl/testcert/server.pem",
 	}
 
 	tls, err = NewTLSConfigServer(c)
@@ -23,16 +23,16 @@ func TestNewTLSConfigServer(t *testing.T) {
 }
 
 func TestNewTLSConfigClient(t *testing.T) {
-	tls, err := NewTLSConfigClient(Certificate{Key: "testcert/client.key"})
+	tls, err := NewTLSConfigClient(Certificate{Key: "../example/var/lib/baetyl/testcert/client.key"})
 	assert.Error(t, err)
 
-	tls, err = NewTLSConfigClient(Certificate{Cert: "testcert/client.pem"})
+	tls, err = NewTLSConfigClient(Certificate{Cert: "../example/var/lib/baetyl/testcert/client.pem"})
 	assert.Error(t, err)
 	assert.Empty(t, tls)
 
 	c := Certificate{
-		Key:  "testcert/client.key",
-		Cert: "testcert/client.pem",
+		Key:  "../example/var/lib/baetyl/testcert/client.key",
+		Cert: "../example/var/lib/baetyl/testcert/client.pem",
 	}
 	tls, err = NewTLSConfigClient(c)
 	assert.NoError(t, err)
