@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package api;
+package kv;
 
 option (gogoproto.sizer_all) = true;
 option (gogoproto.marshaler_all) = true;
@@ -29,9 +29,9 @@ service KVService {
 // KV kv message
 message KV {
   // key is the key, in bytes, to put into the key-value store.
-  bytes key   = 1;
+  string key   = 1;
   // value is the value, in bytes, to associate with the key in the key-value store.
-  bytes value = 2;
+  bytes  value = 2;
 }
 
 // KVs kvs message

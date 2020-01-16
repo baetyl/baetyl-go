@@ -67,7 +67,7 @@ func (s *mockKVService) List(ctx context.Context, _kv *kv.KV) (*kv.KVs, error) {
 	}
 	for k, v := range s.m {
 		kvs.Kvs = append(kvs.Kvs, &kv.KV{
-			Key:   []byte(k),
+			Key:   k,
 			Value: v,
 		})
 	}

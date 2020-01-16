@@ -87,17 +87,17 @@ type Context interface {
 	// set kv which supports context
 	SetKVConext(ctx context.Context, kv kv.KV) error
 	// get kv
-	GetKV(k []byte) (*kv.KV, error)
+	GetKV(k string) (*kv.KV, error)
 	// get kv which supports context
-	GetKVConext(ctx context.Context, k []byte) (*kv.KV, error)
+	GetKVConext(ctx context.Context, k string) (*kv.KV, error)
 	// del kv
-	DelKV(k []byte) error
+	DelKV(k string) error
 	// del kv which supports context
-	DelKVConext(ctx context.Context, k []byte) error
+	DelKVConext(ctx context.Context, k string) error
 	// list kv with prefix
-	ListKV(p []byte) ([]*kv.KV, error)
+	ListKV(p string) ([]*kv.KV, error)
 	// list kv with prefix which supports context
-	ListKVContext(ctx context.Context, p []byte) ([]*kv.KV, error)
+	ListKVContext(ctx context.Context, p string) ([]*kv.KV, error)
 }
 
 type ctx struct {
