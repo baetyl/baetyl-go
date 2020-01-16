@@ -77,9 +77,9 @@ func TestMqttTcpTls(t *testing.T) {
 			"ssl://localhost:0",
 		},
 		Certificate: utils.Certificate{
-			CA:   "./testcert/ca.chain.pem",
-			Key:  "./testcert/server.key",
-			Cert: "./testcert/server.pem",
+			CA:   "../example/var/lib/baetyl/testcert/ca.pem", // ca.pem is a certificate chain
+			Key:  "../example/var/lib/baetyl/testcert/server.key",
+			Cert: "../example/var/lib/baetyl/testcert/server.pem",
 		},
 	}
 	m, err := NewTransport(svccfg, handle)
@@ -105,9 +105,9 @@ func TestMqttTcpTls(t *testing.T) {
 
 	// count: 2
 	ctc, err := utils.NewTLSConfigClient(utils.Certificate{
-		CA:                 "./testcert/ca.chain.pem",
-		Key:                "./testcert/client.key",
-		Cert:               "./testcert/client.pem",
+		CA:                 "../example/var/lib/baetyl/testcert/ca.pem", // ca.pem is a certificate chain
+		Key:                "../example/var/lib/baetyl/testcert/client.key",
+		Cert:               "../example/var/lib/baetyl/testcert/client.pem",
 		InsecureSkipVerify: true,
 	})
 	assert.NoError(t, err)
@@ -190,9 +190,9 @@ func TestMqttWebSocketTls(t *testing.T) {
 			"wss://localhost:0/mqtt",
 		},
 		Certificate: utils.Certificate{
-			CA:   "./testcert/ca.chain.pem",
-			Key:  "./testcert/server.key",
-			Cert: "./testcert/server.pem",
+			CA:   "../example/var/lib/baetyl/testcert/ca.pem", // ca.pem is a certificate chain
+			Key:  "../example/var/lib/baetyl/testcert/server.key",
+			Cert: "../example/var/lib/baetyl/testcert/server.pem",
 		},
 	}
 	m, err := NewTransport(svccfg, handle)
@@ -218,9 +218,9 @@ func TestMqttWebSocketTls(t *testing.T) {
 
 	// count: 2
 	ctc, err := utils.NewTLSConfigClient(utils.Certificate{
-		CA:                 "./testcert/ca.chain.pem",
-		Key:                "./testcert/client.key",
-		Cert:               "./testcert/client.pem",
+		CA:                 "../example/var/lib/baetyl/testcert/ca.pem", // ca.pem is a certificate chain
+		Key:                "../example/var/lib/baetyl/testcert/client.key",
+		Cert:               "../example/var/lib/baetyl/testcert/client.pem",
 		InsecureSkipVerify: true,
 	})
 	assert.NoError(t, err)
