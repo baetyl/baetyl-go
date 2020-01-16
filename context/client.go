@@ -50,29 +50,29 @@ func (c *Client) SetKVConext(ctx context.Context, kv kv.KV) error {
 }
 
 // GetKV get kv
-func (c *Client) GetKV(k []byte) (*kv.KV, error) {
+func (c *Client) GetKV(k string) (*kv.KV, error) {
 	return c.KV.Get(context.Background(), &kv.KV{Key: k}, grpc.WaitForReady(true))
 }
 
 // GetKVConext get kv which supports context
-func (c *Client) GetKVConext(ctx context.Context, k []byte) (*kv.KV, error) {
+func (c *Client) GetKVConext(ctx context.Context, k string) (*kv.KV, error) {
 	return c.KV.Get(ctx, &kv.KV{Key: k}, grpc.WaitForReady(true))
 }
 
 // DelKV del kv
-func (c *Client) DelKV(k []byte) error {
+func (c *Client) DelKV(k string) error {
 	_, err := c.KV.Del(context.Background(), &kv.KV{Key: k}, grpc.WaitForReady(true))
 	return err
 }
 
 // DelKVConext del kv which supports context
-func (c *Client) DelKVConext(ctx context.Context, k []byte) error {
+func (c *Client) DelKVConext(ctx context.Context, k string) error {
 	_, err := c.KV.Del(ctx, &kv.KV{Key: k}, grpc.WaitForReady(true))
 	return err
 }
 
 // ListKV list kv with prefix
-func (c *Client) ListKV(p []byte) ([]*kv.KV, error) {
+func (c *Client) ListKV(p string) ([]*kv.KV, error) {
 	kvs, err := c.KV.List(context.Background(), &kv.KV{Key: p}, grpc.WaitForReady(true))
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (c *Client) ListKV(p []byte) ([]*kv.KV, error) {
 }
 
 // ListKVContext list kv with prefix which supports context
-func (c *Client) ListKVContext(ctx context.Context, p []byte) ([]*kv.KV, error) {
+func (c *Client) ListKVContext(ctx context.Context, p string) ([]*kv.KV, error) {
 	kvs, err := c.KV.List(ctx, &kv.KV{Key: p}, grpc.WaitForReady(true))
 	if err != nil {
 		return nil, err

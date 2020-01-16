@@ -27,7 +27,7 @@ func TestNewEnvClient(t *testing.T) {
 	assert.NotNil(t, cli)
 
 	a := kv.KV{
-		Key:   []byte("name"),
+		Key:   "name",
 		Value: []byte("baetyl"),
 	}
 	_, err = cli.GetKV(a.Key)
@@ -46,11 +46,11 @@ func TestNewEnvClient(t *testing.T) {
 	err = cli.SetKV(a)
 	assert.NoError(t, err)
 
-	a.Key = []byte("bb")
+	a.Key = "bb"
 	err = cli.SetKV(a)
 	assert.NoError(t, err)
 
-	respa, err := cli.ListKV([]byte(""))
+	respa, err := cli.ListKV("")
 	assert.NoError(t, err)
 	assert.Len(t, respa, 2)
 
@@ -86,13 +86,13 @@ func TestNewEnvClient(t *testing.T) {
 
 	ctx5, cel5 := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cel5()
-	respa, err = cli.ListKVContext(ctx5, []byte(""))
+	respa, err = cli.ListKVContext(ctx5, "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "DeadlineExceeded desc")
 
 	svr = FakeServer(t, port, new(mockAuthenticator))
 
-	a.Key = []byte("aa")
+	a.Key = "aa"
 	err = cli.SetKV(a)
 	assert.NoError(t, err)
 
@@ -114,13 +114,13 @@ func TestNewEnvClient(t *testing.T) {
 
 	ctx9, cel9 := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cel9()
-	a.Key = []byte("bb")
+	a.Key = "bb"
 	err = cli.SetKVConext(ctx9, a)
 	assert.NoError(t, err)
 
 	ctx10, cel10 := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cel10()
-	respa, err = cli.ListKVContext(ctx10, []byte(""))
+	respa, err = cli.ListKVContext(ctx10, "")
 	assert.NoError(t, err)
 	assert.Len(t, respa, 2)
 
