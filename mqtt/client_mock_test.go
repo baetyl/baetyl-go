@@ -3,6 +3,7 @@ package mqtt
 import (
 	"fmt"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,9 +15,11 @@ import (
 )
 
 type mockObserver struct {
-	t    *testing.T
-	pkts chan Packet
-	errs chan error
+	t            *testing.T
+	pkts         chan Packet
+	errs         chan error
+	errOnPublish error
+	sync.Mutex
 }
 
 func newMockObserver(t *testing.T) *mockObserver {
@@ -30,7 +33,9 @@ func newMockObserver(t *testing.T) *mockObserver {
 func (o *mockObserver) OnPublish(pkt *packet.Publish) error {
 	fmt.Println("--> OnPublish:", pkt)
 	o.pkts <- pkt
-	return nil
+	o.Lock()
+	defer o.Unlock()
+	return o.errOnPublish
 }
 
 func (o *mockObserver) OnPuback(pkt *packet.Puback) error {
@@ -42,6 +47,12 @@ func (o *mockObserver) OnPuback(pkt *packet.Puback) error {
 func (o *mockObserver) OnError(err error) {
 	fmt.Println("--> OnError:", err)
 	o.errs <- err
+}
+
+func (o *mockObserver) setErrOnPublish(err error) {
+	o.Lock()
+	o.errOnPublish = err
+	o.Unlock()
 }
 
 func (o *mockObserver) assertPkts(pkts ...Packet) {
@@ -75,13 +86,14 @@ func safeReceive(ch chan struct{}) {
 }
 
 func newConfig(port string) (c ClientConfig) {
-	c.CleanSession = true
 	c.Address = "tcp://localhost:" + port
+	c.CleanSession = true
+	c.DisableAutoAck = true
 	defaults.Set(&c)
 	return
 }
 
-func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {
+func initMockBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {
 	done := make(chan struct{})
 
 	server, err := transport.Launch("tcp://localhost:0")

@@ -17,6 +17,7 @@ type stream struct {
 	tracker *Tracker
 	tomb    utils.Tomb
 	once    sync.Once
+	mu      sync.Mutex
 }
 
 func (c *Client) connect() (*stream, error) {
@@ -62,7 +63,9 @@ func (c *Client) connect() (*stream, error) {
 func (s *stream) send(pkt Packet, async bool) error {
 	s.tracker.Reset()
 
+	s.mu.Lock()
 	err := s.conn.Send(pkt, async)
+	s.mu.Unlock()
 	if err != nil {
 		s.die("failed to send packet", err)
 		return err
@@ -130,7 +133,15 @@ func (s *stream) receiving() error {
 
 		switch p := pkt.(type) {
 		case *Publish:
-			err = s.cli.onPublish(p)
+			qos := p.Message.QOS
+			uerr := s.cli.onPublish(p)
+			if uerr != nil {
+				s.cli.log.Warn("failed to handle publish packet in user code", log.Error(uerr))
+			} else if !s.cli.cfg.DisableAutoAck && qos == 1 {
+				ack := NewPuback()
+				ack.ID = p.ID
+				err = s.send(ack, true)
+			}
 		case *Puback:
 			err = s.cli.onPuback(p)
 		case *Suback:

@@ -49,27 +49,33 @@ func TestLinkClientConnectErrorWrongPort(t *testing.T) {
 	assert.Nil(t, res)
 }
 
-func TestLinkClientConnectCallSend(t *testing.T) {
+func TestLinkClientSendRecvMessage(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
 	cfg.Level = "debug"
 	log.Init(cfg)
 
-	msg := &Message{}
-	msg.Context.ID = 1
+	msg0 := &Message{}
+	msg1 := &Message{}
+	msg1.Context.ID = 1
+	msg1.Context.QOS = 1
 	ack := &Message{}
 	ack.Context.ID = 1
 	ack.Context.Type = Ack
 
 	server := flow.New().Debug().
-		Receive(msg).
-		Send(msg).
-		Receive(ack).
+		Receive(msg0).
+		Send(msg0).
+		Receive(msg1).
 		Send(ack).
+		Send(msg1).
+		Receive(ack). // auto ack
+		Receive(ack).
+		Send(msg1). // not auto ack since user code error
 		End().
 		Close()
 
-	done := FakeServer(t, server, nil)
+	done := initMockServer(t, server, nil)
 
 	cc := newClientConfig()
 	obs := newMockObserver(t)
@@ -77,18 +83,83 @@ func TestLinkClientConnectCallSend(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 
-	res, err := c.Call(msg)
+	res, err := c.Call(msg0)
 	assert.NoError(t, err)
-	assert.Equal(t, msg, res)
+	assert.Equal(t, msg0, res)
 
-	err = c.Send(msg)
+	res, err = c.Call(msg1)
 	assert.NoError(t, err)
-	obs.assertMsgs(msg)
+	assert.Equal(t, msg1, res)
+
+	err = c.Send(msg0)
+	assert.NoError(t, err)
+	obs.assertMsgs(msg0)
+
+	err = c.Send(msg1)
+	assert.NoError(t, err)
+	obs.assertMsgs(ack, msg1)
+
+	obs.setErrOnMsg(ErrClientMessageTypeInvalid)
+	err = c.Send(ack)
+	assert.NoError(t, err)
+	obs.assertMsgs(msg1)
+
+	assert.NoError(t, c.Close())
+	safeReceive(done)
+}
+
+func TestLinkClientSendRecvMessageDisableAutoAck(t *testing.T) {
+	cfg := log.Config{}
+	utils.SetDefaults(&cfg)
+	cfg.Level = "debug"
+	log.Init(cfg)
+
+	msg0 := &Message{}
+	msg1 := &Message{}
+	msg1.Context.ID = 1
+	msg1.Context.QOS = 1
+	ack := &Message{}
+	ack.Context.ID = 1
+	ack.Context.Type = Ack
+
+	server := flow.New().Debug().
+		Receive(msg0).
+		Send(msg0).
+		Receive(msg1).
+		Send(ack).
+		Send(msg1).
+		Receive(ack).
+		End().
+		Close()
+
+	done := initMockServer(t, server, nil)
+
+	cc := newClientConfig()
+	cc.DisableAutoAck = true
+	obs := newMockObserver(t)
+	c, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+
+	res, err := c.Call(msg0)
+	assert.NoError(t, err)
+	assert.Equal(t, msg0, res)
+
+	res, err = c.Call(msg1)
+	assert.NoError(t, err)
+	assert.Equal(t, msg1, res)
+
+	err = c.Send(msg0)
+	assert.NoError(t, err)
+	obs.assertMsgs(msg0)
+
+	err = c.Send(msg1)
+	assert.NoError(t, err)
+	obs.assertMsgs(ack, msg1)
 
 	err = c.Send(ack)
 	assert.NoError(t, err)
 
-	obs.assertMsgs(ack)
 	assert.NoError(t, c.Close())
 	safeReceive(done)
 }
@@ -108,7 +179,7 @@ func TestLinkClientConnectWithoutCredentials(t *testing.T) {
 		Receive(msg).
 		End().
 		Close()
-	done := FakeServer(t, server, &FakeAuth{"u1": "p1", "u2": "p2"})
+	done := initMockServer(t, server, &mockAuth{"u1": "p1", "u2": "p2"})
 
 	fmt.Println("--> no password <--")
 
@@ -176,7 +247,7 @@ func TestLinkClientReconnect(t *testing.T) {
 	server := flow.New().Debug().
 		Receive(msg).
 		Close()
-	done := FakeServer(t, server, nil)
+	done := initMockServer(t, server, nil)
 
 	cc := newClientConfig()
 	cc.Timeout = time.Millisecond * 100
@@ -207,7 +278,7 @@ func TestLinkClientReconnect(t *testing.T) {
 		Send(msg).
 		End().
 		Close()
-	done = FakeServer(t, server, nil)
+	done = initMockServer(t, server, nil)
 
 	err = c.Send(msg)
 	assert.NoError(t, err)
