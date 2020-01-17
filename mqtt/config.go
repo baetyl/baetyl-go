@@ -20,14 +20,15 @@ type ServerConfig struct {
 
 // ClientConfig mqtt client config
 type ClientConfig struct {
-	Address      string            `yaml:"address" json:"address"`
-	Username     string            `yaml:"username" json:"username"`
-	Password     string            `yaml:"password" json:"password"`
-	Certificate  utils.Certificate `yaml:",inline" json:",inline"`
-	ClientID     string            `yaml:"clientid" json:"clientid"`
-	CleanSession bool              `yaml:"cleansession" json:"cleansession"`
-	KeepAlive    time.Duration     `yaml:"keepalive" json:"keepalive"` // keepalive not enabled by default
-	Timeout      time.Duration     `yaml:"timeout" json:"timeout" default:"30s"`
-	Interval     time.Duration     `yaml:"interval" json:"interval" default:"2m"`
-	BufferSize   int               `yaml:"buffersize" json:"buffersize" default:"10"`
+	Address        string            `yaml:"address" json:"address"`
+	Username       string            `yaml:"username" json:"username"`
+	Password       string            `yaml:"password" json:"password"`
+	Certificate    utils.Certificate `yaml:",inline" json:",inline"`
+	ClientID       string            `yaml:"clientid" json:"clientid"`
+	CleanSession   bool              `yaml:"cleansession" json:"cleansession"`
+	KeepAlive      time.Duration     `yaml:"keepalive" json:"keepalive"` // keepalive not enabled by default
+	Timeout        time.Duration     `yaml:"timeout" json:"timeout" default:"30s"`
+	Interval       time.Duration     `yaml:"interval" json:"interval" default:"2m"`
+	BufferSize     int               `yaml:"buffersize" json:"buffersize" default:"10"`
+	DisableAutoAck bool              `yaml:"disableAutoAck" json:"disableAutoAck"`
 }

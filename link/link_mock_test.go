@@ -18,9 +18,11 @@ import (
 var testAddr = "0.0.0.0:50006"
 
 type mockObserver struct {
-	t    *testing.T
-	msgs chan *Message
-	errs chan error
+	t        *testing.T
+	msgs     chan *Message
+	errs     chan error
+	errOnMsg error
+	sync.Mutex
 }
 
 func newMockObserver(t *testing.T) *mockObserver {
@@ -37,7 +39,9 @@ func (o *mockObserver) OnMsg(msg *Message) error {
 	case o.msgs <- msg:
 	default:
 	}
-	return nil
+	o.Lock()
+	defer o.Unlock()
+	return o.errOnMsg
 }
 
 func (o *mockObserver) OnAck(msg *Message) error {
@@ -55,6 +59,12 @@ func (o *mockObserver) OnErr(err error) {
 	case o.errs <- err:
 	default:
 	}
+}
+
+func (o *mockObserver) setErrOnMsg(err error) {
+	o.Lock()
+	o.errOnMsg = err
+	o.Unlock()
 }
 
 func (o *mockObserver) assertMsgs(msgs ...*Message) {
@@ -101,11 +111,11 @@ func newClientConfig() (c ClientConfig) {
 	return
 }
 
-// FakeAuth the fake of auth
-type FakeAuth map[string]string
+// mockAuth the fake of auth
+type mockAuth map[string]string
 
 // Authenticate authenticates username and password
-func (ma FakeAuth) Authenticate(ctx context.Context) error {
+func (ma mockAuth) Authenticate(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return ErrUnauthenticated
@@ -156,8 +166,8 @@ func (s *mockServer) Close() error {
 	return nil
 }
 
-// FakeServer the fake of link server for test only
-func FakeServer(t *testing.T, f *flow.Flow, a Authenticator) chan struct{} {
+// initMockServer the fake of link server for test only
+func initMockServer(t *testing.T, f *flow.Flow, a Authenticator) chan struct{} {
 	s, err := NewServer(newServerConfig(), a)
 	assert.NoError(t, err)
 

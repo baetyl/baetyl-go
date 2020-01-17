@@ -14,6 +14,7 @@ type stream struct {
 	conn Link_TalkClient
 	tomb utils.Tomb
 	once sync.Once
+	mu   sync.Mutex
 }
 
 func (c *Client) connect() (*stream, error) {
@@ -30,7 +31,9 @@ func (c *Client) connect() (*stream, error) {
 }
 
 func (s *stream) send(msg *Message) error {
+	s.mu.Lock()
 	err := s.conn.Send(msg)
+	s.mu.Unlock()
 	if err != nil {
 		s.die("failed to send message", err)
 		return err
@@ -88,7 +91,16 @@ func (s *stream) receiving() error {
 
 		switch msg.Context.Type {
 		case Msg, MsgRtn:
-			err = s.cli.onMsg(msg)
+			qos := msg.Context.QOS
+			uerr := s.cli.onMsg(msg)
+			if uerr != nil {
+				s.cli.log.Warn("failed to handle publish packet in user code", log.Error(uerr))
+			} else if !s.cli.cfg.DisableAutoAck && qos == 1 {
+				ack := &Message{}
+				ack.Context.ID = msg.Context.ID
+				ack.Context.Type = Ack
+				err = s.send(ack)
+			}
 		case Ack:
 			err = s.cli.onAck(msg)
 		default:

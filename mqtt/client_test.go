@@ -311,6 +311,70 @@ func TestMqttClientPublishSubscribeQOS1(t *testing.T) {
 	safeReceive(done)
 }
 
+func TestMqttClientAutoAck(t *testing.T) {
+	subscribe := NewSubscribe()
+	subscribe.Subscriptions = []Subscription{{Topic: "test", QOS: 1}}
+	subscribe.ID = 1
+
+	suback := NewSuback()
+	suback.ReturnCodes = []QOS{1}
+	suback.ID = 1
+
+	pub0 := NewPublish()
+	pub0.Message.Topic = "test"
+	pub0.Message.Payload = []byte("test")
+
+	pub1 := NewPublish()
+	pub1.Message.Topic = "test"
+	pub1.Message.Payload = []byte("test")
+	pub1.Message.QOS = 1
+	pub1.ID = 2
+
+	puback := NewPuback()
+	puback.ID = 2
+
+	broker := flow.New().Debug().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		Receive(pub1).
+		Send(puback).
+		Send(pub1).
+		Receive(puback). // auto ack
+		Send(pub0).
+		Receive(puback).
+		Send(pub1). // not auto ack since user code error
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	cc := newConfig(port)
+	cc.DisableAutoAck = false
+	obs := newMockObserver(t)
+	cli, err := NewClient(cc, obs)
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
+
+	err = cli.Subscribe([]Subscription{Subscription{Topic: "test", QOS: 1}})
+	assert.NoError(t, err)
+
+	err = cli.Publish(pub1.Message.QOS, pub1.Message.Topic, pub1.Message.Payload, pub1.ID, pub1.Message.Retain, pub1.Dup)
+	assert.NoError(t, err)
+
+	obs.assertPkts(puback, pub1, pub0)
+
+	obs.setErrOnPublish(ErrFutureTimeout)
+	err = cli.Send(puback)
+	assert.NoError(t, err)
+
+	obs.assertPkts(pub1)
+
+	assert.NoError(t, cli.Close())
+	safeReceive(done)
+}
+
 func TestMqttClientUnexpectedClose(t *testing.T) {
 	broker := flow.New().Debug().
 		Receive(connectPacket()).
