@@ -93,7 +93,7 @@ func newConfig(port string) (c ClientConfig) {
 	return
 }
 
-func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {
+func initMockBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {
 	done := make(chan struct{})
 
 	server, err := transport.Launch("tcp://localhost:0")
