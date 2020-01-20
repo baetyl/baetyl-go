@@ -125,18 +125,12 @@ func newContext() (*ctx, error) {
 		logger = log.With(log.Any("service", sn), log.Any("instance", in))
 		logger.Error("failed to init logger", log.Error(err))
 	}
-	cli, err := NewEnvClient()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "[%s][%s] failed to create master client: %s\n", sn, in, err.Error())
-		logger.Error("failed to create master client", log.Error(err))
-	}
 	return &ctx{
 		sn:     sn,
 		in:     in,
 		md:     md,
 		cfg:    cfg,
 		log:    logger,
-		Client: cli,
 	}, nil
 }
 
