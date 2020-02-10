@@ -126,11 +126,11 @@ func newContext() (*ctx, error) {
 		logger.Error("failed to init logger", log.Error(err))
 	}
 	return &ctx{
-		sn:     sn,
-		in:     in,
-		md:     md,
-		cfg:    cfg,
-		log:    logger,
+		sn:  sn,
+		in:  in,
+		md:  md,
+		cfg: cfg,
+		log: logger,
 	}, nil
 }
 
@@ -185,7 +185,9 @@ func (c *ctx) Log() *log.Logger {
 
 func (c *ctx) Wait() {
 	<-c.WaitChan()
-	c.Close()
+	if c.Client != nil {
+		c.Client.Close()
+	}
 }
 
 func (c *ctx) IsNative() bool {
