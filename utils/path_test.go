@@ -118,9 +118,9 @@ func TestCalculateMD5(t *testing.T) {
 	assert.Equal(t, "+sl+V5Y5vj8Q22caRGLtkQ==", md5)
 }
 
-func TestCalculateBase64Encoding(t *testing.T) {
-	base64EncodingValue := CalculateBase64Encoding("test")
-	assert.Equal(t, "dGVzdA==", base64EncodingValue)
+func TestCalculateBase64(t *testing.T) {
+	base64Value := CalculateBase64("test")
+	assert.Equal(t, "dGVzdA==", base64Value)
 }
 
 func TestCreateSymlink(t *testing.T) {

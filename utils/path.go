@@ -77,8 +77,8 @@ func CalculateFileMD5(fn string) (string, error) {
 	return base64.StdEncoding.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// CalculateBase64Encoding calculates base64 encoding value of target string
-func CalculateBase64Encoding(s string) string {
+// CalculateBase64 calculates base64 encoding value of target string
+func CalculateBase64(s string) string {
 	return base64.StdEncoding.EncodeToString([]byte(s))
 }
 
