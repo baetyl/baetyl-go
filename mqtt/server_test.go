@@ -122,6 +122,75 @@ func TestMqttTcpTls(t *testing.T) {
 	conn.Close()
 }
 
+func TestMqttTcpTlsMultiCA(t *testing.T) {
+	count := int32(0)
+	handle := func(conn Connection) {
+		c := atomic.AddInt32(&count, 1)
+		p, err := conn.Receive()
+		if c == 1 {
+			assert.EqualError(t, err, "remote error: tls: bad certificate")
+			assert.Nil(t, p)
+			return
+		}
+		assert.NoError(t, err)
+		assert.NotNil(t, p)
+		cn, isBidAuth := GetTLSCommonName(conn)
+		assert.True(t, isBidAuth)
+		assert.NotNil(t, cn)
+		assert.Equal(t, "client.example.org", cn)
+		err = conn.Send(p, false)
+		assert.NoError(t, err)
+	}
+	svccfg := ServerConfig{
+		Addresses: []string{
+			"ssl://localhost:0",
+		},
+		Certificate: utils.Certificate{
+			CA:   "../example/var/lib/baetyl/testcert/multiCA.pem", // multiCA.pem is a multiCA certificate with a valid certificate chain and other CA certificate(invalid)
+			Key:  "../example/var/lib/baetyl/testcert/server.key",
+			Cert: "../example/var/lib/baetyl/testcert/server.pem",
+		},
+	}
+	m, err := NewTransport(svccfg, handle)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(m.GetServers()))
+	defer m.Close()
+	time.Sleep(time.Millisecond * 100)
+
+	url := getURL(m.servers[0], "ssl")
+	pkt := NewConnect()
+	pkt.ClientID = m.servers[0].Addr().String()
+
+	// count: 1
+	dailer := NewDialer(nil, time.Duration(0))
+	conn, err := dailer.Dial(url)
+	assert.Nil(t, conn)
+	switch err.Error() {
+	case "x509: certificate signed by unknown authority":
+	case "x509: cannot validate certificate for 127.0.0.1 because it doesn't contain any IP SANs":
+	default:
+		assert.FailNow(t, "error expected")
+	}
+
+	// count: 2
+	ctc, err := utils.NewTLSConfigClient(utils.Certificate{
+		CA:                 "../example/var/lib/baetyl/testcert/multiCA.pem", // multiCA.pem is a multiCA certificate with a valid certificate chain and other CA certificate(invalid)
+		Key:                "../example/var/lib/baetyl/testcert/client.key",
+		Cert:               "../example/var/lib/baetyl/testcert/client.pem",
+		InsecureSkipVerify: true,
+	})
+	assert.NoError(t, err)
+	dailer = NewDialer(ctc, time.Duration(0))
+	conn, err = dailer.Dial(url)
+	assert.NoError(t, err)
+	err = conn.Send(pkt, false)
+	assert.NoError(t, err)
+	res, err := conn.Receive()
+	assert.NoError(t, err)
+	assert.Equal(t, pkt.String(), res.String())
+	conn.Close()
+}
+
 func TestMqttWebSocket(t *testing.T) {
 	handle := func(conn Connection) {
 		p, err := conn.Receive()
