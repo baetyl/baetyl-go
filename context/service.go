@@ -1,7 +1,6 @@
 package context
 
 import (
-	"fmt"
 	"os"
 	"runtime/debug"
 
@@ -10,23 +9,17 @@ import (
 
 // Run service
 func Run(handle func(Context) error) {
+	c := newContext()
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintf(os.Stderr, "service is stopped with panic: %s\n%s", r, string(debug.Stack()))
+			c.log.Error("service is stopped with panic", log.Any("panic", debug.Stack()))
 		}
 	}()
-	c, err := newContext()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "[%s][%s] failed to create context: %s\n", c.sn, c.in, err.Error())
-		c.log.Error("failed to create context", log.Error(err))
-		return
-	}
 	c.log.Info("service starting", log.Any("args", os.Args))
-	err = handle(c)
+	err := handle(c)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[%s][%s] service is stopped with error: %s\n", c.sn, c.in, err.Error())
-		c.log.Error("service is stopped with error", log.Error(err))
+		c.log.Error("service has stopped with error", log.Error(err))
 	} else {
-		c.log.Info("service stopped")
+		c.log.Info("service has stopped")
 	}
 }

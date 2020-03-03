@@ -3,30 +3,54 @@ package log
 import (
 	"encoding/base64"
 	"fmt"
+	"net/url"
+	"strconv"
 )
 
 // Config for logging
 type Config struct {
-	Path   string `yaml:"path" json:"path"`
-	Level  string `yaml:"level" json:"level" default:"info" validate:"regexp=^(fatal|panic|error|warn|info|debug)$"`
-	Format string `yaml:"format" json:"format" default:"text" validate:"regexp=^(text|json)$"`
-	Age    struct {
-		Max int `yaml:"max" json:"max" default:"15" validate:"min=1"`
-	} `yaml:"age" json:"age"` // days
-	Size struct {
-		Max int `yaml:"max" json:"max" default:"50" validate:"min=1"`
-	} `yaml:"size" json:"size"` // in MB
-	Backup struct {
-		Max int `yaml:"max" json:"max" default:"15" validate:"min=1"`
-	} `yaml:"backup" json:"backup"`
+	Level      string `yaml:"level" json:"level" default:"info" validate:"regexp=^(fatal|panic|error|warn|info|debug)$"`
+	Encoding   string `yaml:"encoding" json:"encoding" default:"json" validate:"regexp=^(json|console)$"`
+	Filename   string `yaml:"filename" json:"filename"`
+	Compress   bool   `yaml:"compress" json:"compress"`
+	MaxAge     int    `yaml:"maxAge" json:"maxAge" default:"15" validate:"min=1"`   // days
+	MaxSize    int    `yaml:"maxSize" json:"maxSize" default:"50" validate:"min=1"` // MB
+	MaxBackups int    `yaml:"maxBackups" json:"maxBackups" default:"15" validate:"min=1"`
 }
 
 func (c *Config) String() string {
-	return fmt.Sprintf("path=%s&level=%s&format=%s&age_max=%d&size_max=%d&backup_max=%d",
-		base64.URLEncoding.EncodeToString([]byte(c.Path)),
+	return fmt.Sprintf("level=%s&encoding=%s&filename=%s&compress=%t&maxAge=%d&maxSize=%d&maxBackups=%d",
 		c.Level,
-		c.Format,
-		c.Age.Max,
-		c.Size.Max,
-		c.Backup.Max)
+		c.Encoding,
+		base64.URLEncoding.EncodeToString([]byte(c.Filename)),
+		c.Compress,
+		c.MaxAge,
+		c.MaxSize,
+		c.MaxBackups)
+}
+
+// FromURL creates config from url
+func FromURL(u *url.URL) (c Config, err error) {
+	args := u.Query()
+	c.Level = args.Get("level")
+	c.Encoding = args.Get("encoding")
+	filename, err := base64.URLEncoding.DecodeString(args.Get("filename"))
+	if err != nil {
+		return
+	}
+	c.Filename = string(filename)
+	c.Compress, err = strconv.ParseBool(args.Get("compress"))
+	if err != nil {
+		return
+	}
+	c.MaxAge, err = strconv.Atoi(args.Get("maxAge"))
+	if err != nil {
+		return
+	}
+	c.MaxSize, err = strconv.Atoi(args.Get("maxSize"))
+	if err != nil {
+		return
+	}
+	c.MaxBackups, err = strconv.Atoi(args.Get("maxBackups"))
+	return
 }
