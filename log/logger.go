@@ -1,12 +1,10 @@
 package log
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -14,38 +12,51 @@ import (
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
-var _log *Logger
-
 func init() {
-	var err error
-	_log, err = zap.NewProduction()
+	// Config{
+	// 	Level:       NewAtomicLevelAt(InfoLevel),
+	// 	Development: false,
+	// 	Sampling: &SamplingConfig{
+	// 		Initial:    100,
+	// 		Thereafter: 100,
+	// 	},
+	// 	Encoding:         "json",
+	// 	EncoderConfig:    NewProductionEncoderConfig(),
+	// 	OutputPaths:      []string{"stderr"},
+	// 	ErrorOutputPaths: []string{"stderr"},
+	// }
+	c := zap.NewProductionConfig()
+	c.Sampling = nil
+	c.OutputPaths = []string{"stdout"}
+	l, err := c.Build()
 	if err != nil {
-		panic(fmt.Sprintf("failed to new default logger: %s", err.Error()))
+		panic(fmt.Sprintf("failed to create default logger: %s", err.Error()))
 	}
 	err = zap.RegisterSink("lumberjack", newFileHook)
 	if err != nil {
-		_log.Error("failed to register lumberjack", Error(err))
+		l.Error("failed to register lumberjack", Error(err))
 	}
+	zap.ReplaceGlobals(l)
 }
 
 // Init init and return logger
-func Init(c Config, fields ...Field) (*Logger, error) {
-	config := zap.NewProductionConfig()
-	config.Sampling = nil
-	if c.Path != "" {
-		config.OutputPaths = append(config.OutputPaths, "lumberjack:?"+c.String())
+func Init(cfg Config, fields ...Field) (*Logger, error) {
+	c := zap.NewProductionConfig()
+	c.Sampling = nil
+	if cfg.Filename != "" {
+		c.OutputPaths = append(c.OutputPaths, "lumberjack:?"+cfg.String())
 	}
-	if c.Format == "text" {
-		config.Encoding = "console"
-		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	if cfg.Encoding == "console" {
+		c.Encoding = "console"
+		c.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	}
-	config.Level = zap.NewAtomicLevelAt(parseLevel(c.Level))
-	tmp, err := config.Build(zap.Fields(fields...))
+	c.Level = zap.NewAtomicLevelAt(parseLevel(cfg.Level))
+	l, err := c.Build(zap.Fields(fields...))
 	if err != nil {
 		return nil, err
 	}
-	_log = tmp
-	return _log, nil
+	zap.ReplaceGlobals(l)
+	return L(), nil
 }
 
 type lumberjackSink struct {
@@ -57,24 +68,23 @@ func (*lumberjackSink) Sync() error {
 }
 
 func newFileHook(u *url.URL) (zap.Sink, error) {
-	args := u.Query()
-	path, _ := base64.URLEncoding.DecodeString(args.Get("path"))
-	err := os.MkdirAll(filepath.Dir(string(path)), 0755)
+	cfg, err := FromURL(u)
 	if err != nil {
-		_log.Warn("failed to create log directory", Error(err))
+		L().Warn("failed to parse config for file hook", Error(err))
 		return nil, err
 	}
-	inner := &lumberjack.Logger{Filename: string(path), Compress: true}
-	if age, err := strconv.Atoi(args.Get("age_max")); err == nil {
-		inner.MaxAge = age
+	err = os.MkdirAll(filepath.Dir(cfg.Filename), 0755)
+	if err != nil {
+		L().Warn("failed to create log directory", Error(err))
+		return nil, err
 	}
-	if size, err := strconv.Atoi(args.Get("size_max")); err == nil {
-		inner.MaxSize = size
-	}
-	if backup, err := strconv.Atoi(args.Get("backup_max")); err == nil {
-		inner.MaxBackups = backup
-	}
-	return &lumberjackSink{inner}, nil
+	return &lumberjackSink{&lumberjack.Logger{
+		Compress:   cfg.Compress,
+		Filename:   cfg.Filename,
+		MaxAge:     cfg.MaxAge,
+		MaxSize:    cfg.MaxSize,
+		MaxBackups: cfg.MaxBackups,
+	}}, nil
 }
 
 func parseLevel(lvl string) Level {
@@ -92,7 +102,7 @@ func parseLevel(lvl string) Level {
 	case "debug":
 		return DebugLevel
 	default:
-		_log.Warn("failed to parse log level, use default level (info)", Any("level", lvl))
+		L().Warn("failed to parse log level, use default level (info)", Any("level", lvl))
 		return InfoLevel
 	}
 }

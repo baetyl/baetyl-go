@@ -37,8 +37,14 @@ func Error(err error) Field {
 	return zap.Error(err)
 }
 
+// L returns the global Logger, which can be reconfigured with ReplaceGlobals.
+// It's safe for concurrent use.
+func L() *Logger {
+	return zap.L()
+}
+
 // With creates a child logger and adds structured context to it. Fields added
 // to the child don't affect the parent, and vice versa.
 func With(fields ...Field) *Logger {
-	return _log.With(fields...)
+	return zap.L().With(fields...)
 }

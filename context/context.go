@@ -1,143 +1,95 @@
 package context
 
 import (
-	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/baetyl/baetyl-go/kv"
 	"github.com/baetyl/baetyl-go/link"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/mqtt"
 	"github.com/baetyl/baetyl-go/utils"
 )
 
-// Mode keys
-const (
-	ModeNative = "native"
-	ModeDocker = "docker"
-)
-
 // Env keys
 const (
-	// new envs
-	EnvKeyHostID              = "BAETYL_HOST_ID"
-	EnvKeyHostOS              = "BAETYL_HOST_OS"
-	EnvKeyHostSN              = "BAETYL_HOST_SN"
-	EnvKeyAPISocket           = "BAETYL_API_SOCKET"
-	EnvKeyAPIAddress          = "BAETYL_API_ADDRESS"
-	EnvKeyServiceMode         = "BAETYL_SERVICE_MODE"
-	EnvKeyServiceName         = "BAETYL_SERVICE_NAME"
-	EnvKeyServiceToken        = "BAETYL_SERVICE_TOKEN"
-	EnvKeyServiceInstanceName = "BAETYL_SERVICE_INSTANCE_NAME"
+	EnvKeyNodeName    = "BAETYL_NODE_NAME"
+	EnvKeyAppName     = "BAETYL_APP_NAME"
+	EnvKeyServiceName = "BAETYL_SERVICE_NAME"
 )
 
-// Path keys
 const (
-	// AppConfFileName application config file name
-	AppConfFileName = "application.yml"
-	// AppBackupFileName application backup configuration file
-	AppBackupFileName = "application.yml.old"
-	// AppStatsFileName application stats file name
-	AppStatsFileName = "application.stats"
-	// MetadataFileName application metadata file name
-	MetadataFileName = "metadata.yml"
-
-	// BinFile the file path of master binary
-	DefaultBinFile = "bin/baetyl"
-	// DefaultBinBackupFile the backup file path of master binary
-	DefaultBinBackupFile = "bin/baetyl.old"
-	// DefaultSockFile sock file of baetyl by default
-	DefaultSockFile = "var/run/baetyl.sock"
-	// DefaultConfFile config path of the service by default
-	DefaultConfFile = "etc/baetyl/service.yml"
-	// DefaultDBDir db dir of the service by default
-	DefaultDBDir = "var/db/baetyl"
-	// DefaultRunDir  run dir of the service by default
-	DefaultRunDir = "var/run/baetyl"
-	// DefaultLogDir  log dir of the service by default
-	DefaultLogDir = "var/log/baetyl"
+	// DefaultConfFile service config path by default
+	DefaultConfFile = "/etc/baetyl/service.yml"
+	// DefaultFunctionAddress middleware function address by default
+	DefaultFunctionAddress = "https://baetyl-function:8880"
+	// DefaultBrokerMqttAddress middleware broker mqtt address by default
+	DefaultBrokerMqttAddress = "ssl://baetyl-broker:8883"
+	// DefaultBrokerLinkAddress middleware broker link address by default
+	DefaultBrokerLinkAddress = "ssl://baetyl-broker:8886"
 )
 
 // Context of service
 type Context interface {
-	// returns the system configuration of the service, such as hub and logger
-	Config() *ServiceConfig
-	// loads the custom configuration of the service
-	LoadConfig(interface{}) error
 	// creates a MQTT Client that connects to the broker through system configuration
 	NewMQTTClient(string, mqtt.Observer, []mqtt.QOSTopic) (*mqtt.Client, error)
 	// creates a Link Client that connects to the broker through system configuration
 	NewLinkClient(link.Observer) (*link.Client, error)
 	// returns logger interface
 	Log() *log.Logger
-	// check running mode
-	IsNative() bool
 	// waiting to exit, receiving SIGTERM and SIGINT signals
 	Wait()
 	// returns wait channel
 	WaitChan() <-chan os.Signal
-
-	// Master KV API
-
-	// set kv
-	SetKV(kv kv.KV) error
-	// set kv which supports context
-	SetKVConext(ctx context.Context, kv kv.KV) error
-	// get kv
-	GetKV(k string) (*kv.KV, error)
-	// get kv which supports context
-	GetKVConext(ctx context.Context, k string) (*kv.KV, error)
-	// del kv
-	DelKV(k string) error
-	// del kv which supports context
-	DelKVConext(ctx context.Context, k string) error
-	// list kv with prefix
-	ListKV(p string) ([]*kv.KV, error)
-	// list kv with prefix which supports context
-	ListKVContext(ctx context.Context, p string) ([]*kv.KV, error)
 }
 
 type ctx struct {
-	sn  string // service name
-	in  string // instance name
-	md  string // running mode
+	nn  string
+	an  string
+	sn  string
 	cfg ServiceConfig
 	log *log.Logger
-	*Client
 }
 
-func newContext() (*ctx, error) {
-	var cfg ServiceConfig
-	md := os.Getenv(EnvKeyServiceMode)
+func newContext() *ctx {
+	nn := os.Getenv(EnvKeyNodeName)
+	an := os.Getenv(EnvKeyAppName)
 	sn := os.Getenv(EnvKeyServiceName)
-	in := os.Getenv(EnvKeyServiceInstanceName)
+	fs := []log.Field{log.Any("node", nn), log.Any("app", an), log.Any("service", sn)}
+	l := log.With(fs...)
 
-	err := utils.LoadYAML(DefaultConfFile, &cfg)
-	if err != nil && !os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "[%s][%s] failed to load config: %s\n", sn, in, err.Error())
+	var err error
+	var cfg ServiceConfig
+	if utils.FileExists(DefaultConfFile) {
+		err = utils.LoadYAML(DefaultConfFile, &cfg)
+	} else {
+		err = utils.UnmarshalYAML(nil, &cfg)
 	}
-	logger, err := log.Init(cfg.Logger, log.Any("service", sn), log.Any("instance", in))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[%s][%s] failed to init logger: %s\n", sn, in, err.Error())
-		logger = log.With(log.Any("service", sn), log.Any("instance", in))
-		logger.Error("failed to init logger", log.Error(err))
+		l.Error("failed to load config", log.Error(err))
 	}
-	return &ctx{
+	l, err = log.Init(cfg.Logger, fs...)
+	if err != nil {
+		l.Error("failed to init logger", log.Error(err))
+	}
+	if cfg.Mqtt.Address == "" {
+		cfg.Mqtt.Address = DefaultBrokerMqttAddress
+	}
+	if cfg.Link.Address == "" {
+		cfg.Link.Address = DefaultBrokerLinkAddress
+	}
+	c := &ctx{
+		nn:  nn,
+		an:  an,
 		sn:  sn,
-		in:  in,
-		md:  md,
 		cfg: cfg,
-		log: logger,
-	}, nil
+		log: l,
+	}
+	l.Info("context is created", log.Any("config", cfg))
+	return c
 }
 
 func (c *ctx) NewMQTTClient(cid string, obs mqtt.Observer, topics []mqtt.QOSTopic) (*mqtt.Client, error) {
-	if c.cfg.Mqtt.Address == "" {
-		return nil, fmt.Errorf("mqtt endpoint not configured")
-	}
 	cc := c.cfg.Mqtt
 	if cid != "" {
 		cc.ClientID = cid
@@ -160,9 +112,6 @@ func (c *ctx) NewMQTTClient(cid string, obs mqtt.Observer, topics []mqtt.QOSTopi
 }
 
 func (c *ctx) NewLinkClient(obs link.Observer) (*link.Client, error) {
-	if c.cfg.Link.Address == "" {
-		return nil, fmt.Errorf("link endpoint not configured")
-	}
 	cc := c.cfg.Link
 	cli, err := link.NewClient(cc, obs)
 	if err != nil {
@@ -175,8 +124,20 @@ func (c *ctx) LoadConfig(cfg interface{}) error {
 	return utils.LoadYAML(DefaultConfFile, cfg)
 }
 
-func (c *ctx) Config() *ServiceConfig {
-	return &c.cfg
+func (c *ctx) NodeName() string {
+	return c.nn
+}
+
+func (c *ctx) AppName() string {
+	return c.an
+}
+
+func (c *ctx) ServiceName() string {
+	return c.sn
+}
+
+func (c *ctx) Config() ServiceConfig {
+	return c.cfg
 }
 
 func (c *ctx) Log() *log.Logger {
@@ -185,13 +146,6 @@ func (c *ctx) Log() *log.Logger {
 
 func (c *ctx) Wait() {
 	<-c.WaitChan()
-	if c.Client != nil {
-		c.Client.Close()
-	}
-}
-
-func (c *ctx) IsNative() bool {
-	return c.md == ModeNative
 }
 
 func (c *ctx) WaitChan() <-chan os.Signal {
