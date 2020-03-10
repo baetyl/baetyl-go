@@ -5,9 +5,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/baetyl/baetyl-go/link"
 	"github.com/baetyl/baetyl-go/log"
-	"github.com/baetyl/baetyl-go/mqtt"
 	"github.com/baetyl/baetyl-go/utils"
 )
 
@@ -26,15 +24,11 @@ const (
 	// DefaultBrokerMqttAddress middleware broker mqtt address by default
 	DefaultBrokerMqttAddress = "ssl://baetyl-broker:8883"
 	// DefaultBrokerLinkAddress middleware broker link address by default
-	DefaultBrokerLinkAddress = "ssl://baetyl-broker:8886"
+	DefaultBrokerLinkAddress = "baetyl-broker:8886"
 )
 
 // Context of service
 type Context interface {
-	// creates a MQTT Client that connects to the broker through system configuration
-	NewMQTTClient(string, mqtt.Observer, []mqtt.QOSTopic) (*mqtt.Client, error)
-	// creates a Link Client that connects to the broker through system configuration
-	NewLinkClient(link.Observer) (*link.Client, error)
 	// returns logger interface
 	Log() *log.Logger
 	// waiting to exit, receiving SIGTERM and SIGINT signals
@@ -78,46 +72,9 @@ func newContext() *ctx {
 	if cfg.Link.Address == "" {
 		cfg.Link.Address = DefaultBrokerLinkAddress
 	}
-	c := &ctx{
-		nn:  nn,
-		an:  an,
-		sn:  sn,
-		cfg: cfg,
-		log: l,
-	}
+	c := &ctx{nn: nn, an: an, sn: sn, cfg: cfg, log: l}
 	l.Info("context is created", log.Any("config", cfg))
 	return c
-}
-
-func (c *ctx) NewMQTTClient(cid string, obs mqtt.Observer, topics []mqtt.QOSTopic) (*mqtt.Client, error) {
-	cc := c.cfg.Mqtt
-	if cid != "" {
-		cc.ClientID = cid
-	}
-	cli, err := mqtt.NewClient(cc, obs)
-	if err != nil {
-		return nil, err
-	}
-	var subs []mqtt.Subscription
-	for _, topic := range topics {
-		subs = append(subs, mqtt.Subscription{Topic: topic.Topic, QOS: mqtt.QOS(topic.QOS)})
-	}
-	if len(subs) > 0 {
-		err = cli.Subscribe(subs)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return cli, nil
-}
-
-func (c *ctx) NewLinkClient(obs link.Observer) (*link.Client, error) {
-	cc := c.cfg.Link
-	cli, err := link.NewClient(cc, obs)
-	if err != nil {
-		return nil, err
-	}
-	return cli, nil
 }
 
 func (c *ctx) LoadConfig(cfg interface{}) error {

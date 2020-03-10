@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -12,9 +11,7 @@ import (
 
 // Client auto reconnection client
 type Client struct {
-	cfg   ClientConfig
-	obs   Observer
-	tls   *tls.Config
+	ops   ClientOptions
 	ids   *Counter
 	cache chan Packet
 	log   *log.Logger
@@ -22,25 +19,15 @@ type Client struct {
 }
 
 // NewClient creates a new client
-func NewClient(cc ClientConfig, obs Observer) (*Client, error) {
-	var err error
-	var tc *tls.Config
-	if cc.Certificate.Key != "" || cc.Certificate.Cert != "" {
-		tc, err = utils.NewTLSConfigClient(cc.Certificate)
-		if err != nil {
-			return nil, err
-		}
-	}
+func NewClient(ops ClientOptions) *Client {
 	c := &Client{
-		cfg:   cc,
-		obs:   obs,
-		tls:   tc,
+		ops:   ops,
 		ids:   NewCounter(),
-		cache: make(chan Packet, cc.BufferSize),
-		log:   log.With(log.Any("mqtt", "client"), log.Any("cid", cc.ClientID)),
+		cache: make(chan Packet, ops.MaxCacheMessages),
+		log:   log.With(log.Any("mqtt", "client"), log.Any("cid", ops.ClientID)),
 	}
 	c.tomb.Go(c.connecting)
-	return c, nil
+	return c
 }
 
 // Subscribe sends a subscribe packet
@@ -98,7 +85,7 @@ func (c *Client) connecting() error {
 	defer timer.Stop()
 	bf := backoff.Backoff{
 		Min:    time.Second,
-		Max:    c.cfg.Interval,
+		Max:    c.ops.MaxReconnectInterval,
 		Factor: 1.6,
 	}
 
@@ -143,17 +130,17 @@ func (c *Client) onConnack(pkt Packet) error {
 }
 
 func (c *Client) onPublish(pkt *Publish) error {
-	if c.obs == nil {
+	if c.ops.Observer == nil {
 		return nil
 	}
-	return c.obs.OnPublish(pkt)
+	return c.ops.Observer.OnPublish(pkt)
 }
 
 func (c *Client) onPuback(pkt *Puback) error {
-	if c.obs == nil {
+	if c.ops.Observer == nil {
 		return nil
 	}
-	return c.obs.OnPuback(pkt)
+	return c.ops.Observer.OnPuback(pkt)
 }
 
 func (c *Client) onSuback(pkt *Suback) error {
@@ -166,9 +153,9 @@ func (c *Client) onSuback(pkt *Suback) error {
 }
 
 func (c *Client) onError(msg string, err error) {
-	if c.obs == nil || err == nil {
+	if c.ops.Observer == nil || err == nil {
 		return
 	}
 	c.log.Error(msg, log.Error(err))
-	c.obs.OnError(err)
+	c.ops.Observer.OnError(err)
 }

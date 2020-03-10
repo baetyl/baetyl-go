@@ -13,16 +13,15 @@ import (
 )
 
 // ErrClientAlreadyClosed the client is closed
-var ErrClientAlreadyClosed = errors.New("client is closed")
+var ErrClientAlreadyClosed = errors.New("client has closed")
 
 // ErrClientMessageTypeInvalid the message type is invalid
 var ErrClientMessageTypeInvalid = errors.New("message type is invalid")
 
 // Client client of contact server
 type Client struct {
-	cfg   ClientConfig
+	ops   ClientOptions
 	cli   LinkClient
-	obs   Observer
 	conn  *grpc.ClientConn
 	cache chan *Message
 	log   *log.Logger
@@ -30,17 +29,24 @@ type Client struct {
 }
 
 // NewClient creates a new client of functions server
-func NewClient(cc ClientConfig, obs Observer) (*Client, error) {
-	conn, err := NewClientConn(cc)
+func NewClient(ops ClientOptions) (*Client, error) {
+	gops := []grpc.DialOption{
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(ops.MaxMessageSize))),
+	}
+	if ops.TLSConfig == nil {
+		gops = append(gops, grpc.WithInsecure())
+	} else {
+		gops = append(gops, grpc.WithTransportCredentials(credentials.NewTLS(ops.TLSConfig)))
+	}
+	conn, err := grpc.Dial(ops.Address, gops...)
 	if err != nil {
 		return nil, err
 	}
 	cli := &Client{
-		cfg:   cc,
-		obs:   obs,
+		ops:   ops,
 		conn:  conn,
 		cli:   NewLinkClient(conn),
-		cache: make(chan *Message, cc.MaxCacheMessages),
+		cache: make(chan *Message, ops.MaxCacheMessages),
 		log:   log.With(log.Any("link", "client")),
 	}
 	cli.tomb.Go(cli.connecting)
@@ -102,7 +108,7 @@ func (c *Client) connecting() error {
 	defer timer.Stop()
 	bf := backoff.Backoff{
 		Min:    time.Second,
-		Max:    c.cfg.Interval,
+		Max:    c.ops.MaxReconnectInterval,
 		Factor: 1.6,
 	}
 
@@ -136,57 +142,23 @@ func (c *Client) connecting() error {
 }
 
 func (c *Client) onMsg(msg *Message) error {
-	if c.obs == nil {
+	if c.ops.Observer == nil {
 		return nil
 	}
-	return c.obs.OnMsg(msg)
+	return c.ops.Observer.OnMsg(msg)
 }
 
 func (c *Client) onAck(msg *Message) error {
-	if c.obs == nil {
+	if c.ops.Observer == nil {
 		return nil
 	}
-	return c.obs.OnAck(msg)
+	return c.ops.Observer.OnAck(msg)
 }
 
 func (c *Client) onErr(msg string, err error) {
-	if c.obs == nil || err == nil {
+	if c.ops.Observer == nil || err == nil {
 		return
 	}
 	c.log.Error(msg, log.Error(err))
-	c.obs.OnErr(err)
-}
-
-// NewClientConn creates a new grpc client connection
-func NewClientConn(cc ClientConfig) (*grpc.ClientConn, error) {
-	opts := []grpc.DialOption{
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(cc.MaxMessageSize))),
-	}
-	// enable tls
-	if cc.Certificate.Key != "" || cc.Certificate.Cert != "" {
-		tlsCfg, err := utils.NewTLSConfigClient(cc.Certificate)
-		if err != nil {
-			return nil, err
-		}
-		if tlsCfg != nil {
-			// TODO: thing auth
-			if !cc.Certificate.InsecureSkipVerify {
-				tlsCfg.ServerName = cc.Certificate.Name
-			}
-			creds := credentials.NewTLS(tlsCfg)
-			opts = append(opts, grpc.WithTransportCredentials(creds))
-		}
-	} else {
-		opts = append(opts, grpc.WithInsecure())
-	}
-
-	//  enable username/password
-	if cc.Username != "" || cc.Password != "" {
-		opts = append(opts, grpc.WithPerRPCCredentials(MD{
-			KeyUsername: cc.Username,
-			KeyPassword: cc.Password,
-		}))
-	}
-
-	return grpc.Dial(cc.Address, opts...)
+	c.ops.Observer.OnErr(err)
 }

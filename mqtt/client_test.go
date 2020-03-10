@@ -13,14 +13,10 @@ import (
 )
 
 func TestMqttClientConnectErrorMissingAddress(t *testing.T) {
-	cfg := log.Config{}
-	utils.SetDefaults(&cfg)
-	cfg.Level = "debug"
-	log.Init(cfg)
-
-	obs := newMockObserver(t)
-	cli, err := NewClient(ClientConfig{}, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, "")
+	ops.Address = ""
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
@@ -28,10 +24,9 @@ func TestMqttClientConnectErrorMissingAddress(t *testing.T) {
 }
 
 func TestMqttClientConnectErrorWrongPort(t *testing.T) {
-	cc := newConfig("1234567")
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, "1234567")
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
@@ -53,12 +48,11 @@ func TestMqttClientConnectWithCredentials(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	cc.Username = "test"
-	cc.Password = "test"
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	ops.Username = "test"
+	ops.Password = "test"
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
@@ -77,10 +71,9 @@ func TestMqttClientConnectionDenied(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
@@ -96,10 +89,9 @@ func TestMqttClientExpectedConnack(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
@@ -121,10 +113,9 @@ func TestMqttClientNotExpectedConnack(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
 	obs.assertErrs(ErrClientAlreadyConnecting)
@@ -155,11 +146,9 @@ func TestMqttClientKeepAlive(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	cc.KeepAlive = time.Millisecond * 100
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	ops.KeepAlive = time.Millisecond * 100
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
 	time.Sleep(250 * time.Millisecond)
@@ -180,11 +169,10 @@ func TestMqttClientKeepAliveTimeout(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	cc.KeepAlive = time.Millisecond * 100
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	ops.KeepAlive = time.Millisecond * 100
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
 	safeReceive(done)
@@ -201,10 +189,8 @@ func TestMqttClientKeepAliveNone(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
 	<-time.After(time.Second)
@@ -238,13 +224,12 @@ func TestMqttClientPublishSubscribeQOS0(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
-	err = cli.Subscribe([]Subscription{Subscription{Topic: "test"}})
+	err := cli.Subscribe([]Subscription{Subscription{Topic: "test"}})
 	assert.NoError(t, err)
 
 	err = cli.Publish(publish.Message.QOS, publish.Message.Topic, publish.Message.Payload, publish.ID, publish.Message.Retain, publish.Dup)
@@ -288,13 +273,12 @@ func TestMqttClientPublishSubscribeQOS1(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
-	err = cli.Subscribe([]Subscription{Subscription{Topic: "test", QOS: 1}})
+	err := cli.Subscribe([]Subscription{Subscription{Topic: "test", QOS: 1}})
 	assert.NoError(t, err)
 
 	err = cli.Publish(publish.Message.QOS, publish.Message.Topic, publish.Message.Payload, publish.ID, publish.Message.Retain, publish.Dup)
@@ -350,14 +334,13 @@ func TestMqttClientAutoAck(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	cc.DisableAutoAck = false
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	ops.DisableAutoAck = false
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
-	err = cli.Subscribe([]Subscription{Subscription{Topic: "test", QOS: 1}})
+	err := cli.Subscribe([]Subscription{Subscription{Topic: "test", QOS: 1}})
 	assert.NoError(t, err)
 
 	err = cli.Publish(pub1.Message.QOS, pub1.Message.Topic, pub1.Message.Payload, pub1.ID, pub1.Message.Retain, pub1.Dup)
@@ -383,10 +366,9 @@ func TestMqttClientUnexpectedClose(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
 	safeReceive(done)
@@ -401,10 +383,9 @@ func TestMqttClientConnackTimeout1(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
 	obs.assertErrs(io.EOF)
@@ -420,11 +401,10 @@ func TestMqttClientConnackTimeout2(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	cc.Timeout = time.Millisecond * 100
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	ops.Timeout = time.Millisecond * 100
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
 	obs.assertErrs(errors.New("future timeout"))
@@ -450,13 +430,12 @@ func TestMqttClientSubscribe(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	cc := newConfig(port)
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
-	err = cli.Subscribe([]Subscription{Subscription{Topic: "test"}})
+	err := cli.Subscribe([]Subscription{Subscription{Topic: "test"}})
 	assert.NoError(t, err)
 	obs.assertErrs(errors.New("failed subscription"))
 
@@ -498,11 +477,10 @@ func TestMqttClientReconnect(t *testing.T) {
 
 	done, port := initMockBroker(t, broker1, broker2, broker3)
 
-	cc := newConfig(port)
-	cc.Timeout = time.Second
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	ops.Timeout = time.Second
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
 	cli.Send(publish)
@@ -548,11 +526,10 @@ func TestMqttClientReconnect2(t *testing.T) {
 
 	done, port := initMockBroker(t, broker1, broker2, broker3)
 
-	cc := newConfig(port)
-	cc.Timeout = time.Second
-	obs := newMockObserver(t)
-	cli, err := NewClient(cc, obs)
-	assert.NoError(t, err)
+	ops := newClientOptions(t, port)
+	ops.Timeout = time.Second
+	obs := ops.Observer.(*mockObserver)
+	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
 	obs.assertErrs(io.EOF)

@@ -10,7 +10,6 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
 	"github.com/baetyl/baetyl-go/flow"
-	"github.com/creasty/defaults"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -85,12 +84,14 @@ func safeReceive(ch chan struct{}) {
 	}
 }
 
-func newConfig(port string) (c ClientConfig) {
+func newClientOptions(t *testing.T, port string) ClientOptions {
+	c := NewClientOptions()
 	c.Address = "tcp://localhost:" + port
+	c.KeepAlive = 0
 	c.CleanSession = true
 	c.DisableAutoAck = true
-	defaults.Set(&c)
-	return
+	c.Observer = newMockObserver(t)
+	return c
 }
 
 func initMockBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {

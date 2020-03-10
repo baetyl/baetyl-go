@@ -22,20 +22,20 @@ type stream struct {
 
 func (c *Client) connect() (*stream, error) {
 	// dialing
-	dialer := NewDialer(c.tls, c.cfg.Timeout)
-	conn, err := dialer.Dial(c.cfg.Address)
+	dialer := NewDialer(c.ops.TLSConfig, c.ops.Timeout)
+	conn, err := dialer.Dial(c.ops.Address)
 	if err != nil {
 		return nil, err
 	}
 
 	// send connect
 	connect := NewConnect()
-	connect.ClientID = c.cfg.ClientID
-	connect.KeepAlive = uint16(math.Ceil(c.cfg.KeepAlive.Seconds()))
-	connect.CleanSession = c.cfg.CleanSession
-	connect.Username = c.cfg.Username
-	connect.Password = c.cfg.Password
-	// connect.Will = c.cfg.WillMessage
+	connect.ClientID = c.ops.ClientID
+	connect.KeepAlive = uint16(math.Ceil(c.ops.KeepAlive.Seconds()))
+	connect.CleanSession = c.ops.CleanSession
+	connect.Username = c.ops.Username
+	connect.Password = c.ops.Password
+	// connect.Will = c.ops.WillMessage
 	err = conn.Send(connect, false)
 	if err != nil {
 		conn.Close()
@@ -46,13 +46,13 @@ func (c *Client) connect() (*stream, error) {
 		cli:     c,
 		conn:    conn,
 		future:  NewFuture(),
-		tracker: NewTracker(c.cfg.KeepAlive),
+		tracker: NewTracker(c.ops.KeepAlive),
 	}
 	s.tomb.Go(s.receiving)
-	if c.cfg.KeepAlive > 0 {
+	if c.ops.KeepAlive > 0 {
 		s.tomb.Go(s.pinging)
 	}
-	err = s.future.Wait(c.cfg.Timeout)
+	err = s.future.Wait(c.ops.Timeout)
 	if err != nil {
 		s.close()
 		return nil, err
@@ -137,7 +137,7 @@ func (s *stream) receiving() error {
 			uerr := s.cli.onPublish(p)
 			if uerr != nil {
 				s.cli.log.Warn("failed to handle publish packet in user code", log.Error(uerr))
-			} else if !s.cli.cfg.DisableAutoAck && qos == 1 {
+			} else if !s.cli.ops.DisableAutoAck && qos == 1 {
 				ack := NewPuback()
 				ack.ID = p.ID
 				err = s.send(ack, true)
