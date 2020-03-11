@@ -14,13 +14,9 @@ import (
 )
 
 func TestLinkClientConnectErrorMissingAddress(t *testing.T) {
-	cfg := log.Config{}
-	utils.SetDefaults(&cfg)
-	cfg.Level = "debug"
-	log.Init(cfg)
-
-	obs := newMockObserver(t)
-	c, err := NewClient(ClientConfig{}, obs)
+	ops := newClientOptions(t)
+	ops.Address = ""
+	c, err := NewClient(ops)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 	defer c.Close()
@@ -34,9 +30,9 @@ func TestLinkClientConnectErrorMissingAddress(t *testing.T) {
 }
 
 func TestLinkClientConnectErrorWrongPort(t *testing.T) {
-	cc := ClientConfig{Address: "localhost:123456789"}
-	obs := newMockObserver(t)
-	c, err := NewClient(cc, obs)
+	ops := newClientOptions(t)
+	ops.Address = "localhost:123456789"
+	c, err := NewClient(ops)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 	defer c.Close()
@@ -75,11 +71,11 @@ func TestLinkClientSendRecvMessage(t *testing.T) {
 		End().
 		Close()
 
-	done := initMockServer(t, server, nil)
+	done := initMockServer(t, server)
 
-	cc := newClientConfig()
-	obs := newMockObserver(t)
-	c, err := NewClient(cc, obs)
+	ops := newClientOptions(t)
+	obs := ops.Observer.(*mockObserver)
+	c, err := NewClient(ops)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 
@@ -132,12 +128,12 @@ func TestLinkClientSendRecvMessageDisableAutoAck(t *testing.T) {
 		End().
 		Close()
 
-	done := initMockServer(t, server, nil)
+	done := initMockServer(t, server)
 
-	cc := newClientConfig()
-	cc.DisableAutoAck = true
-	obs := newMockObserver(t)
-	c, err := NewClient(cc, obs)
+	ops := newClientOptions(t)
+	ops.DisableAutoAck = true
+	obs := ops.Observer.(*mockObserver)
+	c, err := NewClient(ops)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 
@@ -164,74 +160,6 @@ func TestLinkClientSendRecvMessageDisableAutoAck(t *testing.T) {
 	safeReceive(done)
 }
 
-func TestLinkClientConnectWithoutCredentials(t *testing.T) {
-	cfg := log.Config{}
-	utils.SetDefaults(&cfg)
-	cfg.Level = "debug"
-	log.Init(cfg)
-
-	msg := &Message{}
-	msg.Context.ID = 1
-
-	server := flow.New().Debug().
-		Receive(msg).
-		Send(msg).
-		Receive(msg).
-		End().
-		Close()
-	done := initMockServer(t, server, &mockAuth{"u1": "p1", "u2": "p2"})
-
-	fmt.Println("--> no password <--")
-
-	cc := newClientConfig()
-	cc.Username = ""
-	cc.Password = ""
-
-	o1 := newMockObserver(t)
-	c1, err := NewClient(cc, o1)
-	assert.NoError(t, err)
-	assert.NotNil(t, c1)
-
-	res, err := c1.Call(msg)
-	assert.EqualError(t, err, "rpc error: code = Unauthenticated desc = Username is unauthenticated")
-	assert.Nil(t, res)
-	o1.assertErrs(ErrUnauthenticated)
-	c1.Close()
-
-	fmt.Println("--> wrong password <--")
-
-	cc = newClientConfig()
-	cc.Username = "u1"
-	cc.Password = "p2"
-
-	o2 := newMockObserver(t)
-	c2, err := NewClient(cc, o2)
-	assert.NoError(t, err)
-	assert.NotNil(t, c2)
-
-	err = c2.Send(msg)
-	assert.NoError(t, err)
-	o2.assertErrs(ErrUnauthenticated)
-	c2.Close()
-
-	fmt.Println("--> signal server to end <--")
-
-	o3 := newMockObserver(t)
-	cc = newClientConfig()
-	c3, err := NewClient(cc, o3)
-	assert.NoError(t, err)
-	assert.NotNil(t, c3)
-
-	err = c3.Send(msg)
-	assert.NoError(t, err)
-	o3.assertMsgs(msg)
-	err = c3.Send(msg)
-	assert.NoError(t, err)
-	c3.Close()
-
-	safeReceive(done)
-}
-
 func TestLinkClientReconnect(t *testing.T) {
 	cfg := log.Config{}
 	utils.SetDefaults(&cfg)
@@ -247,12 +175,12 @@ func TestLinkClientReconnect(t *testing.T) {
 	server := flow.New().Debug().
 		Receive(msg).
 		Close()
-	done := initMockServer(t, server, nil)
+	done := initMockServer(t, server)
 
-	cc := newClientConfig()
-	cc.Timeout = time.Millisecond * 100
-	obs := newMockObserver(t)
-	c, err := NewClient(cc, obs)
+	ops := newClientOptions(t)
+	ops.DisableAutoAck = true
+	obs := ops.Observer.(*mockObserver)
+	c, err := NewClient(ops)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 
@@ -278,7 +206,7 @@ func TestLinkClientReconnect(t *testing.T) {
 		Send(msg).
 		End().
 		Close()
-	done = initMockServer(t, server, nil)
+	done = initMockServer(t, server)
 
 	err = c.Send(msg)
 	assert.NoError(t, err)

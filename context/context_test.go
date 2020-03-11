@@ -18,7 +18,7 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, "service", ctx.ServiceName())
 	cfg := ctx.Config()
 	assert.Equal(t, "ssl://baetyl-broker:8883", cfg.Mqtt.Address)
-	assert.Equal(t, "ssl://baetyl-broker:8886", cfg.Link.Address)
+	assert.Equal(t, "baetyl-broker:8886", cfg.Link.Address)
 	assert.Equal(t, "info", cfg.Logger.Level)
 	assert.Equal(t, "json", cfg.Logger.Encoding)
 	assert.Empty(t, cfg.Logger.Filename)

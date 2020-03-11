@@ -95,7 +95,7 @@ func (s *stream) receiving() error {
 			uerr := s.cli.onMsg(msg)
 			if uerr != nil {
 				s.cli.log.Warn("failed to handle publish packet in user code", log.Error(uerr))
-			} else if !s.cli.cfg.DisableAutoAck && qos == 1 {
+			} else if !s.cli.ops.DisableAutoAck && qos == 1 {
 				ack := &Message{}
 				ack.Context.ID = msg.Context.ID
 				ack.Context.Type = Ack

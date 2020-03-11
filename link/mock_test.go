@@ -3,19 +3,14 @@ package link
 import (
 	"context"
 	fmt "fmt"
-	"net"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/baetyl/baetyl-go/flow"
-	"github.com/creasty/defaults"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
-
-var testAddr = "0.0.0.0:50006"
 
 type mockObserver struct {
 	t        *testing.T
@@ -97,41 +92,11 @@ func safeReceive(ch chan struct{}) {
 	}
 }
 
-func newServerConfig() (c ServerConfig) {
-	c.Address = testAddr
-	defaults.Set(&c)
-	return
-}
-
-func newClientConfig() (c ClientConfig) {
-	c.Address = testAddr
-	c.Username = "u1"
-	c.Password = "p1"
-	defaults.Set(&c)
-	return
-}
-
-// mockAuth the fake of auth
-type mockAuth map[string]string
-
-// Authenticate authenticates username and password
-func (ma mockAuth) Authenticate(ctx context.Context) error {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return ErrUnauthenticated
-	}
-	u, ok := md[KeyUsername]
-	if !ok || len(u) != 1 {
-		return ErrUnauthenticated
-	}
-	p, ok := md[KeyPassword]
-	if !ok || len(p) != 1 {
-		return ErrUnauthenticated
-	}
-	if v, ok := ma[u[0]]; !ok || v != p[0] {
-		return ErrUnauthenticated
-	}
-	return nil
+func newClientOptions(t *testing.T) ClientOptions {
+	o := NewClientOptions()
+	o.Address = "0.0.0.0:50006"
+	o.Observer = newMockObserver(t)
+	return o
 }
 
 type mockServer struct {
@@ -167,20 +132,16 @@ func (s *mockServer) Close() error {
 }
 
 // initMockServer the fake of link server for test only
-func initMockServer(t *testing.T, f *flow.Flow, a Authenticator) chan struct{} {
-	s, err := NewServer(newServerConfig(), a)
+func initMockServer(t *testing.T, f *flow.Flow) chan struct{} {
+	ms := &mockServer{t: t, f: f, q: make(chan struct{})}
+
+	ops := NewServerOptions()
+	ops.Address = "0.0.0.0:50006"
+	ops.LinkServer = ms
+	svr, err := Launch(ops)
 	assert.NoError(t, err)
 
-	ms := &mockServer{t: t, s: s, f: f, q: make(chan struct{})}
-	RegisterLinkServer(s, ms)
-
-	lis, err := net.Listen("tcp", testAddr)
-	assert.NoError(t, err)
-	assert.NotNil(t, lis)
-	if lis == nil {
-		panic("listener cannot be nil")
-	}
-	go s.Serve(lis)
+	ms.s = svr
 	return ms.q
 }
 
