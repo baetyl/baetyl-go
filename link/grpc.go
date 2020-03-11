@@ -3,6 +3,7 @@ package link
 import (
 	"crypto/tls"
 	"net"
+	"net/url"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -12,30 +13,34 @@ import (
 type Server = grpc.Server
 
 // Launch launches a link server
-func Launch(op ServerOptions) (*Server, error) {
-	var err error
+func Launch(ops ServerOptions) (*Server, error) {
+	// remove tcp/link scheme from address if exists
+	addr, err := url.Parse(ops.Address)
+	if err == nil && (addr.Scheme == "link" || addr.Scheme == "tcp") {
+		ops.Address = addr.Host
+	}
 	var l net.Listener
-	if op.TLSConfig == nil {
-		l, err = net.Listen("tcp", op.Address)
+	if ops.TLSConfig == nil {
+		l, err = net.Listen("tcp", ops.Address)
 	} else {
-		l, err = tls.Listen("tcp", op.Address, op.TLSConfig)
+		l, err = tls.Listen("tcp", ops.Address, ops.TLSConfig)
 	}
 	if err != nil {
 		return nil, err
 	}
 	gops := []grpc.ServerOption{}
-	if op.TLSConfig != nil {
-		gops = append(gops, grpc.Creds(credentials.NewTLS(op.TLSConfig)))
+	if ops.TLSConfig != nil {
+		gops = append(gops, grpc.Creds(credentials.NewTLS(ops.TLSConfig)))
 	}
-	if op.MaxMessageSize > 0 {
-		gops = append(gops, grpc.MaxRecvMsgSize(int(op.MaxMessageSize)))
-		gops = append(gops, grpc.MaxSendMsgSize(int(op.MaxMessageSize)))
+	if ops.MaxMessageSize > 0 {
+		gops = append(gops, grpc.MaxRecvMsgSize(int(ops.MaxMessageSize)))
+		gops = append(gops, grpc.MaxSendMsgSize(int(ops.MaxMessageSize)))
 	}
-	if op.MaxConcurrentStreams > 0 {
-		gops = append(gops, grpc.MaxConcurrentStreams(op.MaxConcurrentStreams))
+	if ops.MaxConcurrentStreams > 0 {
+		gops = append(gops, grpc.MaxConcurrentStreams(ops.MaxConcurrentStreams))
 	}
 	svr := grpc.NewServer(gops...)
-	RegisterLinkServer(svr, op.LinkServer)
+	RegisterLinkServer(svr, ops.LinkServer)
 	go svr.Serve(l)
 	return svr, nil
 }

@@ -132,6 +132,7 @@ func TestLinkClientSendRecvMessageDisableAutoAck(t *testing.T) {
 
 	ops := newClientOptions(t)
 	ops.DisableAutoAck = true
+	ops.Address = "link://" + ops.Address
 	obs := ops.Observer.(*mockObserver)
 	c, err := NewClient(ops)
 	assert.NoError(t, err)

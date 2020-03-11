@@ -136,7 +136,7 @@ func initMockServer(t *testing.T, f *flow.Flow) chan struct{} {
 	ms := &mockServer{t: t, f: f, q: make(chan struct{})}
 
 	ops := NewServerOptions()
-	ops.Address = "0.0.0.0:50006"
+	ops.Address = "link://0.0.0.0:50006"
 	ops.LinkServer = ms
 	svr, err := Launch(ops)
 	assert.NoError(t, err)

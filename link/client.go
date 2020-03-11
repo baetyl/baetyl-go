@@ -3,6 +3,7 @@ package link
 import (
 	"context"
 	"errors"
+	"net/url"
 	"time"
 
 	"github.com/baetyl/baetyl-go/log"
@@ -30,6 +31,10 @@ type Client struct {
 
 // NewClient creates a new client of functions server
 func NewClient(ops ClientOptions) (*Client, error) {
+	// remove link scheme from address if exists
+	if addr, err := url.Parse(ops.Address); err == nil && addr.Scheme == "link" {
+		ops.Address = addr.Host
+	}
 	gops := []grpc.DialOption{
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(int(ops.MaxMessageSize))),
 	}
