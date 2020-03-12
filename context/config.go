@@ -11,36 +11,49 @@ import (
 
 // ServiceConfig base config of service
 type ServiceConfig struct {
-	Mqtt   MQTTClientConfig `yaml:"mqtt" json:"mqtt"`
+	HTTP   HTTPClientConfig `yaml:"http" json:"http"`
+	MQTT   MQTTClientConfig `yaml:"mqtt" json:"mqtt"`
 	Link   LinkClientConfig `yaml:"link" json:"link"`
 	Logger log.Config       `yaml:"logger" json:"logger"`
 }
 
+// HTTPClientConfig mqtt client config
+type HTTPClientConfig struct {
+	Address               string `yaml:"address" json:"address"`
+	utils.Certificate     `yaml:",inline" json:",inline"`
+	Timeout               time.Duration `yaml:"timeout" json:"timeout" default:"30s"`
+	KeepAlive             time.Duration `yaml:"keepalive" json:"keepalive" default:"30s"`
+	MaxIdleConns          int           `yaml:"maxIdleConns" json:"maxIdleConns" default:"100"`
+	IdleConnTimeout       time.Duration `yaml:"idleConnTimeout" json:"idleConnTimeout" default:"90s"`
+	TLSHandshakeTimeout   time.Duration `yaml:"tlsHandshakeTimeout" json:"tlsHandshakeTimeout" default:"10s"`
+	ExpectContinueTimeout time.Duration `yaml:"expectContinueTimeout" json:"expectContinueTimeout" default:"1s"`
+}
+
 // MQTTClientConfig mqtt client config
 type MQTTClientConfig struct {
-	Address              string            `yaml:"address" json:"address"`
-	Username             string            `yaml:"username" json:"username"`
-	Password             string            `yaml:"password" json:"password"`
-	Certificate          utils.Certificate `yaml:",inline" json:",inline"`
-	ClientID             string            `yaml:"clientid" json:"clientid"`
-	CleanSession         bool              `yaml:"cleansession" json:"cleansession"`
-	Timeout              time.Duration     `yaml:"timeout" json:"timeout" default:"30s"`
-	KeepAlive            time.Duration     `yaml:"keepalive" json:"keepalive" default:"3m"`
-	MaxReconnectInterval time.Duration     `yaml:"maxReconnectInterval" json:"maxReconnectInterval" default:"3m"`
-	MaxCacheMessages     int               `yaml:"maxCacheMessages" json:"maxCacheMessages" default:"10"`
-	DisableAutoAck       bool              `yaml:"disableAutoAck" json:"disableAutoAck"`
-	Subscriptions        Subscriptions     `yaml:"subscriptions" json:"subscriptions" default:"[]"`
+	Address              string `yaml:"address" json:"address"`
+	Username             string `yaml:"username" json:"username"`
+	Password             string `yaml:"password" json:"password"`
+	utils.Certificate    `yaml:",inline" json:",inline"`
+	ClientID             string        `yaml:"clientid" json:"clientid"`
+	CleanSession         bool          `yaml:"cleansession" json:"cleansession"`
+	Timeout              time.Duration `yaml:"timeout" json:"timeout" default:"30s"`
+	KeepAlive            time.Duration `yaml:"keepalive" json:"keepalive" default:"30s"`
+	MaxReconnectInterval time.Duration `yaml:"maxReconnectInterval" json:"maxReconnectInterval" default:"3m"`
+	MaxCacheMessages     int           `yaml:"maxCacheMessages" json:"maxCacheMessages" default:"10"`
+	DisableAutoAck       bool          `yaml:"disableAutoAck" json:"disableAutoAck"`
+	Subscriptions        Subscriptions `yaml:"subscriptions" json:"subscriptions" default:"[]"`
 }
 
 // LinkClientConfig link client config
 type LinkClientConfig struct {
-	Address              string            `yaml:"address" json:"address"`
-	Certificate          utils.Certificate `yaml:",inline" json:",inline"`
-	Timeout              time.Duration     `yaml:"timeout" json:"timeout" default:"30s"`
-	MaxReconnectInterval time.Duration     `yaml:"maxReconnectInterval" json:"maxReconnectInterval" default:"3m"`
-	MaxMessageSize       utils.Size        `yaml:"maxMessageSize" json:"maxMessageSize" default:"4m"`
-	MaxCacheMessages     int               `yaml:"maxCacheMessages" json:"maxCacheMessages" default:"10"`
-	DisableAutoAck       bool              `yaml:"disableAutoAck" json:"disableAutoAck"`
+	Address              string `yaml:"address" json:"address"`
+	utils.Certificate    `yaml:",inline" json:",inline"`
+	Timeout              time.Duration `yaml:"timeout" json:"timeout" default:"30s"`
+	MaxReconnectInterval time.Duration `yaml:"maxReconnectInterval" json:"maxReconnectInterval" default:"3m"`
+	MaxMessageSize       utils.Size    `yaml:"maxMessageSize" json:"maxMessageSize" default:"4m"`
+	MaxCacheMessages     int           `yaml:"maxCacheMessages" json:"maxCacheMessages" default:"10"`
+	DisableAutoAck       bool          `yaml:"disableAutoAck" json:"disableAutoAck"`
 }
 
 // Subscriptions subscriptions
