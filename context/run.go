@@ -1,17 +1,16 @@
-package main
+package context
 
 import (
 	"flag"
 	"os"
 	"runtime/debug"
 
-	"github.com/baetyl/baetyl-go/context"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
 )
 
 // Run service
-func Run(handle func(context.Context) error) {
+func Run(handle func(Context) error) {
 	utils.Version()
 
 	var h bool
@@ -23,7 +22,7 @@ func Run(handle func(context.Context) error) {
 		return
 	}
 
-	ctx := context.NewContext(c)
+	ctx := NewContext(c)
 	defer func() {
 		if r := recover(); r != nil {
 			ctx.Log().Error("service is stopped with panic", log.Any("panic", debug.Stack()))
