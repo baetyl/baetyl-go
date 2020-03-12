@@ -49,10 +49,11 @@ func (c *Client) Call(service, function string, payload []byte) ([]byte, error) 
 	if err != nil {
 		return nil, err
 	}
-	return handleResponse(r)
+	return HandleResponse(r)
 }
 
-func handleResponse(r *gohttp.Response) ([]byte, error) {
+// HandleResponse handles response
+func HandleResponse(r *gohttp.Response) ([]byte, error) {
 	defer r.Body.Close()
 	data, err := ioutil.ReadAll(r.Body)
 	if r.StatusCode != gohttp.StatusOK {
