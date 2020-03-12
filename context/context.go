@@ -28,7 +28,7 @@ type Context interface {
 	// returns service config
 	ServiceConfig() ServiceConfig
 	// leads custom config, if path is empty, will load config from default path
-	LoadCustomConfig(cfg interface{}, path string) error
+	LoadCustomConfig(cfg interface{}, files ...string) error
 	// returns logger interface
 	Log() *log.Logger
 	// waiting to exit, receiving SIGTERM and SIGINT signals
@@ -65,19 +65,17 @@ func NewContext(confFile string) Context {
 	fs := []log.Field{log.Any("node", c.nodeName), log.Any("app", c.appName), log.Any("service", c.serviceName)}
 	c.log = log.With(fs...)
 
-	var err error
-	if utils.FileExists(c.confFile) {
-		err = utils.LoadYAML(c.confFile, &c.cfg)
-	} else {
-		err = utils.UnmarshalYAML(nil, &c.cfg)
-	}
+	err := c.LoadCustomConfig(&c.cfg)
 	if err != nil {
-		c.log.Error("failed to load service config", log.Error(err))
+		c.log.Error("failed to load service config, to use default config", log.Error(err))
+		utils.UnmarshalYAML(nil, &c.cfg)
 	}
+
 	c.log, err = log.Init(c.cfg.Logger, fs...)
 	if err != nil {
 		c.log.Error("failed to init logger", log.Error(err))
 	}
+
 	if c.cfg.HTTP.Address == "" {
 		if c.cfg.HTTP.Key == "" {
 			c.cfg.HTTP.Address = "http://baetyl-function:8880"
@@ -85,6 +83,7 @@ func NewContext(confFile string) Context {
 			c.cfg.HTTP.Address = "https://baetyl-function:8880"
 		}
 	}
+
 	if c.cfg.MQTT.Address == "" {
 		if c.cfg.MQTT.Key == "" {
 			c.cfg.MQTT.Address = "tcp://baetyl-broker:1883"
@@ -92,6 +91,7 @@ func NewContext(confFile string) Context {
 			c.cfg.MQTT.Address = "ssl://baetyl-broker:8883"
 		}
 	}
+
 	if c.cfg.Link.Address == "" {
 		c.cfg.Link.Address = "link://baetyl-broker:8886"
 	}
@@ -115,11 +115,15 @@ func (c *ctx) ServiceConfig() ServiceConfig {
 	return c.cfg
 }
 
-func (c *ctx) LoadCustomConfig(cfg interface{}, path string) error {
-	if path == "" {
-		path = c.confFile
+func (c *ctx) LoadCustomConfig(cfg interface{}, files ...string) error {
+	f := c.confFile
+	if len(files) > 0 && len(files[0]) > 0 {
+		f = files[0]
 	}
-	return utils.LoadYAML(path, cfg)
+	if utils.FileExists(f) {
+		return utils.LoadYAML(f, cfg)
+	}
+	return utils.UnmarshalYAML(nil, cfg)
 }
 
 func (c *ctx) Log() *log.Logger {

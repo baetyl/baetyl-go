@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/zap v1.13.0
-	golang.org/x/net v0.0.0-20191119073136-fc4aabc6c914
+	golang.org/x/net v0.0.0-20191119073136-fc4aabc6c914 // indirect
 	golang.org/x/sys v0.0.0-20190422165155-953cdadca894 // indirect
 	golang.org/x/tools v0.0.0-20191205225056-3393d29bb9fe // indirect
 	google.golang.org/grpc v1.25.1
@@ -27,5 +27,4 @@ require (
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/validator.v2 v2.0.0-20191107172027-c3144fdedc21
 	gopkg.in/yaml.v2 v2.2.2
-	gotest.tools v2.2.0+incompatible
 )
