@@ -5,4 +5,6 @@ baetyl-go
 [![Go Report Card](https://goreportcard.com/badge/github.com/baetyl/baetyl-go)](https://goreportcard.com/report/github.com/baetyl/baetyl-go) 
 [![License](https://img.shields.io/github/license/baetyl/baetyl-go.svg)](./LICENSE)
 
-BAETYL SDK for golang
+Golang SDK for BAETYL V2
+
+Please use [Old SDK](https://github.com/baetyl/baetyl/tree/master/sdk/baetyl-go) if working on [BAETYL V1](https://github.com/baetyl/baetyl).
