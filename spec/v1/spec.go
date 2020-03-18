@@ -9,6 +9,7 @@ type ReportSpec struct {
 	NodeStats   NodeStatus  `json:"nodestats,omitempty"`
 	AppVersions AppVersions `json:"apps,omitempty"`
 	AppStats    []AppStatus `json:"appstats,omitempty"`
+	Activation  *Activation `json:"activation,omitempty"`
 }
 
 // NodeInfo node info
