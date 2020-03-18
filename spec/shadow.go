@@ -1,4 +1,4 @@
-package shadow
+package spec
 
 import (
 	"encoding/json"
