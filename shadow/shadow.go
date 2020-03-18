@@ -15,8 +15,8 @@ const maxJSONLevel = 5
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
 var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
 
-// Shadow the model of shadow
-type Shadow struct {
+// Spec the spec of shadow
+type Spec struct {
 	Namespace         string            `json:"namespace,omitempty"`
 	Name              string            `json:"name,omitempty"`
 	Version           string            `json:"version,omitempty"`
