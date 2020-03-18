@@ -74,7 +74,7 @@ type ServiceVolume struct {
 	// specifies target of volume
 	Target string `yaml:"target,omitempty" json:"target,omitempty"`
 	// specifies if the volume is read-only
-	ReadOnly bool `yaml:"read_only,omitempty" json:"read_only,omitempty"`
+	ReadOnly bool `yaml:"readOnly,omitempty" json:"readOnly,omitempty"`
 }
 
 func (sv *ServiceVolume) MarshalYAML() (interface{}, error) {
@@ -99,8 +99,8 @@ type Retry struct {
 
 // BackoffInfo holds backoff value
 type BackoffInfo struct {
-	Min    string  `json:"min,omitempty" validate:"duration"`
-	Max    string  `json:"max,omitempty" validate:"duration"`
+	Min    string  `json:"min,omitempty"`
+	Max    string  `json:"max,omitempty"`
 	Factor float64 `json:"factor,omitempty"`
 }
 
@@ -114,7 +114,7 @@ type Resources struct {
 // CPU cpu config
 type CPU struct {
 	Cpus    float64 `json:"cpus,omitempty"`
-	SetCPUs string  `json:"setcpus,omitempty" validate:"setcpus"`
+	SetCPUs string  `json:"setcpus,omitempty"`
 }
 
 // Pids pids config
