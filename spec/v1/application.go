@@ -89,11 +89,6 @@ type ObjectReference struct {
 	Version string `json:"version,omitempty"`
 }
 
-type KeyToPath struct {
-	Key  string `json:"key,omitempty"`
-	Path string `json:"path,omitempty"`
-}
-
 // ServiceVolume specific volume configuration of service
 type VolumeMount struct {
 	// specifies name of volume
