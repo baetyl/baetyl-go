@@ -24,8 +24,9 @@ service Function {
 
 // Message message
 message Message {
-  map<string,string> Metadata = 1;  // Metadata
-  bytes  Payload              = 2;  // Payload
+  uint64 ID                   = 1;  // message id
+  map<string,string> Metadata = 2;  // Metadata
+  bytes  Payload              = 3;  // Payload
 }
 
 // protoc -I=. -I=$GOPATH/src -I=$GOPATH/src/github.com/gogo/protobuf/protobuf --gogofaster_out=plugins=grpc:. function.proto
