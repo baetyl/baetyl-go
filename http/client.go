@@ -25,6 +25,7 @@ func NewClient(ops ClientOptions) *Client {
 			DualStack: true,
 		}).DialContext,
 		ForceAttemptHTTP2:     true,
+		TLSClientConfig:       ops.TLSConfig,
 		MaxIdleConns:          ops.MaxIdleConns,
 		IdleConnTimeout:       ops.IdleConnTimeout,
 		TLSHandshakeTimeout:   ops.TLSHandshakeTimeout,

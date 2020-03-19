@@ -1,35 +1,33 @@
 package http
 
 import (
-	"fmt"
-	"io/ioutil"
 	gohttp "net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/baetyl/baetyl-go/mock"
+	"github.com/baetyl/baetyl-go/utils"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestClient_Call(t *testing.T) {
-	ts := httptest.NewServer(gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
-		fmt.Printf("Header:%vn", r.Header)
-		assert.Equal(t, "POST", r.Method)
-		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
-		assert.Equal(t, "/service/function", r.URL.EscapedPath())
-		req, err := ioutil.ReadAll(r.Body)
-		assert.NoError(t, err)
-		assert.Equal(t, "{}", string(req))
-		w.WriteHeader(gohttp.StatusOK)
-		w.Write(req)
-	}))
-	defer ts.Close()
+	tlssvr, err := utils.NewTLSConfigServer(utils.Certificate{CA: "../mock/testcert/ca.pem", Key: "../mock/testcert/server.key", Cert: "../mock/testcert/server.pem"})
+	assert.NoError(t, err)
+	assert.NotNil(t, tlssvr)
+	tlscli, err := utils.NewTLSConfigClient(utils.Certificate{CA: "../mock/testcert/ca.pem", Key: "../mock/testcert/client.key", Cert: "../mock/testcert/client.pem", InsecureSkipVerify: true})
+	assert.NoError(t, err)
+	assert.NotNil(t, tlscli)
+
+	ms := mock.NewServer(tlssvr, mock.NewResponse(200, []byte("abc")))
+	defer ms.Close()
 
 	ops := NewClientOptions()
-	ops.Address = ts.URL
+	ops.Address = ms.URL
+	ops.TLSConfig = tlscli
 	c := NewClient(ops)
 	resp, err := c.Call("service", "function", []byte("{}"))
 	assert.NoError(t, err)
-	assert.Equal(t, "{}", string(resp))
+	assert.Equal(t, "abc", string(resp))
 }
 
 func TestClieneBadRequest(t *testing.T) {
