@@ -2,7 +2,7 @@ package v1
 
 import (
 	"time"
-	)
+)
 
 type Application struct {
 	Name              string                      `json:"name,omitempty"`
