@@ -11,12 +11,12 @@ import (
 
 // Client client of http server
 type Client struct {
-	ops ClientOptions
+	ops *ClientOptions
 	*gohttp.Client
 }
 
 // NewClient creates a new http client
-func NewClient(ops ClientOptions) *Client {
+func NewClient(ops *ClientOptions) *Client {
 	transport := &gohttp.Transport{
 		Proxy: gohttp.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{

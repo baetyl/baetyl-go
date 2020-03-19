@@ -14,16 +14,19 @@ func TestClient_Call(t *testing.T) {
 	tlssvr, err := utils.NewTLSConfigServer(utils.Certificate{CA: "../mock/testcert/ca.pem", Key: "../mock/testcert/server.key", Cert: "../mock/testcert/server.pem"})
 	assert.NoError(t, err)
 	assert.NotNil(t, tlssvr)
-	tlscli, err := utils.NewTLSConfigClient(utils.Certificate{CA: "../mock/testcert/ca.pem", Key: "../mock/testcert/client.key", Cert: "../mock/testcert/client.pem", InsecureSkipVerify: true})
-	assert.NoError(t, err)
-	assert.NotNil(t, tlscli)
-
 	ms := mock.NewServer(tlssvr, mock.NewResponse(200, []byte("abc")))
 	defer ms.Close()
 
-	ops := NewClientOptions()
-	ops.Address = ms.URL
-	ops.TLSConfig = tlscli
+	var cfg ClientConfig
+	utils.UnmarshalYAML(nil, &cfg)
+	cfg.CA = "../mock/testcert/ca.pem"
+	cfg.Key = "../mock/testcert/client.key"
+	cfg.Cert = "../mock/testcert/client.pem"
+	cfg.InsecureSkipVerify = true
+	cfg.Address = ms.URL
+	ops, err := cfg.ToClientOptions()
+	assert.NoError(t, err)
+	assert.NotNil(t, ops)
 	c := NewClient(ops)
 	resp, err := c.Call("service", "function", []byte("{}"))
 	assert.NoError(t, err)

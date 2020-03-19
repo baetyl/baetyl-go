@@ -20,8 +20,8 @@ type ClientOptions struct {
 }
 
 // NewClientOptions creates client options with default values
-func NewClientOptions() ClientOptions {
-	return ClientOptions{
+func NewClientOptions() *ClientOptions {
+	return &ClientOptions{
 		Timeout:               30 * time.Second,
 		KeepAlive:             30 * time.Second,
 		MaxIdleConns:          100,
