@@ -35,7 +35,11 @@ func NewServer(tlsConfig *tls.Config, responses ...*Response) *Server {
 		w.Write(ms.responses[0].body)
 		ms.responses = ms.responses[1:]
 	}))
-	ms.Server.Config.TLSConfig = tlsConfig
-	ms.Server.StartTLS()
+	if tlsConfig == nil {
+		ms.Server.Start()
+	} else {
+		ms.Server.Config.TLSConfig = tlsConfig
+		ms.Server.StartTLS()
+	}
 	return ms
 }

@@ -1,8 +1,6 @@
 package http
 
 import (
-	gohttp "net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/baetyl/baetyl-go/mock"
@@ -44,24 +42,23 @@ func TestClientRequests(t *testing.T) {
 }
 
 func TestClieneBadRequests(t *testing.T) {
-	ts := httptest.NewServer(gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
-		w.WriteHeader(gohttp.StatusBadRequest)
-	}))
-	defer ts.Close()
+	response := mock.NewResponse(400, []byte("abc"))
+	ms := mock.NewServer(nil, response, response, response)
+	defer ms.Close()
 
 	ops := NewClientOptions()
-	ops.Address = ts.URL
+	ops.Address = ms.URL
 	c := NewClient(ops)
 
 	data, err := c.Call("service", "function", []byte("{}"))
-	assert.EqualError(t, err, "[400] 400 Bad Request")
-	assert.Empty(t, data)
+	assert.EqualError(t, err, "[400] abc")
+	assert.Equal(t, "abc", string(data))
 
-	resp, err := c.Get(ts.URL)
-	assert.NoError(t, err)
-	assert.Equal(t, gohttp.StatusBadRequest, resp.StatusCode)
+	data, err = c.GetJSON(ms.URL)
+	assert.EqualError(t, err, "[400] abc")
+	assert.Equal(t, "abc", string(data))
 
-	resp, err = c.Post(ts.URL, "", nil)
-	assert.NoError(t, err)
-	assert.Equal(t, gohttp.StatusBadRequest, resp.StatusCode)
+	data, err = c.PostJSON(ms.URL, []byte("abc"))
+	assert.EqualError(t, err, "[400] abc")
+	assert.Equal(t, "abc", string(data))
 }

@@ -61,4 +61,12 @@ func TestHttpServer(t *testing.T) {
 		assert.Equal(t, "", string(data))
 	}()
 	wg.Wait()
+
+	res, err = cli.Post(svr.URL, "application/json", nil)
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.Equal(t, 200, res.StatusCode)
+	data, err = ioutil.ReadAll(res.Body)
+	assert.NoError(t, err)
+	assert.Equal(t, "", string(data))
 }
