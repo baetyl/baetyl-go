@@ -19,22 +19,22 @@ import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 enum Type {
     option (gogoproto.goproto_enum_prefix) = false;
-    Msg = 0; // 0: message
+    Msg    = 0; // 0: message
     MsgRtn = 1; // 1: message with retain flag
-    Ack = 2; // 2: acknowledge
+    Ack    = 2; // 2: acknowledge
 }
 
 message Context {
-    uint64 ID = 1;
-    uint64 TS = 2;
-    uint32 QOS = 3;
-    Type Type = 4;
+    uint64 ID    = 1;
+    uint64 TS    = 2;
+    uint32 QOS   = 3;
+    Type   Type  = 4;
     string Topic = 5;
 }
 
 message Message {
     Context Context = 1 [(gogoproto.nullable) = false];
-    bytes Content = 2;
+    bytes Content   = 2;
 }
 
 service Link {
