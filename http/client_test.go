@@ -10,11 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClient_Call(t *testing.T) {
+func TestClientRequests(t *testing.T) {
 	tlssvr, err := utils.NewTLSConfigServer(utils.Certificate{CA: "../mock/testcert/ca.pem", Key: "../mock/testcert/server.key", Cert: "../mock/testcert/server.pem"})
 	assert.NoError(t, err)
 	assert.NotNil(t, tlssvr)
-	ms := mock.NewServer(tlssvr, mock.NewResponse(200, []byte("abc")))
+
+	response := mock.NewResponse(200, []byte("abc"))
+	ms := mock.NewServer(tlssvr, response, response, response)
 	defer ms.Close()
 
 	var cfg ClientConfig
@@ -31,9 +33,17 @@ func TestClient_Call(t *testing.T) {
 	resp, err := c.Call("service", "function", []byte("{}"))
 	assert.NoError(t, err)
 	assert.Equal(t, "abc", string(resp))
+
+	data, err := c.PostJSON("v1", []byte("{}"))
+	assert.NoError(t, err)
+	assert.Equal(t, "abc", string(data))
+
+	data, err = c.GetJSON("v1")
+	assert.NoError(t, err)
+	assert.Equal(t, "abc", string(data))
 }
 
-func TestClieneBadRequest(t *testing.T) {
+func TestClieneBadRequests(t *testing.T) {
 	ts := httptest.NewServer(gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
 		w.WriteHeader(gohttp.StatusBadRequest)
 	}))

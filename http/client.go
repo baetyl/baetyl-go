@@ -9,6 +9,9 @@ import (
 	"strings"
 )
 
+// ContentTypeJSON the json content type of request
+const ContentTypeJSON = "application/json"
+
 // Client client of http server
 type Client struct {
 	ops *ClientOptions
@@ -46,7 +49,27 @@ func (c *Client) Call(service, function string, payload []byte) ([]byte, error) 
 	if function != "" {
 		url += "/" + function
 	}
-	r, err := c.Post(url, "application/json", bytes.NewBuffer(payload))
+	r, err := c.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+	return HandleResponse(r)
+}
+
+// PostJSON post data with json content type
+func (c *Client) PostJSON(url string, payload []byte) ([]byte, error) {
+	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
+	r, err := c.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+	return HandleResponse(r)
+}
+
+// GetJSON get data with json content type
+func (c *Client) GetJSON(url string) ([]byte, error) {
+	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
+	r, err := c.Get(url)
 	if err != nil {
 		return nil, err
 	}
