@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -83,6 +84,49 @@ func UnmarshalJSON(in []byte, out interface{}) error {
 	return nil
 }
 
+// Size size
+type Size int64
+
+// MarshalYAML customizes marshal
+func (s Size) MarshalYAML() (interface{}, error) {
+	return int64(s), nil
+}
+
+// UnmarshalYAML customizes unmarshal
+func (s *Size) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var str string
+	err := unmarshal(&str)
+	if err != nil {
+		return err
+	}
+	v, err := units.RAMInBytes(str)
+	if err != nil {
+		return err
+	}
+	*s = Size(v)
+	return nil
+}
+
+// MarshalJSON customizes marshal
+func (s Size) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.FormatInt(int64(s), 10)), nil
+}
+
+// UnmarshalJSON customizes unmarshal
+func (s *Size) UnmarshalJSON(data []byte) error {
+	str := string(data)
+	if str == "null" {
+		return nil
+	}
+	str = strings.Trim(str, "\"")
+	v, err := units.RAMInBytes(str)
+	if err != nil {
+		return err
+	}
+	*s = Size(v)
+	return nil
+}
+
 /*
   "b" represents for "B"
   "k" represents for "KB" or "KiB"
@@ -95,6 +139,7 @@ func UnmarshalJSON(in []byte, out interface{}) error {
 var decimapAbbrs = []string{"", "k", "m", "g", "t", "p"}
 
 // Length length
+// ! Length is deprecated, please to use Size
 type Length struct {
 	Max int64 `yaml:"max" json:"max"`
 }

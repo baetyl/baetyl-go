@@ -77,6 +77,11 @@ func CalculateFileMD5(fn string) (string, error) {
 	return base64.StdEncoding.EncodeToString(hasher.Sum(nil)), nil
 }
 
+// CalculateBase64 calculates base64 encoding value of target string
+func CalculateBase64(s string) string {
+	return base64.StdEncoding.EncodeToString([]byte(s))
+}
+
 // CreateSymlink create symlink of target
 func CreateSymlink(target, symlink string) error {
 	if PathExists(symlink) {

@@ -1,8 +1,6 @@
 package log
 
 import (
-	"encoding/base64"
-	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -17,7 +15,7 @@ import (
 )
 
 func TestLogger(t *testing.T) {
-	log := With(String("height", "122"))
+	log := With(Any("height", "122"))
 	log.Info("test")
 
 	dir, err := ioutil.TempDir("", t.Name())
@@ -26,29 +24,17 @@ func TestLogger(t *testing.T) {
 
 	jsonFile := path.Join(dir, "json.log")
 	cfg := Config{
-		Path:   jsonFile,
-		Level:  "info",
-		Format: "json",
-		Age: struct {
-			Max int `yaml:"max" json:"max" default:"15" validate:"min=1"`
-		}{
-			Max: 15,
-		},
-		Size: struct {
-			Max int `yaml:"max" json:"max" default:"50" validate:"min=1"`
-		}{
-			Max: 1,
-		},
-		Backup: struct {
-			Max int `yaml:"max" json:"max" default:"15" validate:"min=1"`
-		}{
-			Max: 15,
-		},
+		Filename:   jsonFile,
+		Level:      "info",
+		Encoding:   "json",
+		MaxAge:     15,
+		MaxSize:    1,
+		MaxBackups: 15,
 	}
 
 	log, err = Init(cfg)
 	assert.NoError(t, err)
-	log.Info("baetyl", Int("age", 12), Error(errors.New("custom error")), String("icon", "baetyl"), Duration("duration", time.Duration(1)))
+	log.Info("baetyl", Any("age", 12), Error(errors.New("custom error")), Any("icon", "baetyl"), Any("duration", time.Duration(1)))
 	log.Sync()
 	assert.FileExists(t, jsonFile)
 
@@ -70,7 +56,7 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), `"level":"debug"`)
 
-	log = With(String("name", "baetyl"))
+	log = With(Any("name", "baetyl"))
 	log.Info("baetyl")
 
 	bytes, err = ioutil.ReadFile(jsonFile)
@@ -87,7 +73,7 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), `"level":"debug"`)
 
-	log, err = Init(cfg, String("height", "122"))
+	log, err = Init(cfg, Any("height", "122"))
 	assert.NoError(t, err)
 	assert.NotEmpty(t, log)
 	log.Info("baetyl")
@@ -97,9 +83,9 @@ func TestLogger(t *testing.T) {
 	res, _ = regexp.MatchString(`{"level":"info","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"baetyl","height":"122"}`, string(bytes))
 	assert.True(t, res)
 
-	textFile := path.Join(dir, "text.log")
-	cfg.Format = "text"
-	cfg.Path = textFile
+	textFile := path.Join(dir, "console.log")
+	cfg.Encoding = "console"
+	cfg.Filename = textFile
 	cfg.Level = "info"
 	log, err = Init(cfg)
 	assert.NoError(t, err)
@@ -118,7 +104,7 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), "debug")
 
-	log = With(String("name", "baetyl"))
+	log = With(Any("name", "baetyl"))
 	log.Info("baetyl")
 	bytes, err = ioutil.ReadFile(textFile)
 	assert.NoError(t, err)
@@ -133,7 +119,7 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotContains(t, string(bytes), "debug")
 
-	log, err = Init(cfg, String("height", "122"))
+	log, err = Init(cfg, Any("height", "122"))
 	assert.NoError(t, err)
 	log.Info("baetyl")
 	log.Sync()
@@ -168,35 +154,22 @@ func TestParseLevel(t *testing.T) {
 	assert.Equal(t, InfoLevel, level)
 }
 
-func TestField(t *testing.T) {
-	key := "age"
-	m := Int(key, 10)
-	assert.Equal(t, key, m.Key)
-	assert.Equal(t, int64(10), m.Integer)
-
-	m = Error(errors.New("test"))
-	assert.Equal(t, m.Key, "error")
-
-	m = String(key, "baetyl")
-	assert.Equal(t, key, m.Key)
-	assert.Equal(t, "baetyl", m.String)
-
-	m = Duration(key, time.Duration(12))
-	assert.Equal(t, key, m.Key)
-	assert.Equal(t, int64(12), m.Integer)
-}
-
 func TestNewFileHook(t *testing.T) {
-	path := "&name=chen&log=wang"
+	cfg := Config{
+		Filename:   "&name=chen&log=wang",
+		Compress:   true,
+		MaxAge:     12,
+		MaxSize:    13,
+		MaxBackups: 14,
+	}
 	url := url.URL{
-		Scheme: "lumberjack",
-		RawQuery: fmt.Sprintf("path=%s&level=%s&format=%s&age_max=%d&size_max=%d&backup_max=%d",
-			base64.URLEncoding.EncodeToString([]byte(path)), "info", "json", 12, 13, 14),
+		Scheme:   "lumberjack",
+		RawQuery: cfg.String(),
 	}
 	lumber, err := newFileHook(&url)
 	assert.NoError(t, err)
 	assert.True(t, lumber.(*lumberjackSink).Compress)
-	assert.Equal(t, path, lumber.(*lumberjackSink).Filename)
+	assert.Equal(t, cfg.Filename, lumber.(*lumberjackSink).Filename)
 	assert.Equal(t, 12, lumber.(*lumberjackSink).MaxAge)
 	assert.Equal(t, 13, lumber.(*lumberjackSink).MaxSize)
 	assert.Equal(t, 14, lumber.(*lumberjackSink).MaxBackups)
@@ -209,24 +182,12 @@ func BenchmarkConsoleAndFile(b *testing.B) {
 
 	file := path.Join(dir, "test.log")
 	cfg := Config{
-		Path:   file,
-		Level:  "info",
-		Format: "json",
-		Age: struct {
-			Max int `yaml:"max" json:"max" default:"15" validate:"min=1"`
-		}{
-			Max: 15,
-		},
-		Size: struct {
-			Max int `yaml:"max" json:"max" default:"50" validate:"min=1"`
-		}{
-			Max: 1000,
-		},
-		Backup: struct {
-			Max int `yaml:"max" json:"max" default:"15" validate:"min=1"`
-		}{
-			Max: 15,
-		},
+		Filename:   file,
+		Level:      "info",
+		Encoding:   "json",
+		MaxAge:     15,
+		MaxSize:    1000,
+		MaxBackups: 15,
 	}
 	logger, err := Init(cfg)
 	assert.NoError(b, err)

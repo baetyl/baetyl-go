@@ -5,8 +5,11 @@ language: go
 go:
   - "1.13"
 
-install: true
+before_install:
+  - make prepare
+
 script:
-  - echo "baetyl-go unit test begin"
-  - env GO111MODULE=on GOPROXY=https://goproxy.cn make test GO_TEST_FLAGS=--race
-  - echo "baetyl-go unit test end"
+  - make test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

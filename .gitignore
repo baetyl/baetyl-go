@@ -6,10 +6,10 @@
 *.dylib
 /.idea
 /.vscode
-/**/cover*.html
+/**/coverage.*
 /**/.DS_Store
 /**/*.log
-
+/vendor
 # Test binary, build with `go test -c`
 *.test
 

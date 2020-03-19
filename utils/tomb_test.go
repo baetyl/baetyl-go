@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	tb "gopkg.in/tomb.v2"
 )
 
 func TestTomb(t *testing.T) {
@@ -17,6 +16,7 @@ func TestTomb(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
+	assert.EqualError(t, tb.Err(), ErrStillAlive.Error())
 	tb.Kill(nil)
 	err = tb.Wait()
 	assert.NoError(t, err)
@@ -67,8 +67,10 @@ func TestTomb(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	tb.Kill(fmt.Errorf("abc"))
+	tb.Kill(fmt.Errorf("efd"))
 	err = tb.Wait()
 	assert.EqualError(t, err, "abc")
+	assert.EqualError(t, tb.Err(), "abc")
 
 	tb = new(Tomb)
 	err = tb.Go(func() error {
@@ -101,20 +103,21 @@ func TestTomb(t *testing.T) {
 }
 
 func TestKillErrStillAlivePanic(t *testing.T) {
-	to := &Tomb{t: tb.Tomb{}}
+	tb := new(Tomb)
 	defer func() {
 		err := recover()
 		if err != "tomb: Kill with ErrStillAlive" {
 			t.Fatalf("Wrong panic on Kill(ErrStillAlive): %v", err)
 		}
-		checkState(t, &to.t, false, false, tb.ErrStillAlive)
+		checkState(t, tb, false, false, ErrStillAlive)
 	}()
-	b := to.Alive()
+	b := tb.Alive()
 	assert.Equal(t, true, b)
-	to.Kill(tb.ErrStillAlive)
+	assert.EqualError(t, tb.Err(), ErrStillAlive.Error())
+	tb.Kill(ErrStillAlive)
 }
 
-func checkState(t *testing.T, tm *tb.Tomb, wantDying, wantDead bool, wantErr error) {
+func checkState(t *testing.T, tm *Tomb, wantDying, wantDead bool, wantErr error) {
 	select {
 	case <-tm.Dying():
 		if !wantDying {
@@ -143,7 +146,7 @@ func checkState(t *testing.T, tm *tb.Tomb, wantDying, wantDead bool, wantErr err
 	if wantDead && seemsDead {
 		waitErr := tm.Wait()
 		switch {
-		case waitErr == tb.ErrStillAlive:
+		case waitErr == ErrStillAlive:
 			t.Errorf("Wait should not return ErrStillAlive")
 		case !reflect.DeepEqual(waitErr, wantErr):
 			t.Errorf("Wait: want %#v, got %#v", wantErr, waitErr)

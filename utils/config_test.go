@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
 
 type testEncodeStruct struct {
@@ -341,6 +343,115 @@ func TestMarshalYAML(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Length.MarshalYAML() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSizeMarshal(t *testing.T) {
+	type dummy struct {
+		S Size `yaml:"s" json:"s"`
+	}
+
+	tests := []struct {
+		name     string
+		dummy    *dummy
+		wantJSON string
+		wantYAML string
+	}{
+		{
+			name:     "1",
+			dummy:    &dummy{S: 1},
+			wantJSON: "{\"s\":1}",
+			wantYAML: "s: 1\n",
+		},
+		{
+			name:     "1024",
+			dummy:    &dummy{S: 1024},
+			wantJSON: "{\"s\":1024}",
+			wantYAML: "s: 1024\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dd, err := json.Marshal(tt.dummy)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantJSON, string(dd))
+
+			ddd := &dummy{}
+			err = json.Unmarshal(dd, ddd)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.dummy.S, ddd.S)
+
+			dd, err = yaml.Marshal(tt.dummy)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantYAML, string(dd))
+
+			ddd = &dummy{}
+			err = yaml.Unmarshal(dd, ddd)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.dummy.S, ddd.S)
+		})
+	}
+}
+
+func TestSizeUnmarshal(t *testing.T) {
+	type dummy struct {
+		S Size `yaml:"s" json:"s"`
+	}
+
+	tests := []struct {
+		name     string
+		json     string
+		yaml     string
+		wantSize Size
+		wantErr  bool
+	}{
+		{
+			name:     "1k",
+			json:     "{\"s\":\"1k\"}",
+			yaml:     "s: 1k\n",
+			wantSize: Size(1024),
+		},
+		{
+			name:     "1m",
+			json:     "{\"s\":\"1M\"}",
+			yaml:     "s: \"1M\"\n",
+			wantSize: Size(1024 * 1024),
+		},
+		{
+			name:     "1g",
+			json:     "{\"s\":\"1gB\"}",
+			yaml:     "s: \"1gB\"\n",
+			wantSize: Size(1024 * 1024 * 1024),
+		},
+		{
+			name:    "1x",
+			json:    "{\"s\":\"1x\"}",
+			yaml:    "s: \"1x\"\n",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := new(dummy)
+			err := json.Unmarshal([]byte(tt.json), d)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSize, d.S)
+			}
+
+			d = new(dummy)
+			err = yaml.Unmarshal([]byte(tt.yaml), d)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSize, d.S)
 			}
 		})
 	}
