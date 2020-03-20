@@ -20,6 +20,8 @@ type NodeInfo struct {
 	OS               string `yaml:"os,omitempty" json:"os,omitempty"`
 	ContainerRuntime string `yaml:"containerRuntime,omitempty" json:"containerRuntime"`
 	MachineID        string `yaml:"machineID,omitempty" json:"machineID"`
+	BootID           string `yaml:"bootID,omitempty" json:"bootID"`
+	SystemUUID       string `yaml:"systemUUID,omitempty" json:"systemUUID"`
 	OSImage          string `yaml:"osImage,omitempty" json:"osImage"`
 }
 
