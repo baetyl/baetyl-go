@@ -4,11 +4,11 @@ import "time"
 
 // ReportSpec report spec
 type ReportSpec struct {
-	Time      time.Time   `json:"time,omitempty"`
-	NodeInfo  NodeInfo    `json:"node,omitempty"`
-	NodeStats NodeStatus  `json:"nodestats,omitempty"`
-	AppInfos  []AppInfo   `json:"apps,omitempty"`
-	AppStats  []AppStatus `json:"appstats,omitempty"`
+	Time     time.Time   `json:"time,omitempty"`
+	NodeInfo NodeInfo    `json:"node,omitempty"`
+	NodeStat NodeStatus  `json:"nodestats,omitempty"`
+	AppInfos []AppInfo   `json:"apps,omitempty"`
+	AppStats []AppStatus `json:"appstats,omitempty"`
 }
 
 // NodeInfo node info
