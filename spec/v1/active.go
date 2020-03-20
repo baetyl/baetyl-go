@@ -5,7 +5,6 @@ import "github.com/baetyl/baetyl-go/utils"
 // ActiveRequest body of active request
 type ActiveRequest struct {
 	BatchName        string            `yaml:"batchName,omitempty" json:"batchName,omitempty"`
-	NodeName         string            `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
 	Namespace        string            `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 	FingerprintValue string            `yaml:"fingerprintValue,omitempty" json:"fingerprintValue,omitempty"`
 	SecurityType     string            `yaml:"securityType,omitempty" json:"securityType,omitempty"`
