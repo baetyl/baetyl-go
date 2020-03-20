@@ -1,4 +1,4 @@
-package v1
+package crd
 
 import (
 	"time"
@@ -11,14 +11,14 @@ type Application struct {
 	Namespace         string                      `json:"namespace,omitempty"`
 	CreationTimestamp time.Time                   `json:"creationTimestamp,omitempty"`
 	Version           string                      `json:"version,omitempty"`
-	Selector          string                      `json:"selector"`
+	Selector          string                      `json:"selector,omitempty"`
 	Services          []Service                   `json:"services,omitempty"`
 	Volumes           []Volume                    `json:"volumes,omitempty"`
 	Registries        map[string]*ObjectReference `json:"registries,omitempty"`
 	Description       string                      `json:"description,omitempty"`
 }
 
-// Service service config
+// Service service config1ma1
 type Service struct {
 	// specifies the unique name of the service
 	Name string `json:"name,omitempty" binding:"required"`
