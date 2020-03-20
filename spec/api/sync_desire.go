@@ -26,7 +26,6 @@ type CRDInfo struct {
 // CRDData crd data
 type CRDData struct {
 	CRDInfo `yaml:",inline" json:",inline"`
-	Data    []byte        `yaml:"data,omitempty" json:"data,omitempty"`
 	Value   VariableValue `yaml:"value,omitempty" json:"value,omitempty"`
 }
 
