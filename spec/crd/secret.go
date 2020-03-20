@@ -1,4 +1,4 @@
-package v1
+package crd
 
 import "time"
 
@@ -10,6 +10,6 @@ type Secret struct {
 	Data              map[string][]byte `json:"data,omitempty"`
 	CreationTimestamp time.Time         `json:"creationTimestamp,omitempty"`
 	UpdateTimestamp   time.Time         `json:"updateTimestamp,omitempty"`
-	Description       string            `json:"description"`
+	Description       string            `json:"description,omitempty"`
 	Version           string            `json:"version,omitempty"`
 }

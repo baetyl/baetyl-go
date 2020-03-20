@@ -1,9 +1,9 @@
-package v1
+package api
 
 import "time"
 
-// ReportSpec report spec
-type ReportSpec struct {
+// ReportRequest report request
+type ReportRequest struct {
 	Time     time.Time   `json:"time,omitempty"`
 	NodeInfo NodeInfo    `json:"node,omitempty"`
 	NodeStat NodeStatus  `json:"nodestats,omitempty"`
@@ -46,8 +46,8 @@ type AppStatus struct {
 	VolumeInfos  map[string]*VolumeInfo  `yaml:"volumes,omitempty" json:"volumes,omitempty"`
 }
 
-// DesireSpec desire spec
-type DesireSpec struct {
+// ReportResponse report response as desire
+type ReportResponse struct {
 	AppInfos []AppInfo `json:"apps,omitempty"`
 }
 
