@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Configuration
+// Configuration config info
 type Configuration struct {
 	Name              string            `json:"name,omitempty"`
 	Namespace         string            `json:"namespace,omitempty"`

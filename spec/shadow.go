@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"time"
 
+	v1 "github.com/baetyl/baetyl-go/spec/v1"
 	jsonpatch "github.com/evanphx/json-patch"
 )
 
@@ -32,12 +33,19 @@ type Report map[string]interface{}
 // Desire desire data
 type Desire map[string]interface{}
 
-// Delta delat data
-type Delta map[string]interface{}
+// AppInfos return app infos
+func (r Report) AppInfos() []v1.AppInfo {
+	return getAppInfos(r)
+}
 
 // Merge merge new reported data
 func (r Report) Merge(reported Report) error {
 	return merge(r, reported, 1, maxJSONLevel)
+}
+
+// AppInfos return app infos
+func (d Desire) AppInfos() []v1.AppInfo {
+	return getAppInfos(d)
 }
 
 // Merge merge new reported data
@@ -45,9 +53,32 @@ func (d Desire) Merge(desired Desire) error {
 	return merge(d, desired, 1, maxJSONLevel)
 }
 
-// Diff diff with reported data, return the delta
-func (d Desire) Diff(reported Report) (Delta, error) {
+// Diff diff with reported data, return the delta fo desire
+func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
+}
+
+func getAppInfos(data map[string]interface{}) []v1.AppInfo {
+	if data["apps"] == nil {
+		return nil
+	}
+	res, ok := data["apps"].([]v1.AppInfo)
+	if ok {
+		return res
+	}
+	ais, ok := data["apps"].([]interface{})
+	if !ok || len(ais) == 0 {
+		return nil
+	}
+	res = []v1.AppInfo{}
+	for _, ai := range ais {
+		aim := ai.(map[string]interface{})
+		if aim == nil {
+			return nil
+		}
+		res = append(res, v1.AppInfo{Name: aim["name"].(string), Version: aim["version"].(string)})
+	}
+	return res
 }
 
 // merge right map into left map

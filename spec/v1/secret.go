@@ -2,7 +2,7 @@ package v1
 
 import "time"
 
-// Secret secret
+// Secret secret info
 type Secret struct {
 	Name              string            `json:"name,omitempty"`
 	Namespace         string            `json:"namespace,omitempty"`
