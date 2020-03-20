@@ -12,8 +12,8 @@ type ActiveRequest struct {
 	PenetrateData    map[string]string `yaml:"penetrateData,omitempty" json:"penetrateData,omitempty"`
 }
 
-// ActiveResponce body of active responce
-type ActiveResponce struct {
+// ActiveResponse body of active responce
+type ActiveResponse struct {
 	NodeName    string            `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
 	Namespace   string            `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 	Certificate utils.Certificate `yaml:"certificate,omitempty" json:"certificate,omitempty"`
