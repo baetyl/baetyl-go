@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/flow"
+	"github.com/baetyl/baetyl-go/mock"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
@@ -102,7 +102,7 @@ func newClientOptions(t *testing.T) ClientOptions {
 type mockServer struct {
 	t *testing.T
 	s *grpc.Server
-	f *flow.Flow
+	f *mock.Flow
 	q chan struct{}
 	sync.Once
 }
@@ -132,7 +132,7 @@ func (s *mockServer) Close() error {
 }
 
 // initMockServer the fake of link server for test only
-func initMockServer(t *testing.T, f *flow.Flow) chan struct{} {
+func initMockServer(t *testing.T, f *mock.Flow) chan struct{} {
 	ms := &mockServer{t: t, f: f, q: make(chan struct{})}
 
 	ops := NewServerOptions()
@@ -150,7 +150,7 @@ type wrapper struct {
 	stream Link_TalkServer
 }
 
-func newWrapper(s *mockServer, conn Link_TalkServer) flow.Conn {
+func newWrapper(s *mockServer, conn Link_TalkServer) mock.Conn {
 	return &wrapper{server: s, stream: conn}
 }
 

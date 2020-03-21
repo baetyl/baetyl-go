@@ -1,4 +1,4 @@
-package flow
+package mock
 
 import (
 	"testing"
@@ -30,7 +30,7 @@ func TestFlow(t *testing.T) {
 
 	wait := make(chan struct{})
 
-	server := New().
+	server := NewFlow().
 		Receive(connect).
 		Send(connack).
 		Run(func() {
@@ -40,7 +40,7 @@ func TestFlow(t *testing.T) {
 		Receive(publish1, publish2).
 		Close()
 
-	client := New().
+	client := NewFlow().
 		Send(connect).
 		Receive(connack).
 		Run(func() {

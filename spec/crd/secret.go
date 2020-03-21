@@ -1,15 +1,13 @@
-package v1
+package crd
 
-import (
-	"time"
-)
+import "time"
 
-// Configuration
-type Configuration struct {
+// Secret secret info
+type Secret struct {
 	Name              string            `json:"name,omitempty"`
 	Namespace         string            `json:"namespace,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
-	Data              map[string]string `json:"data,omitempty" default:"{}" binding:"required"`
+	Data              map[string][]byte `json:"data,omitempty"`
 	CreationTimestamp time.Time         `json:"creationTimestamp,omitempty"`
 	UpdateTimestamp   time.Time         `json:"updateTimestamp,omitempty"`
 	Description       string            `json:"description,omitempty"`

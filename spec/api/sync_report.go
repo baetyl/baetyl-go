@@ -1,15 +1,14 @@
-package v1
+package api
 
 import "time"
 
-// ReportSpec report spec
-type ReportSpec struct {
-	Time        time.Time   `json:"time,omitempty"`
-	Node        NodeInfo    `json:"node,omitempty"`
-	NodeStats   NodeStatus  `json:"nodestats,omitempty"`
-	AppVersions AppVersions `json:"apps,omitempty"`
-	AppStats    []AppStatus `json:"appstats,omitempty"`
-	Activation  *Activation `json:"activation,omitempty"`
+// ReportRequest report request
+type ReportRequest struct {
+	Time     time.Time   `json:"time,omitempty"`
+	NodeInfo NodeInfo    `json:"node,omitempty"`
+	NodeStat NodeStatus  `json:"nodestats,omitempty"`
+	AppInfos []AppInfo   `json:"apps,omitempty"`
+	AppStats []AppStatus `json:"appstats,omitempty"`
 }
 
 // NodeInfo node info
@@ -21,6 +20,8 @@ type NodeInfo struct {
 	OS               string `yaml:"os,omitempty" json:"os,omitempty"`
 	ContainerRuntime string `yaml:"containerRuntime,omitempty" json:"containerRuntime"`
 	MachineID        string `yaml:"machineID,omitempty" json:"machineID"`
+	BootID           string `yaml:"bootID,omitempty" json:"bootID"`
+	SystemUUID       string `yaml:"systemUUID,omitempty" json:"systemUUID"`
 	OSImage          string `yaml:"osImage,omitempty" json:"osImage"`
 }
 
@@ -30,22 +31,24 @@ type NodeStatus struct {
 	Capacity map[string]*ResourceInfo `yaml:"capacity,omitempty" json:"capacity,omitempty"`
 }
 
-// AppVersions app versions
-type AppVersions map[string]string
+// AppInfo app info
+type AppInfo struct {
+	Name    string `yaml:"name" json:"name"`
+	Version string `yaml:"version,omitempty" json:"version,omitempty"`
+}
 
 // AppStatus app status
 type AppStatus struct {
-	Name         string                  `yaml:"name" json:"name"`
-	Version      string                  `yaml:"version,omitempty" json:"version,omitempty"`
+	AppInfo      `yaml:",inline" json:",inline"`
 	Status       string                  `yaml:"status,omitempty" json:"status,omitempty"`
 	Cause        string                  `yaml:"cause,omitempty" json:"cause,omitempty"`
 	ServiceInfos map[string]*ServiceInfo `yaml:"services,omitempty" json:"services,omitempty"`
 	VolumeInfos  map[string]*VolumeInfo  `yaml:"volumes,omitempty" json:"volumes,omitempty"`
 }
 
-// DesireSpec desire spec
-type DesireSpec struct {
-	AppVersions AppVersions `json:"apps,omitempty"`
+// ReportResponse report response as desire
+type ReportResponse struct {
+	AppInfos []AppInfo `json:"apps,omitempty"`
 }
 
 // ResourceInfo resource info
