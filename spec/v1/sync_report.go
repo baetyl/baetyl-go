@@ -1,15 +1,6 @@
-package api
+package v1
 
 import "time"
-
-// ReportRequest report request
-type ReportRequest struct {
-	Time     time.Time   `json:"time,omitempty"`
-	NodeInfo NodeInfo    `json:"node,omitempty"`
-	NodeStat NodeStatus  `json:"nodestats,omitempty"`
-	AppInfos []AppInfo   `json:"apps,omitempty"`
-	AppStats []AppStatus `json:"appstats,omitempty"`
-}
 
 // NodeInfo node info
 type NodeInfo struct {
@@ -44,11 +35,6 @@ type AppStatus struct {
 	Cause        string                  `yaml:"cause,omitempty" json:"cause,omitempty"`
 	ServiceInfos map[string]*ServiceInfo `yaml:"services,omitempty" json:"services,omitempty"`
 	VolumeInfos  map[string]*VolumeInfo  `yaml:"volumes,omitempty" json:"volumes,omitempty"`
-}
-
-// ReportResponse report response as desire
-type ReportResponse struct {
-	AppInfos []AppInfo `json:"apps,omitempty"`
 }
 
 // ResourceInfo resource info

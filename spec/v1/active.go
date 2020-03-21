@@ -1,4 +1,4 @@
-package api
+package v1
 
 import "github.com/baetyl/baetyl-go/utils"
 
