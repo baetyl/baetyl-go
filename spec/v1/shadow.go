@@ -1,4 +1,4 @@
-package spec
+package v1
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/baetyl/baetyl-go/spec/api"
 	jsonpatch "github.com/evanphx/json-patch"
 )
 
@@ -34,7 +33,7 @@ type Report map[string]interface{}
 type Desire map[string]interface{}
 
 // AppInfos return app infos
-func (r Report) AppInfos() []api.AppInfo {
+func (r Report) AppInfos() []AppInfo {
 	return getAppInfos(r)
 }
 
@@ -44,7 +43,7 @@ func (r Report) Merge(reported Report) error {
 }
 
 // AppInfos return app infos
-func (d Desire) AppInfos() []api.AppInfo {
+func (d Desire) AppInfos() []AppInfo {
 	return getAppInfos(d)
 }
 
@@ -58,11 +57,11 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
 }
 
-func getAppInfos(data map[string]interface{}) []api.AppInfo {
+func getAppInfos(data map[string]interface{}) []AppInfo {
 	if data["apps"] == nil {
 		return nil
 	}
-	res, ok := data["apps"].([]api.AppInfo)
+	res, ok := data["apps"].([]AppInfo)
 	if ok {
 		return res
 	}
@@ -70,13 +69,13 @@ func getAppInfos(data map[string]interface{}) []api.AppInfo {
 	if !ok || len(ais) == 0 {
 		return nil
 	}
-	res = []api.AppInfo{}
+	res = []AppInfo{}
 	for _, ai := range ais {
 		aim := ai.(map[string]interface{})
 		if aim == nil {
 			return nil
 		}
-		res = append(res, api.AppInfo{Name: aim["name"].(string), Version: aim["version"].(string)})
+		res = append(res, AppInfo{Name: aim["name"].(string), Version: aim["version"].(string)})
 	}
 	return res
 }
