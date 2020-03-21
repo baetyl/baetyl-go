@@ -1,4 +1,4 @@
-package spec
+package v1
 
 import (
 	"encoding/json"
@@ -15,8 +15,8 @@ const maxJSONLevel = 5
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
 var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
 
-// Spec the spec of shadow
-type Spec struct {
+// Shadow the spec of shadow
+type Shadow struct {
 	Namespace         string            `json:"namespace,omitempty"`
 	Name              string            `json:"name,omitempty"`
 	Version           string            `json:"version,omitempty"`
@@ -32,12 +32,19 @@ type Report map[string]interface{}
 // Desire desire data
 type Desire map[string]interface{}
 
-// Delta delat data
-type Delta map[string]interface{}
+// AppInfos return app infos
+func (r Report) AppInfos() []AppInfo {
+	return getAppInfos(r)
+}
 
 // Merge merge new reported data
 func (r Report) Merge(reported Report) error {
 	return merge(r, reported, 1, maxJSONLevel)
+}
+
+// AppInfos return app infos
+func (d Desire) AppInfos() []AppInfo {
+	return getAppInfos(d)
 }
 
 // Merge merge new reported data
@@ -45,9 +52,32 @@ func (d Desire) Merge(desired Desire) error {
 	return merge(d, desired, 1, maxJSONLevel)
 }
 
-// Diff diff with reported data, return the delta
-func (d Desire) Diff(reported Report) (Delta, error) {
+// Diff diff with reported data, return the delta fo desire
+func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
+}
+
+func getAppInfos(data map[string]interface{}) []AppInfo {
+	if data["apps"] == nil {
+		return nil
+	}
+	res, ok := data["apps"].([]AppInfo)
+	if ok {
+		return res
+	}
+	ais, ok := data["apps"].([]interface{})
+	if !ok || len(ais) == 0 {
+		return nil
+	}
+	res = []AppInfo{}
+	for _, ai := range ais {
+		aim := ai.(map[string]interface{})
+		if aim == nil {
+			return nil
+		}
+		res = append(res, AppInfo{Name: aim["name"].(string), Version: aim["version"].(string)})
+	}
+	return res
 }
 
 // merge right map into left map

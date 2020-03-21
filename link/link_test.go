@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/flow"
 	"github.com/baetyl/baetyl-go/log"
+	"github.com/baetyl/baetyl-go/mock"
 	"github.com/baetyl/baetyl-go/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -59,7 +59,7 @@ func TestLinkClientSendRecvMessage(t *testing.T) {
 	ack.Context.ID = 1
 	ack.Context.Type = Ack
 
-	server := flow.New().Debug().
+	server := mock.NewFlow().Debug().
 		Receive(msg0).
 		Send(msg0).
 		Receive(msg1).
@@ -118,7 +118,7 @@ func TestLinkClientSendRecvMessageDisableAutoAck(t *testing.T) {
 	ack.Context.ID = 1
 	ack.Context.Type = Ack
 
-	server := flow.New().Debug().
+	server := mock.NewFlow().Debug().
 		Receive(msg0).
 		Send(msg0).
 		Receive(msg1).
@@ -173,7 +173,7 @@ func TestLinkClientReconnect(t *testing.T) {
 	ack.Context.ID = 1
 	ack.Context.Type = Ack
 
-	server := flow.New().Debug().
+	server := mock.NewFlow().Debug().
 		Receive(msg).
 		Close()
 	done := initMockServer(t, server)
@@ -202,7 +202,7 @@ func TestLinkClientReconnect(t *testing.T) {
 
 	fmt.Println("--> start server again <--")
 
-	server = flow.New().Debug().
+	server = mock.NewFlow().Debug().
 		Receive(msg).
 		Send(msg).
 		End().

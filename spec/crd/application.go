@@ -1,22 +1,24 @@
-package v1
+package crd
 
 import (
 	"time"
-	)
+)
 
+// Application application info
 type Application struct {
 	Name              string                      `json:"name,omitempty"`
 	Labels            map[string]string           `json:"labels,omitempty"`
 	Namespace         string                      `json:"namespace,omitempty"`
 	CreationTimestamp time.Time                   `json:"creationTimestamp,omitempty"`
 	Version           string                      `json:"version,omitempty"`
-	Selector          string                      `json:"selector"`
+	Selector          string                      `json:"selector,omitempty"`
 	Services          []Service                   `json:"services,omitempty"`
 	Volumes           []Volume                    `json:"volumes,omitempty"`
 	Registries        map[string]*ObjectReference `json:"registries,omitempty"`
 	Description       string                      `json:"description,omitempty"`
 }
 
+// Service service config1ma1
 type Service struct {
 	// specifies the unique name of the service
 	Name string `json:"name,omitempty" binding:"required"`
@@ -46,18 +48,20 @@ type Service struct {
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
+// Environment environment config
 type Environment struct {
 	Name  string `json:"name,omitempty"`
 	Value string `json:"value,omitempty"`
 }
 
+// VolumeDevice device volume config
 type VolumeDevice struct {
 	DevicePath  string `json:"devicePath,omitempty"`
 	Policy      string `json:"policy,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
-// ContainerPort port map configuration
+// ContainerPort port config in container
 type ContainerPort struct {
 	HostPort      int32  `json:"hostPort,omitempty"`
 	ContainerPort int32  `json:"containerPort,omitempty"`
@@ -65,7 +69,7 @@ type ContainerPort struct {
 	HostIP        string `json:"hostIP,omitempty"`
 }
 
-// Volume volume configuration of compose
+// Volume volume config
 type Volume struct {
 	// specified name of the volume
 	Name string `json:"name,omitempty" binding:"required"`
@@ -73,23 +77,25 @@ type Volume struct {
 	VolumeSource `json:",inline"`
 }
 
-// VolumeSource volume source, include empty directory, host path, config
+// VolumeSource volume source, include empty directory, host path, config and secret
 type VolumeSource struct {
 	HostPath *HostPathVolumeSource `json:"hostPath,omitempty"`
 	Config   *ObjectReference      `json:"config,omitempty"`
 	Secret   *ObjectReference      `json:"secret,omitempty"`
 }
 
+// HostPathVolumeSource volume source of host path
 type HostPathVolumeSource struct {
 	Path string `json:"path,omitempty"`
 }
 
+// ObjectReference object reference to config or secret
 type ObjectReference struct {
 	Name    string `json:"name,omitempty"`
 	Version string `json:"version,omitempty"`
 }
 
-// ServiceVolume specific volume configuration of service
+// VolumeMount volume mount config
 type VolumeMount struct {
 	// specifies name of volume
 	Name string `json:"name,omitempty"`
@@ -99,13 +105,14 @@ type VolumeMount struct {
 	ReadOnly bool `json:"readOnly,omitempty"`
 }
 
-// RestartPolicyInfo holds the policy of a module
+// RestartPolicyInfo restart policy config
 type RestartPolicyInfo struct {
 	Retry   *Retry       `json:"retry,omitempty"`
 	Policy  string       `json:"policy,omitempty"`
 	Backoff *BackoffInfo `json:"backoff,omitempty"`
 }
 
+// Retry retry config
 type Retry struct {
 	Max int `json:"max,omitempty"`
 }

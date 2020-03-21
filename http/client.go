@@ -9,14 +9,17 @@ import (
 	"strings"
 )
 
+// ContentTypeJSON the json content type of request
+const ContentTypeJSON = "application/json"
+
 // Client client of http server
 type Client struct {
-	ops ClientOptions
+	ops *ClientOptions
 	*gohttp.Client
 }
 
 // NewClient creates a new http client
-func NewClient(ops ClientOptions) *Client {
+func NewClient(ops *ClientOptions) *Client {
 	transport := &gohttp.Transport{
 		Proxy: gohttp.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
@@ -25,6 +28,7 @@ func NewClient(ops ClientOptions) *Client {
 			DualStack: true,
 		}).DialContext,
 		ForceAttemptHTTP2:     true,
+		TLSClientConfig:       ops.TLSConfig,
 		MaxIdleConns:          ops.MaxIdleConns,
 		IdleConnTimeout:       ops.IdleConnTimeout,
 		TLSHandshakeTimeout:   ops.TLSHandshakeTimeout,
@@ -45,7 +49,27 @@ func (c *Client) Call(service, function string, payload []byte) ([]byte, error) 
 	if function != "" {
 		url += "/" + function
 	}
-	r, err := c.Post(url, "application/json", bytes.NewBuffer(payload))
+	r, err := c.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+	return HandleResponse(r)
+}
+
+// PostJSON post data with json content type
+func (c *Client) PostJSON(url string, payload []byte) ([]byte, error) {
+	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
+	r, err := c.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+	return HandleResponse(r)
+}
+
+// GetJSON get data with json content type
+func (c *Client) GetJSON(url string) ([]byte, error) {
+	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
+	r, err := c.Get(url)
 	if err != nil {
 		return nil, err
 	}

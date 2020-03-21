@@ -9,7 +9,7 @@ import (
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
-	"github.com/baetyl/baetyl-go/flow"
+	"github.com/baetyl/baetyl-go/mock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -94,18 +94,18 @@ func newClientOptions(t *testing.T, port string) ClientOptions {
 	return c
 }
 
-func initMockBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {
+func initMockBroker(t *testing.T, testFlows ...*mock.Flow) (chan struct{}, string) {
 	done := make(chan struct{})
 
 	server, err := transport.Launch("tcp://localhost:0")
 	assert.NoError(t, err)
 
 	go func() {
-		for _, flow := range testFlows {
+		for _, f := range testFlows {
 			conn, err := server.Accept()
 			assert.NoError(t, err)
 
-			err = flow.Test(newWrapper(conn))
+			err = f.Test(newWrapper(conn))
 			assert.NoError(t, err)
 		}
 
@@ -123,7 +123,7 @@ type wrapper struct {
 	Connection
 }
 
-func newWrapper(conn Connection) flow.Conn {
+func newWrapper(conn Connection) mock.Conn {
 	return &wrapper{Connection: conn}
 }
 

@@ -1,4 +1,4 @@
-package spec
+package v1
 
 import (
 	"testing"
@@ -11,50 +11,44 @@ func TestShadowDiff(t *testing.T) {
 		name      string
 		desire    Desire
 		report    Report
-		wantDelta Delta
+		wantDelta Desire
 		wantErr   error
 	}{
 		{
 			name:      "0",
 			desire:    Desire{},
 			report:    Report{},
-			wantDelta: Delta{},
+			wantDelta: Desire{},
 		},
 		{
 			name:      "1",
 			desire:    Desire{"name": "module", "version": "45"},
 			report:    Report{"name": "module", "version": "43"},
-			wantDelta: Delta{"version": "45"},
+			wantDelta: Desire{"version": "45"},
 		},
 		{
 			name:      "2",
 			desire:    Desire{"name": "module", "module": map[string]interface{}{"image": "test:v2"}},
 			report:    Report{"name": "module", "module": map[string]interface{}{"image": "test:v1"}},
-			wantDelta: Delta{"module": map[string]interface{}{"image": "test:v2"}},
+			wantDelta: Desire{"module": map[string]interface{}{"image": "test:v2"}},
 		},
 		{
 			name:      "3",
 			desire:    Desire{"module": map[string]interface{}{"image": "test:v2", "array": []interface{}{}}},
 			report:    Report{"module": map[string]interface{}{"image": "test:v1", "object": map[string]interface{}{"attr": "value"}}},
-			wantDelta: Delta{"module": map[string]interface{}{"image": "test:v2", "array": []interface{}{}}},
+			wantDelta: Desire{"module": map[string]interface{}{"image": "test:v2", "array": []interface{}{}}},
 		},
 		{
 			name:      "6",
 			desire:    Desire{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"n": nil, "5": map[string]interface{}{"6": "x"}}}}}},
 			report:    Report{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"5": map[string]interface{}{"n": nil, "6": "y"}}}}}},
-			wantDelta: Delta{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"5": map[string]interface{}{"6": "x"}}}}}},
+			wantDelta: Desire{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"5": map[string]interface{}{"6": "x"}}}}}},
 		},
 		{
 			name:      "apps",
-			desire:    Desire{"apps": map[string]interface{}{"app1": "123", "app2": "234", "app3": "345", "app4": "456", "app5": ""}},
-			report:    Report{"apps": map[string]interface{}{"app1": "123", "app2": "235", "app3": "", "app5": "567", "app6": "678"}},
-			wantDelta: Delta{"apps": map[string]interface{}{"app2": "234", "app3": "345", "app4": "456", "app5": ""}},
-		},
-		{
-			name:      "appstats",
-			desire:    Desire{"appstats": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
-			report:    Report{"appstats": []interface{}{map[string]interface{}{"name": "b", "version": "2"}, map[string]interface{}{"name": "c", "version": "2"}}},
-			wantDelta: Delta{"appstats": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			desire:    Desire{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			report:    Report{"apps": []interface{}{map[string]interface{}{"name": "b", "version": "2"}, map[string]interface{}{"name": "c", "version": "2"}}},
+			wantDelta: Desire{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
 		},
 	}
 	for _, tt := range tests {
@@ -62,6 +56,17 @@ func TestShadowDiff(t *testing.T) {
 			gotDelta, err := tt.desire.Diff(tt.report)
 			assert.Equal(t, tt.wantErr, err)
 			assert.Equal(t, tt.wantDelta, gotDelta)
+
+			ais := gotDelta.AppInfos()
+			if tt.name == "apps" {
+				assert.Len(t, ais, 2)
+				assert.Equal(t, "a", ais[0].Name)
+				assert.Equal(t, "1", ais[0].Version)
+				assert.Equal(t, "b", ais[1].Name)
+				assert.Equal(t, "1", ais[1].Version)
+			} else {
+				assert.Nil(t, ais)
+			}
 		})
 	}
 }
@@ -107,15 +112,9 @@ func TestShadowMerge(t *testing.T) {
 		},
 		{
 			name:     "apps",
-			oldData:  map[string]interface{}{"apps": map[string]interface{}{"app1": "123", "app2": "234", "app3": "345", "app4": "456", "app5": ""}},
-			newData:  map[string]interface{}{"apps": map[string]interface{}{"app1": "123", "app2": "235", "app3": "", "app5": "567", "app6": "678"}},
-			wantData: map[string]interface{}{"apps": map[string]interface{}{"app1": "123", "app2": "235", "app3": "", "app4": "456", "app5": "567", "app6": "678"}},
-		},
-		{
-			name:     "appstats",
-			oldData:  map[string]interface{}{"appstats": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
-			newData:  map[string]interface{}{"appstats": []interface{}{map[string]interface{}{"name": "b", "version": "2"}, map[string]interface{}{"name": "c", "version": "2"}}},
-			wantData: map[string]interface{}{"appstats": []interface{}{map[string]interface{}{"name": "b", "version": "2"}, map[string]interface{}{"name": "c", "version": "2"}}},
+			oldData:  map[string]interface{}{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			newData:  map[string]interface{}{"apps": []interface{}{map[string]interface{}{"name": "b", "version": "2"}, map[string]interface{}{"name": "c", "version": "2"}}},
+			wantData: map[string]interface{}{"apps": []interface{}{map[string]interface{}{"name": "b", "version": "2"}, map[string]interface{}{"name": "c", "version": "2"}}},
 		},
 	}
 	for _, tt := range tests {
@@ -130,6 +129,17 @@ func TestShadowMerge(t *testing.T) {
 				err = od.Merge(nd)
 				assert.Equal(t, tt.wantErr, err)
 				assert.Equal(t, Desire(tt.wantData), od)
+			}
+
+			ais := nr.AppInfos()
+			if tt.name == "apps" {
+				assert.Len(t, ais, 2)
+				assert.Equal(t, "b", ais[0].Name)
+				assert.Equal(t, "2", ais[0].Version)
+				assert.Equal(t, "c", ais[1].Name)
+				assert.Equal(t, "2", ais[1].Version)
+			} else {
+				assert.Nil(t, ais)
 			}
 		})
 	}

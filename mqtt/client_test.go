@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/flow"
 	"github.com/baetyl/baetyl-go/log"
+	"github.com/baetyl/baetyl-go/mock"
 	"github.com/baetyl/baetyl-go/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,7 +41,7 @@ func TestMqttClientConnectWithCredentials(t *testing.T) {
 	connack := connackPacket()
 	connack.ReturnCode = BadUsernameOrPassword
 
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connect).
 		Send(connack).
 		End()
@@ -64,7 +64,7 @@ func TestMqttClientConnectionDenied(t *testing.T) {
 	connack := connackPacket()
 	connack.ReturnCode = NotAuthorized
 
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connack).
 		Close()
@@ -82,7 +82,7 @@ func TestMqttClientConnectionDenied(t *testing.T) {
 }
 
 func TestMqttClientExpectedConnack(t *testing.T) {
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(NewPingresp()).
 		End()
@@ -105,7 +105,7 @@ func TestMqttClientNotExpectedConnack(t *testing.T) {
 	cfg.Level = "debug"
 	log.Init(cfg)
 
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Send(connackPacket()).
@@ -134,7 +134,7 @@ func TestMqttClientKeepAlive(t *testing.T) {
 
 	pingreq := NewPingreq()
 	pingresp := NewPingresp()
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connect).
 		Send(connackPacket()).
 		Receive(pingreq).
@@ -161,7 +161,7 @@ func TestMqttClientKeepAliveTimeout(t *testing.T) {
 	connect := connectPacket()
 	connect.KeepAlive = 1
 
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connect).
 		Send(connackPacket()).
 		Receive(NewPingreq()).
@@ -181,7 +181,7 @@ func TestMqttClientKeepAliveTimeout(t *testing.T) {
 }
 
 func TestMqttClientKeepAliveNone(t *testing.T) {
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(disconnectPacket()).
@@ -212,7 +212,7 @@ func TestMqttClientPublishSubscribeQOS0(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).
@@ -258,7 +258,7 @@ func TestMqttClientPublishSubscribeQOS1(t *testing.T) {
 	puback := NewPuback()
 	puback.ID = 2
 
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).
@@ -317,7 +317,7 @@ func TestMqttClientAutoAck(t *testing.T) {
 	puback := NewPuback()
 	puback.ID = 2
 
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).
@@ -359,7 +359,7 @@ func TestMqttClientAutoAck(t *testing.T) {
 }
 
 func TestMqttClientUnexpectedClose(t *testing.T) {
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Close()
@@ -377,7 +377,7 @@ func TestMqttClientUnexpectedClose(t *testing.T) {
 }
 
 func TestMqttClientConnackTimeout1(t *testing.T) {
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Close()
 
@@ -394,7 +394,7 @@ func TestMqttClientConnackTimeout1(t *testing.T) {
 }
 
 func TestMqttClientConnackTimeout2(t *testing.T) {
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Receive(disconnectPacket()).
 		End()
@@ -421,7 +421,7 @@ func TestMqttClientSubscribe(t *testing.T) {
 	suback.ReturnCodes = []QOS{QOSFailure}
 	suback.ID = 1
 
-	broker := flow.New().Debug().
+	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).
@@ -453,21 +453,21 @@ func TestMqttClientReconnect(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	broker1 := flow.New().Debug().
+	broker1 := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(publish).
 		Send(publish).
 		Close()
 
-	broker2 := flow.New().Debug().
+	broker2 := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(publish).
 		Send(publish).
 		Close()
 
-	broker3 := flow.New().Debug().
+	broker3 := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(publish).
@@ -508,15 +508,15 @@ func TestMqttClientReconnect2(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	broker1 := flow.New().Debug().
+	broker1 := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Close()
 
-	broker2 := flow.New().Debug().
+	broker2 := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Close()
 
-	broker3 := flow.New().Debug().
+	broker3 := mock.NewFlow().Debug().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(publish).

@@ -1,5 +1,4 @@
-// Package flow can be used to test MQTT packet flows.
-package flow
+package mock
 
 import (
 	"errors"
@@ -81,8 +80,8 @@ type Flow struct {
 	actions []action
 }
 
-// New returns a new flow.
-func New() *Flow {
+// NewFlow returns a new flow.
+func NewFlow() *Flow {
 	return &Flow{
 		actions: make([]action, 0),
 	}
