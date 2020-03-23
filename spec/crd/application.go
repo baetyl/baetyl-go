@@ -6,15 +6,15 @@ import (
 
 // Application application info
 type Application struct {
-	Name              string                      `json:"name,omitempty"`
-	Labels            map[string]string           `json:"labels,omitempty"`
-	Namespace         string                      `json:"namespace,omitempty"`
-	CreationTimestamp time.Time                   `json:"creationTimestamp,omitempty"`
-	Version           string                      `json:"version,omitempty"`
-	Selector          string                      `json:"selector,omitempty"`
-	Services          []Service                   `json:"services,omitempty"`
-	Volumes           []Volume                    `json:"volumes,omitempty"`
-	Description       string                      `json:"description,omitempty"`
+	Name              string            `json:"name,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Namespace         string            `json:"namespace,omitempty"`
+	CreationTimestamp time.Time         `json:"creationTimestamp,omitempty"`
+	Version           string            `json:"version,omitempty"`
+	Selector          string            `json:"selector,omitempty"`
+	Services          []Service         `json:"services,omitempty"`
+	Volumes           []Volume          `json:"volumes,omitempty"`
+	Description       string            `json:"description,omitempty"`
 }
 
 // Service service config1ma1
@@ -125,24 +125,6 @@ type BackoffInfo struct {
 
 // Resources resources config
 type Resources struct {
-	CPU    *CPU    `json:"cpu,omitempty"`
-	Pids   *Pids   `json:"pids,omitempty"`
-	Memory *Memory `json:"memory,omitempty"`
-}
-
-// CPU cpu config
-type CPU struct {
-	Cpus    float64 `json:"cpus,omitempty"`
-	SetCPUs string  `json:"setcpus,omitempty" validate:"setcpus"`
-}
-
-// Pids pids config
-type Pids struct {
-	Limit int64 `json:"limit,omitempty"`
-}
-
-// Memory memory config
-type Memory struct {
-	Limit string `json:"limit,omitempty" validate:"mem"`
-	Swap  string `json:"swap,omitempty" validate:"mem"`
+	Limits   map[string]string `json:"limits,omitempty"`
+	Requests map[string]string `json:"requests,omitempty"`
 }
