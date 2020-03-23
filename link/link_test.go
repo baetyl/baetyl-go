@@ -3,7 +3,7 @@ package link
 import (
 	"context"
 	"errors"
-	fmt "fmt"
+	"fmt"
 	"testing"
 	"time"
 

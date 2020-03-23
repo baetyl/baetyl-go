@@ -41,7 +41,6 @@ type AppStatus struct {
 type ResourceInfo struct {
 	Name        string `yaml:"name,omitempty" json:"name,omitempty"`
 	Value       string `yaml:"value,omitempty" json:"value,omitempty"`
-	UsedPercent string `yaml:"usedPercent,omitempty" json:"usedPercent,omitempty"`
 }
 
 // ServiceInfo service info
