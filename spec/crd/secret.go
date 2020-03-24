@@ -15,10 +15,3 @@ type Secret struct {
 	Description       string            `json:"description,omitempty"`
 	Version           string            `json:"version,omitempty"`
 }
-
-const (
-	BaetylCloudGroup = "cloud.baetyl.io"
-	SecretLabel      = "secret-type"
-	SecretRegistry   = BaetylCloudGroup + "-secret-registry"
-	SecretConfig     = BaetylCloudGroup + "-secret-config"
-)
