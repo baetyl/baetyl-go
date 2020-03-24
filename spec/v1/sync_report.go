@@ -18,8 +18,8 @@ type NodeInfo struct {
 
 // NodeStatus node status
 type NodeStatus struct {
-	Usage    map[string]*ResourceInfo `yaml:"usage,omitempty" json:"usage,omitempty"`
-	Capacity map[string]*ResourceInfo `yaml:"capacity,omitempty" json:"capacity,omitempty"`
+	Usage    map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
+	Capacity map[string]string `yaml:"capacity,omitempty" json:"capacity,omitempty"`
 }
 
 // AppInfo app info
@@ -37,20 +37,14 @@ type AppStatus struct {
 	VolumeInfos  map[string]*VolumeInfo  `yaml:"volumes,omitempty" json:"volumes,omitempty"`
 }
 
-// ResourceInfo resource info
-type ResourceInfo struct {
-	Name        string `yaml:"name,omitempty" json:"name,omitempty"`
-	Value       string `yaml:"value,omitempty" json:"value,omitempty"`
-}
-
 // ServiceInfo service info
 type ServiceInfo struct {
-	Name       string                   `yaml:"name,omitempty" json:"name,omitempty"`
-	Container  Container                `yaml:"container,omitempty" json:"container,omitempty"`
-	Usage      map[string]*ResourceInfo `yaml:"usage,omitempty" json:"usage,omitempty"`
-	Status     string                   `yaml:"status,omitempty" json:"status,omitempty"`
-	Cause      string                   `yaml:"cause,omitempty" json:"cause,omitempty"`
-	CreateTime time.Time                `yaml:"createTime,omitempty" json:"createTime,omitempty"`
+	Name       string            `yaml:"name,omitempty" json:"name,omitempty"`
+	Container  Container         `yaml:"container,omitempty" json:"container,omitempty"`
+	Usage      map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
+	Status     string            `yaml:"status,omitempty" json:"status,omitempty"`
+	Cause      string            `yaml:"cause,omitempty" json:"cause,omitempty"`
+	CreateTime time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
 }
 
 // Container container info
