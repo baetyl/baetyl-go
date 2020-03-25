@@ -12,3 +12,9 @@ const (
 	KindConfiguration Kind = "configuration"
 	KindSecret        Kind = "secret"
 )
+
+const (
+	SecretLabel    = "secret-type"
+	SecretRegistry = "baetyl-secret-registry"
+	SecretConfig   = "baetyl-secret-config"
+)

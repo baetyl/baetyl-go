@@ -1,8 +1,6 @@
 package crd
 
-import (
-	"time"
-)
+import "time"
 
 // Application application info
 type Application struct {
