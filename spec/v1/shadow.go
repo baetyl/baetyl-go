@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/evanphx/json-patch"
 )
 
 // maxJSONLevel the max level of json
@@ -24,6 +24,7 @@ type Shadow struct {
 	Labels            map[string]string `json:"labels,omitempty"`
 	Report            Report            `json:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty"`
+	Description       string            `json:"description,omitempty"`
 }
 
 // Report report data
