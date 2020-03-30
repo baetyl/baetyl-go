@@ -4,7 +4,7 @@ import "time"
 
 // Secret secret info
 type Secret struct {
-	Name              string            `json:"name,omitempty"`
+	Name              string            `json:"name,omitempty" validate:"resourceName"`
 	Namespace         string            `json:"namespace,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Data              map[string][]byte `json:"data,omitempty"`
