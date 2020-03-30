@@ -24,7 +24,7 @@ type NodeStatus struct {
 
 // AppInfo app info
 type AppInfo struct {
-	Name    string `yaml:"name" json:"name"`
+	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
 	Version string `yaml:"version,omitempty" json:"version,omitempty"`
 }
 
@@ -35,6 +35,12 @@ type AppStatus struct {
 	Cause        string                  `yaml:"cause,omitempty" json:"cause,omitempty"`
 	ServiceInfos map[string]*ServiceInfo `yaml:"services,omitempty" json:"services,omitempty"`
 	VolumeInfos  map[string]*VolumeInfo  `yaml:"volumes,omitempty" json:"volumes,omitempty"`
+}
+
+type CoreInfo struct {
+	GoVersion   string `yaml:"goVersion,omitempty" json:"goVersion,omitempty"`
+	BinVersion  string `yaml:"binVersion,omitempty" json:"binVersion,omitempty"`
+	GitRevision string `yaml:"gitRevision,omitempty" json:"gitRevision,omitempty"`
 }
 
 // ServiceInfo service info
