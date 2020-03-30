@@ -15,10 +15,10 @@ const (
 
 const (
 	SecretLabel    = "secret-type"
-	// speical secret of the the registry secret
+	// speical secret of the the registry
 	SecretRegistry = "baetyl-secret-registry"
-	// speical secret of the the config secret
+	// speical secret of the the config
 	SecretConfig   = "baetyl-secret-config"
-	// speical secret of the the certificate secret
+	// speical secret of the the certificate
 	SecretCertificate   = "baetyl-secret-certificate"
 )
