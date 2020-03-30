@@ -14,7 +14,6 @@ const (
 )
 
 const (
-	// baetyl cloud
 	SecretLabel    = "secret-type"
 	// speical secret of the the registry secret
 	SecretRegistry = "baetyl-secret-registry"
