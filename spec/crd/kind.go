@@ -14,7 +14,12 @@ const (
 )
 
 const (
+	// baetyl cloud
 	SecretLabel    = "secret-type"
+	// speical secret of the the registry secret
 	SecretRegistry = "baetyl-secret-registry"
+	// speical secret of the the config secret
 	SecretConfig   = "baetyl-secret-config"
+	// speical secret of the the certificate secret
+	SecretCertificate   = "baetyl-secret-certificate"
 )
