@@ -18,8 +18,20 @@ type NodeInfo struct {
 
 // NodeStatus node status
 type NodeStatus struct {
-	Usage    map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
-	Capacity map[string]string `yaml:"capacity,omitempty" json:"capacity,omitempty"`
+	CPU    CPUStats    `yaml:"cpu,omitempty" json:"cpu,omitempty"`
+	Memory MemoryStats `yaml:"memory,omitempty" json:"memory,omitempty"`
+}
+
+type MemoryStats struct {
+	Used        int64   `yaml:"used,omitempty" json:"used,omitempty"`
+	Total       int64   `yaml:"total,omitempty" json:"total,omitempty"`
+	UsedPercent float64 `yaml:"usedPercent,omitempty" json:"usedPercent,omitempty"`
+}
+
+type CPUStats struct {
+	Used        float64 `yaml:"used,omitempty" json:"used,omitempty"`
+	Total       float64 `yaml:"total,omitempty" json:"total,omitempty"`
+	UsedPercent float64 `yaml:"usedPercent,omitempty" json:"usedPercent,omitempty"`
 }
 
 // AppInfo app info
@@ -34,7 +46,6 @@ type AppStatus struct {
 	Status       string                  `yaml:"status,omitempty" json:"status,omitempty"`
 	Cause        string                  `yaml:"cause,omitempty" json:"cause,omitempty"`
 	ServiceInfos map[string]*ServiceInfo `yaml:"services,omitempty" json:"services,omitempty"`
-	VolumeInfos  map[string]*VolumeInfo  `yaml:"volumes,omitempty" json:"volumes,omitempty"`
 }
 
 type CoreInfo struct {
@@ -45,22 +56,17 @@ type CoreInfo struct {
 
 // ServiceInfo service info
 type ServiceInfo struct {
-	Name       string            `yaml:"name,omitempty" json:"name,omitempty"`
-	Container  Container         `yaml:"container,omitempty" json:"container,omitempty"`
-	Usage      map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
-	Status     string            `yaml:"status,omitempty" json:"status,omitempty"`
-	Cause      string            `yaml:"cause,omitempty" json:"cause,omitempty"`
-	CreateTime time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
+	Name       string      `yaml:"name,omitempty" json:"name,omitempty"`
+	Container  Container   `yaml:"container,omitempty" json:"container,omitempty"`
+	CPU        CPUStats    `yaml:"cpu,omitempty" json:"cpu,omitempty"`
+	Memory     MemoryStats `yaml:"memory,omitempty" json:"memory,omitempty"`
+	Status     string      `yaml:"status,omitempty" json:"status,omitempty"`
+	Cause      string      `yaml:"cause,omitempty" json:"cause,omitempty"`
+	CreateTime time.Time   `yaml:"createTime,omitempty" json:"createTime,omitempty"`
 }
 
 // Container container info
 type Container struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 	ID   string `yaml:"id,omitempty" json:"id,omitempty"`
-}
-
-// VolumeInfo volume info
-type VolumeInfo struct {
-	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
-	Version string `yaml:"version,omitempty" json:"version,omitempty"`
 }
