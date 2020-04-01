@@ -3,6 +3,7 @@ package context
 import (
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/baetyl/baetyl-go/log"
@@ -19,25 +20,40 @@ const (
 
 // Context of service
 type Context interface {
-	// returns node name
+	// NodeName returns node name.
 	NodeName() string
-	// returns app name
+	// AppName returns app name.
 	AppName() string
-	// returns service name
+	// ServiceName returns service name.
 	ServiceName() string
-	// returns service config
+	// ServiceConfig returns service config.
 	ServiceConfig() ServiceConfig
-	// leads custom config, if path is empty, will load config from default path
+
+	// Load returns the value stored in the map for a key, or nil if no value is present.
+	// The ok result indicates whether value was found in the map.
+	Load(key interface{}) (value interface{}, ok bool)
+	// Store sets the value for a key.
+	Store(key, value interface{})
+	// LoadOrStore returns the existing value for the key if present.
+	// Otherwise, it stores and returns the given value.
+	// The loaded result is true if the value was loaded, false if stored.
+	LoadOrStore(key, value interface{}) (actual interface{}, loaded bool)
+	// Delete deletes the value for a key.
+	Delete(key interface{})
+
+	// LoadCustomConfig loads custom config, if path is empty, will load config from default path.
 	LoadCustomConfig(cfg interface{}, files ...string) error
-	// returns logger interface
+	// Log returns logger interface.
 	Log() *log.Logger
-	// waiting to exit, receiving SIGTERM and SIGINT signals
+
+	// Wait waits until exit, receiving SIGTERM and SIGINT signals.
 	Wait()
-	// returns wait channel
+	// WaitChan returns wait channel.
 	WaitChan() <-chan os.Signal
 }
 
 type ctx struct {
+	sync.Map
 	cfg ServiceConfig
 	log *log.Logger
 
