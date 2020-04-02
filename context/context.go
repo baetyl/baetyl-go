@@ -80,7 +80,16 @@ func NewContext(confFile string) Context {
 		serviceName: os.Getenv(EnvKeyServiceName),
 	}
 
-	fs := []log.Field{log.Any("node", c.nodeName), log.Any("app", c.appName), log.Any("service", c.serviceName)}
+	var fs []log.Field
+	if c.nodeName != "" {
+		fs = append(fs, log.Any("node", c.nodeName))
+	}
+	if c.appName != "" {
+		fs = append(fs, log.Any("app", c.appName))
+	}
+	if c.serviceName != "" {
+		fs = append(fs, log.Any("service", c.serviceName))
+	}
 	c.log = log.With(fs...)
 
 	err := c.LoadCustomConfig(&c.cfg)
