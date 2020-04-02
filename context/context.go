@@ -26,6 +26,8 @@ type Context interface {
 	AppName() string
 	// ServiceName returns service name.
 	ServiceName() string
+	// ConfFile returns config file.
+	ConfFile() string
 	// ServiceConfig returns service config.
 	ServiceConfig() ServiceConfig
 
@@ -125,6 +127,10 @@ func (c *ctx) AppName() string {
 
 func (c *ctx) ServiceName() string {
 	return c.serviceName
+}
+
+func (c *ctx) ConfFile() string {
+	return c.confFile
 }
 
 func (c *ctx) ServiceConfig() ServiceConfig {
