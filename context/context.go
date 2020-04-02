@@ -122,7 +122,7 @@ func NewContext(confFile string) Context {
 	if c.cfg.Link.Address == "" {
 		c.cfg.Link.Address = "link://baetyl-broker:8886"
 	}
-	c.log.Info("context is created", log.Any("config", c.cfg))
+	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", c.cfg))
 	return c
 }
 
