@@ -17,7 +17,7 @@ func TestCRDData(t *testing.T) {
 		crddata.Version = "123"
 		crddata.Kind = crd.KindApplication
 		crddata.Value.Value = &crd.Application{Name: "c"}
-		expected := "{\"name\":\"c\",\"creationTimestamp\":\"0001-01-01T00:00:00Z\"}"
+		expected := "{\"name\":\"c\",\"createTime\":\"0001-01-01T00:00:00Z\"}"
 
 		appdata, err := json.Marshal(crddata)
 		assert.NoError(t, err)
@@ -57,7 +57,7 @@ func TestCRDData(t *testing.T) {
 		crddata.Version = "123"
 		crddata.Kind = crd.KindConfiguration
 		crddata.Value.Value = &crd.Configuration{Name: "c"}
-		expected := "{\"name\":\"c\",\"creationTimestamp\":\"0001-01-01T00:00:00Z\",\"updateTimestamp\":\"0001-01-01T00:00:00Z\"}"
+		expected := "{\"name\":\"c\",\"createTime\":\"0001-01-01T00:00:00Z\",\"updateTime\":\"0001-01-01T00:00:00Z\"}"
 
 		appdata, err := json.Marshal(crddata)
 		assert.NoError(t, err)
@@ -97,7 +97,7 @@ func TestCRDData(t *testing.T) {
 		crddata.Version = "123"
 		crddata.Kind = crd.KindSecret
 		crddata.Value.Value = &crd.Secret{Name: "c"}
-		expected := "{\"name\":\"c\",\"creationTimestamp\":\"0001-01-01T00:00:00Z\",\"updateTimestamp\":\"0001-01-01T00:00:00Z\"}"
+		expected := "{\"name\":\"c\",\"createTime\":\"0001-01-01T00:00:00Z\",\"updateTime\":\"0001-01-01T00:00:00Z\"}"
 
 		appdata, err := json.Marshal(crddata)
 		assert.NoError(t, err)
