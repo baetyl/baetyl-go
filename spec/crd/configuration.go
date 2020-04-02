@@ -10,8 +10,8 @@ type Configuration struct {
 	Namespace         string            `json:"namespace,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Data              map[string]string `json:"data,omitempty" default:"{}" binding:"required"`
-	CreationTimestamp time.Time         `json:"creationTimestamp,omitempty"`
-	UpdateTimestamp   time.Time         `json:"updateTimestamp,omitempty"`
+	CreationTimestamp time.Time         `json:"createTime,omitempty"`
+	UpdateTimestamp   time.Time         `json:"updateTime,omitempty"`
 	Description       string            `json:"description,omitempty"`
 	Version           string            `json:"version,omitempty"`
 }
