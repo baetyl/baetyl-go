@@ -17,6 +17,7 @@ func Run(handle func(Context) error) {
 	var c string
 	flag.BoolVar(&h, "h", false, "this help")
 	flag.StringVar(&c, "c", "etc/baetyl/service.yml", "the configuration file")
+	flag.Parse()
 	if h {
 		flag.Usage()
 		return
