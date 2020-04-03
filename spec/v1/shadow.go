@@ -25,6 +25,11 @@ type Shadow struct {
 	Report            Report            `json:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty"`
 	Description       string            `json:"description,omitempty"`
+	ExtraMeta         `json:"extraMeta,omitempty"`
+}
+
+type ExtraMeta struct {
+	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
 // Report report data
