@@ -22,16 +22,10 @@ type Shadow struct {
 	Version           string            `json:"version,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty"`
 	Report            Report            `json:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty"`
 	Description       string            `json:"description,omitempty"`
-	ExtraMeta         `json:"extraMeta,omitempty"`
-}
-
-
-// ExtraMeta the extra information of resource
-type ExtraMeta struct {
-	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
 // Report report data
