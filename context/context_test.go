@@ -8,6 +8,7 @@ import (
 )
 
 func TestContext(t *testing.T) {
+	os.Setenv(EnvKeyConfFile, "file")
 	os.Setenv(EnvKeyNodeName, "node")
 	os.Setenv(EnvKeyAppName, "app")
 	os.Setenv(EnvKeyServiceName, "service")
@@ -16,6 +17,7 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, "node", ctx.NodeName())
 	assert.Equal(t, "app", ctx.AppName())
 	assert.Equal(t, "service", ctx.ServiceName())
+	assert.Equal(t, "file", ctx.ConfFile())
 	cfg := ctx.ServiceConfig()
 	assert.Equal(t, "http://baetyl-function:8880", cfg.HTTP.Address)
 	assert.Equal(t, "tcp://baetyl-broker:1883", cfg.MQTT.Address)
@@ -32,6 +34,7 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, "node", ctx.NodeName())
 	assert.Equal(t, "app", ctx.AppName())
 	assert.Equal(t, "service", ctx.ServiceName())
+	assert.Equal(t, "../example/etc/baetyl/service.yml", ctx.ConfFile())
 	cfg = ctx.ServiceConfig()
 	assert.Equal(t, "https://baetyl-function:8880", cfg.HTTP.Address)
 	assert.Equal(t, "ssl://baetyl-broker:8883", cfg.MQTT.Address)
