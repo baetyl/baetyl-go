@@ -29,6 +29,8 @@ type Shadow struct {
 	ExtraMeta         `json:"extraMeta,omitempty"`
 }
 
+
+// ExtraMeta the extra information of resource
 type ExtraMeta struct {
 	Attributes map[string]string `json:"attributes,omitempty"`
 }
