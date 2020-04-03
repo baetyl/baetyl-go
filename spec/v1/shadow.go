@@ -22,7 +22,6 @@ type Shadow struct {
 	Version           string            `json:"version,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
-	Attributes        map[string]string `json:"attributes,omitempty"`
 	Report            Report            `json:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty"`
 	Description       string            `json:"description,omitempty"`
