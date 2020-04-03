@@ -30,7 +30,7 @@ type Service struct {
 	// specifies the port bindings which exposed by the service, only for Docker container mode
 	Ports []ContainerPort `json:"ports,omitempty"`
 	// specifies the device bindings which used by the service, only for Docker container mode
-	VolumeDevices []VolumeDevice `json:"devices,omitempty"`
+	Devices []Device `json:"devices,omitempty"`
 	// specifies the startup arguments of the service program, but does not include `arg[0]`
 	Args []string `json:"args,omitempty"`
 	// specifies the environment variable of the service program
@@ -52,7 +52,7 @@ type Environment struct {
 }
 
 // VolumeDevice device volume config
-type VolumeDevice struct {
+type Device struct {
 	DevicePath  string `json:"devicePath,omitempty"`
 	Policy      string `json:"policy,omitempty"`
 	Description string `json:"description,omitempty"`
