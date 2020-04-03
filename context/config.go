@@ -9,8 +9,8 @@ import (
 
 // ServiceConfig base config of service
 type ServiceConfig struct {
-	HTTP   http.ClientConfig `yaml:"http" json:"http"`
-	MQTT   mqtt.ClientConfig `yaml:"mqtt" json:"mqtt"`
-	Link   link.ClientConfig `yaml:"link" json:"link"`
-	Logger log.Config        `yaml:"logger" json:"logger"`
+	HTTP   http.ClientConfig `yaml:"http,omitempty" json:"http,omitempty"`
+	MQTT   mqtt.ClientConfig `yaml:"mqtt,omitempty" json:"mqtt,omitempty"`
+	Link   link.ClientConfig `yaml:"link,omitempty" json:"link,omitempty"`
+	Logger log.Config        `yaml:"logger,omitempty" json:"logger,omitempty"`
 }

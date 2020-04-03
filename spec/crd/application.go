@@ -7,7 +7,7 @@ type Application struct {
 	Name              string            `json:"name,omitempty" validate:"resourceName,nonBaetyl"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Namespace         string            `json:"namespace,omitempty"`
-	CreationTimestamp time.Time         `json:"creationTimestamp,omitempty"`
+	CreationTimestamp time.Time         `json:"createTime,omitempty"`
 	Version           string            `json:"version,omitempty"`
 	Selector          string            `json:"selector,omitempty"`
 	Services          []Service         `json:"services,omitempty"`

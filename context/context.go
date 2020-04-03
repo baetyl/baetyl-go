@@ -3,6 +3,7 @@ package context
 import (
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/baetyl/baetyl-go/log"
@@ -19,25 +20,42 @@ const (
 
 // Context of service
 type Context interface {
-	// returns node name
+	// NodeName returns node name.
 	NodeName() string
-	// returns app name
+	// AppName returns app name.
 	AppName() string
-	// returns service name
+	// ServiceName returns service name.
 	ServiceName() string
-	// returns service config
+	// ConfFile returns config file.
+	ConfFile() string
+	// ServiceConfig returns service config.
 	ServiceConfig() ServiceConfig
-	// leads custom config, if path is empty, will load config from default path
+
+	// Load returns the value stored in the map for a key, or nil if no value is present.
+	// The ok result indicates whether value was found in the map.
+	Load(key interface{}) (value interface{}, ok bool)
+	// Store sets the value for a key.
+	Store(key, value interface{})
+	// LoadOrStore returns the existing value for the key if present.
+	// Otherwise, it stores and returns the given value.
+	// The loaded result is true if the value was loaded, false if stored.
+	LoadOrStore(key, value interface{}) (actual interface{}, loaded bool)
+	// Delete deletes the value for a key.
+	Delete(key interface{})
+
+	// LoadCustomConfig loads custom config, if path is empty, will load config from default path.
 	LoadCustomConfig(cfg interface{}, files ...string) error
-	// returns logger interface
+	// Log returns logger interface.
 	Log() *log.Logger
-	// waiting to exit, receiving SIGTERM and SIGINT signals
+
+	// Wait waits until exit, receiving SIGTERM and SIGINT signals.
 	Wait()
-	// returns wait channel
+	// WaitChan returns wait channel.
 	WaitChan() <-chan os.Signal
 }
 
 type ctx struct {
+	sync.Map
 	cfg ServiceConfig
 	log *log.Logger
 
@@ -62,7 +80,16 @@ func NewContext(confFile string) Context {
 		serviceName: os.Getenv(EnvKeyServiceName),
 	}
 
-	fs := []log.Field{log.Any("node", c.nodeName), log.Any("app", c.appName), log.Any("service", c.serviceName)}
+	var fs []log.Field
+	if c.nodeName != "" {
+		fs = append(fs, log.Any("node", c.nodeName))
+	}
+	if c.appName != "" {
+		fs = append(fs, log.Any("app", c.appName))
+	}
+	if c.serviceName != "" {
+		fs = append(fs, log.Any("service", c.serviceName))
+	}
 	c.log = log.With(fs...)
 
 	err := c.LoadCustomConfig(&c.cfg)
@@ -95,7 +122,7 @@ func NewContext(confFile string) Context {
 	if c.cfg.Link.Address == "" {
 		c.cfg.Link.Address = "link://baetyl-broker:8886"
 	}
-	c.log.Info("context is created", log.Any("config", c.cfg))
+	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", c.cfg))
 	return c
 }
 
@@ -109,6 +136,10 @@ func (c *ctx) AppName() string {
 
 func (c *ctx) ServiceName() string {
 	return c.serviceName
+}
+
+func (c *ctx) ConfFile() string {
+	return c.confFile
 }
 
 func (c *ctx) ServiceConfig() ServiceConfig {

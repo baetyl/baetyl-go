@@ -20,7 +20,7 @@ type Shadow struct {
 	Namespace         string            `json:"namespace,omitempty"`
 	Name              string            `json:"name,omitempty"`
 	Version           string            `json:"version,omitempty"`
-	CreationTimestamp time.Time         `json:"creationTimestamp,omitempty"`
+	CreationTimestamp time.Time         `json:"createTime,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Attributes        map[string]string `json:"attributes,omitempty"`
 	Report            Report            `json:"report,omitempty"`
