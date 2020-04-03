@@ -99,7 +99,7 @@ type VolumeMount struct {
 	// specifies mount path of volume
 	MountPath string `json:"mountPath,omitempty"`
 	// specifies if the volume is read-only
-	ReadOnly bool `json:"readOnly"`
+	ReadOnly bool `json:"readOnly,omitempty"`
 }
 
 // RestartPolicyInfo restart policy config
