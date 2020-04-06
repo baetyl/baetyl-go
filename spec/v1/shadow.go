@@ -70,7 +70,7 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 }
 
 func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
-	if data[appType] == nil {
+	if data == nil || data[appType] == nil {
 		return nil
 	}
 	res, ok := data[appType].([]AppInfo)
