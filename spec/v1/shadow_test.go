@@ -150,3 +150,47 @@ func TestShadowMerge(t *testing.T) {
 		})
 	}
 }
+
+func TestDesireSysAppInfos(t *testing.T) {
+	sysApps := Desire{
+		"sysapps": []interface{}{
+			map[string]interface{}{"name": "app1", "version": "1"},
+			map[string]interface{}{"name": "app2", "version": "2"},
+		},
+	}
+
+	expectApps := []AppInfo{
+		{
+			Name:    "app1",
+			Version: "1",
+		},
+		{
+			Name:    "app2",
+			Version: "2",
+		},
+	}
+
+	assert.Equal(t, expectApps, sysApps.SysAppInfos())
+}
+
+func TestReportSysAppInfos(t *testing.T) {
+	sysApps := Report{
+		"sysapps": []interface{}{
+			map[string]interface{}{"name": "app1", "version": "1"},
+			map[string]interface{}{"name": "app2", "version": "2"},
+		},
+	}
+
+	expectApps := []AppInfo{
+		{
+			Name:    "app1",
+			Version: "1",
+		},
+		{
+			Name:    "app2",
+			Version: "2",
+		},
+	}
+
+	assert.Equal(t, expectApps, sysApps.SysAppInfos())
+}

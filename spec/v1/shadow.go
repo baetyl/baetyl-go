@@ -36,7 +36,12 @@ type Desire map[string]interface{}
 
 // AppInfos return app infos
 func (r Report) AppInfos() []AppInfo {
-	return getAppInfos(r)
+	return getAppInfos("apps", r)
+}
+
+// AppInfos return sysapps infos
+func (r Report) SysAppInfos() []AppInfo {
+	return getAppInfos("sysapps", r)
 }
 
 // Merge merge new reported data
@@ -46,7 +51,12 @@ func (r Report) Merge(reported Report) error {
 
 // AppInfos return app infos
 func (d Desire) AppInfos() []AppInfo {
-	return getAppInfos(d)
+	return getAppInfos("apps", d)
+}
+
+// AppInfos return sysapps infos
+func (d Desire) SysAppInfos() []AppInfo {
+	return getAppInfos("sysapps", d)
 }
 
 // Merge merge new reported data
@@ -59,15 +69,15 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
 }
 
-func getAppInfos(data map[string]interface{}) []AppInfo {
-	if data["apps"] == nil {
+func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
+	if data == nil || data[appType] == nil {
 		return nil
 	}
-	res, ok := data["apps"].([]AppInfo)
+	res, ok := data[appType].([]AppInfo)
 	if ok {
 		return res
 	}
-	ais, ok := data["apps"].([]interface{})
+	ais, ok := data[appType].([]interface{})
 	if !ok || len(ais) == 0 {
 		return nil
 	}
