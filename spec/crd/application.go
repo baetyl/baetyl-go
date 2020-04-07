@@ -24,7 +24,7 @@ type Service struct {
 	// specifies the image of the service, usually using the Docker image name
 	Image string `json:"image,omitempty" binding:"required"`
 	// specifies the number of instances started
-	Replica int `json:"replica,omitempty" binding:"required"`
+	Replica int `json:"replica,omitempty" binding:"required" default:"1"`
 	// specifies the storage volumes that the service needs, map the storage volume to the directory in the container
 	VolumeMounts []VolumeMount `json:"volumeMounts,omitempty"`
 	// specifies the port bindings which exposed by the service, only for Docker container mode
