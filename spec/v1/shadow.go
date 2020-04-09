@@ -70,18 +70,22 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 }
 
 func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
-	if data == nil || data[appType] == nil {
+	if data == nil {
 		return nil
 	}
-	res, ok := data[appType].([]AppInfo)
+	apps, ok := data[appType]
+	if !ok || apps == nil{
+		return nil
+	}
+	res, ok := apps.([]AppInfo)
 	if ok {
 		return res
 	}
-	ais, ok := data[appType].([]interface{})
-	if !ok || len(ais) == 0 {
+	res = []AppInfo{}
+	ais, ok := apps.([]interface{})
+	if !ok  {
 		return nil
 	}
-	res = []AppInfo{}
 	for _, ai := range ais {
 		aim := ai.(map[string]interface{})
 		if aim == nil {
