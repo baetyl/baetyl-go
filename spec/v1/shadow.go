@@ -99,7 +99,7 @@ func merge(left, right map[string]interface{}, depth, maxDepth int) error {
 	}
 	for rk, rv := range right {
 		lv, ok := left[rk]
-		if !ok || reflect.TypeOf(rv).Kind() != reflect.Map || reflect.TypeOf(lv).Kind() != reflect.Map {
+		if !ok || rv == nil || reflect.TypeOf(rv).Kind() != reflect.Map || reflect.TypeOf(lv).Kind() != reflect.Map {
 			left[rk] = rv
 			continue
 		}

@@ -24,13 +24,13 @@ type Service struct {
 	// specifies the image of the service, usually using the Docker image name
 	Image string `json:"image,omitempty" binding:"required"`
 	// specifies the number of instances started
-	Replica int `json:"replica,omitempty" binding:"required"`
+	Replica int `json:"replica,omitempty" binding:"required" default:"1"`
 	// specifies the storage volumes that the service needs, map the storage volume to the directory in the container
 	VolumeMounts []VolumeMount `json:"volumeMounts,omitempty"`
 	// specifies the port bindings which exposed by the service, only for Docker container mode
 	Ports []ContainerPort `json:"ports,omitempty"`
 	// specifies the device bindings which used by the service, only for Docker container mode
-	VolumeDevices []VolumeDevice `json:"devices,omitempty"`
+	Devices []Device `json:"devices,omitempty"`
 	// specifies the startup arguments of the service program, but does not include `arg[0]`
 	Args []string `json:"args,omitempty"`
 	// specifies the environment variable of the service program
@@ -52,7 +52,7 @@ type Environment struct {
 }
 
 // VolumeDevice device volume config
-type VolumeDevice struct {
+type Device struct {
 	DevicePath  string `json:"devicePath,omitempty"`
 	Policy      string `json:"policy,omitempty"`
 	Description string `json:"description,omitempty"`
