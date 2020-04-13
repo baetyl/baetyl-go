@@ -7,6 +7,19 @@ import (
 	"github.com/baetyl/baetyl-go/utils"
 )
 
+// ServerConfig server config
+type ServerConfig struct {
+	Address            string        `yaml:"address" json:"address" default:":80"`
+	Concurrency        int           `yaml:"concurrency" json:"concurrency"`
+	DisableKeepalive   bool          `yaml:"disableKeepalive" json:"disableKeepalive"`
+	TCPKeepalive       bool          `yaml:"tcpKeepalive" json:"tcpKeepalive"`
+	MaxRequestBodySize int           `yaml:"maxRequestBodySize" json:"maxRequestBodySize"`
+	ReadTimeout        time.Duration `yaml:"readTimeout" json:"readTimeout"`
+	WriteTimeout       time.Duration `yaml:"writeTimeout" json:"writeTimeout"`
+	IdleTimeout        time.Duration `yaml:"idleTimeout" json:"idleTimeout"`
+	utils.Certificate  `yaml:",inline" json:",inline"`
+}
+
 // ClientOptions client options
 type ClientOptions struct {
 	Address               string

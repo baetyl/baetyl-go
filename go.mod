@@ -10,14 +10,18 @@ require (
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/evanphx/json-patch v4.5.0+incompatible
 	github.com/frankban/quicktest v1.7.2 // indirect
+	github.com/go-ozzo/ozzo-routing v2.1.4+incompatible // indirect
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang/gddo v0.0.0-20200324184333-3c2cc9a6329d // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/jpillora/backoff v1.0.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.3.0+incompatible // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/qiangxue/fasthttp-routing v0.0.0-20160225050629-6ccdc2a18d87
 	github.com/stretchr/testify v1.4.0
+	github.com/valyala/fasthttp v1.9.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/zap v1.13.0
 	golang.org/x/net v0.0.0-20191119073136-fc4aabc6c914 // indirect
