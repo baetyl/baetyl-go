@@ -105,9 +105,9 @@ func NewContext(confFile string) Context {
 
 	if c.cfg.HTTP.Address == "" {
 		if c.cfg.HTTP.Key == "" {
-			c.cfg.HTTP.Address = "http://baetyl-function:8880"
+			c.cfg.HTTP.Address = "http://baetyl-function:80"
 		} else {
-			c.cfg.HTTP.Address = "https://baetyl-function:8880"
+			c.cfg.HTTP.Address = "https://baetyl-function:443"
 		}
 	}
 
