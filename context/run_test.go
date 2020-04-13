@@ -11,7 +11,7 @@ func TestRun(t *testing.T) {
 		assert.Equal(t, "etc/baetyl/service.yml", ctx.ConfFile())
 
 		cfg := ctx.ServiceConfig()
-		assert.Equal(t, "http://baetyl-function:8880", cfg.HTTP.Address)
+		assert.Equal(t, "http://baetyl-function:80", cfg.HTTP.Address)
 		assert.Equal(t, "tcp://baetyl-broker:1883", cfg.MQTT.Address)
 		assert.Equal(t, "link://baetyl-broker:8886", cfg.Link.Address)
 		assert.Equal(t, "info", cfg.Logger.Level)

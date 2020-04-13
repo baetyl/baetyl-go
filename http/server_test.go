@@ -144,30 +144,30 @@ func mockGet(c *routing.Context) error {
 		}
 		d, err := json.Marshal(data)
 		if err != nil {
-			respondMsg(c, 500, "ERR_JSON", err.Error())
+			RespondMsg(c, 500, "ERR_JSON", err.Error())
 			return nil
 		}
-		respond(c, http.StatusOK, d)
+		Respond(c, http.StatusOK, d)
 	} else {
-		respondMsg(c, 500, "ERR", "err")
+		RespondMsg(c, 500, "ERR", "err")
 	}
 	return nil
 }
 
 // Set Set
 func mockSet(c *routing.Context) error {
-	respond(c, http.StatusOK, []byte("set"))
+	Respond(c, http.StatusOK, []byte("set"))
 	return nil
 }
 
 // Delete Delete
 func mockDelete(c *routing.Context) error {
-	respond(c, http.StatusOK, []byte("delete"))
+	Respond(c, http.StatusOK, []byte("delete"))
 	return nil
 }
 
 // Update update
 func mockUpdate(c *routing.Context) error {
-	respond(c, http.StatusOK, []byte("update"))
+	Respond(c, http.StatusOK, []byte("update"))
 	return nil
 }

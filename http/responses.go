@@ -23,13 +23,13 @@ func NewResponse(code, msg string) Response {
 	}
 }
 
-func respondMsg(c *routing.Context, httpCode int, code, msg string) {
+func RespondMsg(c *routing.Context, httpCode int, code, msg string) {
 	resp := NewResponse(code, msg)
 	b, _ := json.Marshal(&resp)
-	respond(c, httpCode, b)
+	Respond(c, httpCode, b)
 }
 
-func respond(c *routing.Context, httpCode int, obj []byte) {
+func Respond(c *routing.Context, httpCode int, obj []byte) {
 	c.RequestCtx.Response.SetStatusCode(httpCode)
 	c.RequestCtx.Response.SetBody(obj)
 	if json.Valid(obj) {
