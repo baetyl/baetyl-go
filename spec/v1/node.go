@@ -74,7 +74,7 @@ func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
 		return nil
 	}
 	apps, ok := data[appType]
-	if !ok || apps == nil{
+	if !ok || apps == nil {
 		return nil
 	}
 	res, ok := apps.([]AppInfo)
@@ -83,7 +83,7 @@ func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
 	}
 	res = []AppInfo{}
 	ais, ok := apps.([]interface{})
-	if !ok  {
+	if !ok {
 		return nil
 	}
 	for _, ai := range ais {

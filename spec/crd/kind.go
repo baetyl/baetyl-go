@@ -14,11 +14,11 @@ const (
 )
 
 const (
-	SecretLabel    = "secret-type"
+	SecretLabel = "secret-type"
 	// speical secret of the the registry
 	SecretRegistry = "registry"
 	// speical secret of the the config
-	SecretConfig   = "config"
+	SecretConfig = "config"
 	// speical secret of the the certificate
-	SecretCertificate   = "certificate"
+	SecretCertificate = "certificate"
 )
