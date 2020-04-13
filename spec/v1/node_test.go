@@ -1,9 +1,11 @@
 package v1
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	coreV1 "k8s.io/api/core/v1"
 )
 
 func TestShadowDiff(t *testing.T) {
@@ -235,4 +237,82 @@ func TestAppInfos(t *testing.T) {
 	}
 
 	assert.Equal(t, expectApps, r.SysAppInfos())
+}
+
+func TestProcessPercent(t *testing.T) {
+	report1 := &ReportView{
+		NodeStatus: &NodeStatus{
+			Usage: map[string]string{
+				"cpu":    "1",
+				"memory": "512Mi",
+			},
+			Capacity: map[string]string{
+				"cpu":    "2",
+				"memory": "1024Mi",
+			},
+		},
+	}
+	err := processPercent(report1)
+	assert.NoError(t, err)
+	m1, err1 := translateQuantityToDecimal("1024Mi", false)
+	assert.NoError(t, err1)
+	s1 := strconv.FormatInt(m1, 10)
+	m2, err2 := translateQuantityToDecimal("512Mi", false)
+	assert.NoError(t, err2)
+	s2 := strconv.FormatInt(m2, 10)
+	assert.Equal(t, report1.NodeStatus.Capacity[string(coreV1.ResourceMemory)], s1)
+	assert.Equal(t, report1.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, report1.NodeStatus.Usage[string(coreV1.ResourceMemory)], s2)
+	assert.Equal(t, report1.NodeStatus.Usage[string(coreV1.ResourceCPU)], "1")
+	assert.Equal(t, report1.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0.5")
+	assert.Equal(t, report1.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.5")
+
+	report2 := &ReportView{
+		NodeStatus: &NodeStatus{
+			Usage: map[string]string{
+				"cpu":    "500m",
+				"memory": "512Mi",
+			},
+			Capacity: map[string]string{
+				"cpu":    "2.0",
+				"memory": "1024Mi",
+			},
+		},
+	}
+	err3 := processPercent(report2)
+	assert.NoError(t, err3)
+	assert.Equal(t, report2.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, report2.NodeStatus.Usage[string(coreV1.ResourceCPU)], "0.5")
+	assert.Equal(t, report2.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0.5")
+	assert.Equal(t, report2.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.25")
+
+	report3 := &ReportView{
+		NodeStatus: &NodeStatus{
+			Usage: map[string]string{
+				"cpu":    "0.5",
+				"memory": "512a",
+			},
+			Capacity: map[string]string{
+				"cpu":    "2.5",
+				"memory": "1024a",
+			},
+		},
+	}
+	err4 := processPercent(report3)
+	assert.Error(t, err4)
+
+	report4 := &ReportView{
+		NodeStatus: &NodeStatus{
+			Usage: map[string]string{
+				"cpu":    "0.5a",
+				"memory": "512Mi",
+			},
+			Capacity: map[string]string{
+				"cpu":    "2.5s",
+				"memory": "1024Mi",
+			},
+		},
+	}
+	err5 := processPercent(report4)
+	assert.Error(t, err5)
 }

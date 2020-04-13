@@ -4,13 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/evanphx/json-patch"
+	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // maxJSONLevel the max level of json
-const maxJSONLevel = 5
+const (
+	maxJSONLevel = 5
+	divisor      = 1000
+)
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
 var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
@@ -26,6 +32,15 @@ type Node struct {
 	Report            Report            `json:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty"`
 	Description       string            `json:"description,omitempty"`
+}
+
+type ReportView struct {
+	Time       time.Time   `json:"time,omitempty"`
+	Apps       []AppInfo   `json:"apps,omitempty"`
+	Core       *CoreInfo   `json:"core,omitempty"`
+	Appstats   []AppStatus `json:"appstats,omitempty"`
+	Node       *NodeInfo   `json:"node,omitempty"`
+	NodeStatus *NodeStatus `json:"nodestats,omitempty"`
 }
 
 // Report report data
@@ -150,4 +165,102 @@ func clean(m map[string]interface{}) {
 			clean(vm)
 		}
 	}
+}
+
+func processPercent(report *ReportView) error {
+	if report == nil || report.NodeStatus == nil {
+		return nil
+	}
+	nodeStatus := report.NodeStatus
+	nodeStatus.Percent = map[string]string{}
+
+	memory := string(coreV1.ResourceMemory)
+	mPercent, err := getMemoryUsagePercent(nodeStatus, memory)
+	if err != nil {
+		return err
+	}
+	nodeStatus.Percent[memory] = mPercent
+	cpu := string(coreV1.ResourceCPU)
+	cpuPercent, err := getCPUUsagePercent(nodeStatus, cpu)
+	if err != nil {
+		return err
+	}
+	nodeStatus.Percent[cpu] = cpuPercent
+	return nil
+}
+
+func getMemoryUsagePercent(status *NodeStatus, resourceType string) (string, error) {
+	cap, capOk := status.Capacity[resourceType]
+	usg, usageOk := status.Usage[resourceType]
+	total := int64(0)
+	usage := int64(0)
+	var err error
+	if capOk {
+		total, err = translateQuantityToDecimal(cap, false)
+		if err != nil {
+			return "", err
+		}
+		status.Capacity[resourceType] = strconv.FormatInt(total, 10)
+	}
+
+	if usageOk {
+		usage, err = translateQuantityToDecimal(usg, false)
+		if err != nil {
+			return "", err
+		}
+		status.Usage[resourceType] = strconv.FormatInt(usage, 10)
+	}
+
+	ratio := float64(0)
+
+	if capOk && usageOk {
+		if total != 0 {
+			ratio = float64(usage) / float64(total)
+		}
+	}
+
+	return strconv.FormatFloat(ratio, 'f', -1, 64), nil
+}
+
+func getCPUUsagePercent(status *NodeStatus, resourceType string) (string, error) {
+	cap, capOk := status.Capacity[resourceType]
+	usg, usageOk := status.Usage[resourceType]
+	total := int64(0)
+	usage := int64(0)
+	var err error
+	if capOk {
+		total, err = translateQuantityToDecimal(cap, true)
+		if err != nil {
+			return "", err
+		}
+		status.Capacity[resourceType] = strconv.FormatFloat(float64(total)/divisor, 'f', -1, 64)
+	}
+
+	if usageOk {
+		usage, err = translateQuantityToDecimal(usg, true)
+		if err != nil {
+			return "", err
+		}
+		status.Usage[resourceType] = strconv.FormatFloat(float64(usage)/divisor, 'f', -1, 64)
+	}
+
+	ratio := float64(0)
+	if capOk && usageOk {
+		if total != 0 {
+			ratio = float64(usage) / float64(total)
+		}
+	}
+
+	return strconv.FormatFloat(ratio, 'f', -1, 64), nil
+}
+
+func translateQuantityToDecimal(q string, milli bool) (int64, error) {
+	num, err := resource.ParseQuantity(q)
+	if err != nil {
+		return 0, err
+	}
+	if milli {
+		return num.MilliValue(), nil
+	}
+	return num.Value(), nil
 }
