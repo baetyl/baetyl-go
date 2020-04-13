@@ -43,6 +43,8 @@ type Service struct {
 	Runtime string `json:"runtime,omitempty"`
 	// labels
 	Labels map[string]string `json:"labels,omitempty"`
+	// privileged
+	Privileged bool `json:"privileged,omitempty"`
 }
 
 // Environment environment config
