@@ -144,12 +144,12 @@ func mockGet(c *routing.Context) error {
 		}
 		d, err := json.Marshal(data)
 		if err != nil {
-			respondError(c, 500, "ERR_JSON", err.Error())
+			respondMsg(c, 500, "ERR_JSON", err.Error())
 			return nil
 		}
 		respond(c, http.StatusOK, d)
 	} else {
-		respondError(c, 500, "ERR", "err")
+		respondMsg(c, 500, "ERR", "err")
 	}
 	return nil
 }
