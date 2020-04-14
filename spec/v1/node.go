@@ -15,8 +15,10 @@ import (
 
 // maxJSONLevel the max level of json
 const (
-	maxJSONLevel   = 5
-	milliPrecision = 1000
+	maxJSONLevel    = 5
+	milliPrecision  = 1000
+	TimePattern     = "2006-01-02T15:04:05.999999999Z"
+	OfflineDuration = 40 * int64(time.Second)
 )
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
@@ -111,7 +113,27 @@ func (n *Node) View() *NodeView {
 			log.L().Error("failed to populate node status", log.Error(err))
 		}
 	}
+	view.Ready = n.UpdateReadyStatus()
 	return view
+}
+
+func (n *Node) UpdateReadyStatus() bool {
+	if n.Report == nil {
+		return false
+	}
+
+	timeStr, ok := n.Report["time"]
+	if !ok {
+		return false
+	}
+	t, err := time.Parse(TimePattern, timeStr.(string))
+	if err != nil {
+		return false
+	}
+
+	start := time.Now().UTC().UnixNano()
+	end := t.UnixNano()
+	return start-end <= OfflineDuration
 }
 
 func (s *NodeStatus) populateNodeStatus() error {
