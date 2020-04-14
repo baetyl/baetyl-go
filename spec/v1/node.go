@@ -15,10 +15,9 @@ import (
 
 // maxJSONLevel the max level of json
 const (
-	maxJSONLevel    = 5
-	milliPrecision  = 1000
-	TimePattern     = "2006-01-02T15:04:05.999999999Z"
-	OfflineDuration = 40 * int64(time.Second)
+	maxJSONLevel   = 5
+	milliPrecision = 1000
+	TimePattern    = "2006-01-02T15:04:05.999999999Z"
 )
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
@@ -100,7 +99,7 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
 }
 
-func (n *Node) View() *NodeView {
+func (n *Node) View(timeout time.Duration) *NodeView {
 	view := new(NodeView)
 	nodeStr, err := json.Marshal(n)
 	if err != nil {
@@ -112,11 +111,14 @@ func (n *Node) View() *NodeView {
 		log.L().Error("failed to convert to node view", log.Error(err))
 		return nil
 	}
-	view.populateNodeStatus()
+	if err = view.populateNodeStatus(timeout); err != nil {
+		log.L().Error("failed to populate node status", log.Error(err))
+		return nil
+	}
 	return view
 }
 
-func (n *Node) UpdateReadyStatus() bool {
+func (n *Node) UpdateReadyStatus(timeout time.Duration) bool {
 	if n.Report == nil {
 		return false
 	}
@@ -126,31 +128,18 @@ func (n *Node) UpdateReadyStatus() bool {
 		return false
 	}
 	t, err := time.Parse(TimePattern, timeStr.(string))
-	if err != nil || t.IsZero() {
+	if err != nil {
 		return false
 	}
-
-	start := time.Now().UTC().UnixNano()
-	end := t.UnixNano()
-	return start-end <= OfflineDuration
+	return time.Now().Before(t.Add(timeout))
 }
 
-func (view *NodeView) populateNodeStatus() {
-	if view.Report != nil && view.Report.NodeStatus != nil {
-		if err := view.Report.NodeStatus.populateNodeStatus(); err != nil {
-			log.L().Error("failed to populate node status", log.Error(err))
-		}
+func (view *NodeView) populateNodeStatus(timeout time.Duration) error {
+	if view.Report == nil || view.Report.NodeStatus == nil {
+		return nil
 	}
-	if view.Report.Time.IsZero() {
-		view.Ready = false
-	} else {
-		start := time.Now().UTC().UnixNano()
-		end := view.Report.Time.UnixNano()
-		view.Ready = start-end <= OfflineDuration
-	}
-}
 
-func (s *NodeStatus) populateNodeStatus() error {
+	s := view.Report.NodeStatus
 	s.Percent = map[string]string{}
 	memory := string(coreV1.ResourceMemory)
 	mPercent, err := s.processResourcePercent(s, memory, populateMemoryResource)
@@ -165,6 +154,8 @@ func (s *NodeStatus) populateNodeStatus() error {
 		return err
 	}
 	s.Percent[cpu] = cpuPercent
+
+	view.Ready = time.Now().Before(view.Report.Time.Add(timeout))
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
@@ -255,7 +256,7 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 	err := json.Unmarshal([]byte(nodeData), node)
 	assert.NoError(t, err)
 
-	view := node.View()
+	view := node.View(time.Minute)
 	assert.NoError(t, err)
 	assert.NotNil(t, view)
 	assert.Equal(t, view.Namespace, "default")
@@ -272,22 +273,26 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 	assert.Equal(t, view.Report.NodeStatus.Usage[string(coreV1.ResourceCPU)], "0.337")
 	assert.Equal(t, view.Report.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.1685")
 	assert.Equal(t, view.Report.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0.2991579803429569")
+	assert.Equal(t, view.Ready, false)
 }
 
 func TestPopulateNodeStatus(t *testing.T) {
-	report1 := &ReportView{
-		NodeStatus: &NodeStatus{
-			Usage: map[string]string{
-				"cpu":    "1",
-				"memory": "512Mi",
+	node1 := NodeView{
+		Report: &ReportView{
+			NodeStatus: &NodeStatus{
+				Usage: map[string]string{
+					"cpu":    "1",
+					"memory": "512Mi",
+				},
+				Capacity: map[string]string{
+					"cpu":    "2",
+					"memory": "1024Mi",
+				},
 			},
-			Capacity: map[string]string{
-				"cpu":    "2",
-				"memory": "1024Mi",
-			},
+			Time: time.Now().Add(-2 * time.Minute),
 		},
 	}
-	err := report1.NodeStatus.populateNodeStatus()
+	err := node1.populateNodeStatus(time.Minute)
 	assert.NoError(t, err)
 	m1, err1 := translateQuantityToDecimal("1024Mi", false)
 	assert.NoError(t, err1)
@@ -295,78 +300,116 @@ func TestPopulateNodeStatus(t *testing.T) {
 	m2, err2 := translateQuantityToDecimal("512Mi", false)
 	assert.NoError(t, err2)
 	s2 := strconv.FormatInt(m2, 10)
-	assert.Equal(t, report1.NodeStatus.Capacity[string(coreV1.ResourceMemory)], s1)
-	assert.Equal(t, report1.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "2")
-	assert.Equal(t, report1.NodeStatus.Usage[string(coreV1.ResourceMemory)], s2)
-	assert.Equal(t, report1.NodeStatus.Usage[string(coreV1.ResourceCPU)], "1")
-	assert.Equal(t, report1.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0.5")
-	assert.Equal(t, report1.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.5")
+	assert.Equal(t, node1.Report.NodeStatus.Capacity[string(coreV1.ResourceMemory)], s1)
+	assert.Equal(t, node1.Report.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, node1.Report.NodeStatus.Usage[string(coreV1.ResourceMemory)], s2)
+	assert.Equal(t, node1.Report.NodeStatus.Usage[string(coreV1.ResourceCPU)], "1")
+	assert.Equal(t, node1.Report.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0.5")
+	assert.Equal(t, node1.Report.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.5")
+	assert.Equal(t, node1.Ready, false)
 
-	report2 := &ReportView{
-		NodeStatus: &NodeStatus{
-			Usage: map[string]string{
-				"cpu":    "500m",
-				"memory": "512Mi",
+	node2 := NodeView{
+		Report: &ReportView{
+			NodeStatus: &NodeStatus{
+				Usage: map[string]string{
+					"cpu":    "1",
+					"memory": "512Mi",
+				},
+				Capacity: map[string]string{
+					"cpu":    "2",
+					"memory": "1024Mi",
+				},
 			},
-			Capacity: map[string]string{
-				"cpu":    "2.0",
-				"memory": "1024Mi",
+			Time: time.Now().Add(-30 * time.Second),
+		},
+	}
+	err = node2.populateNodeStatus(time.Minute)
+	assert.NoError(t, err)
+	assert.Equal(t, node2.Report.NodeStatus.Capacity[string(coreV1.ResourceMemory)], s1)
+	assert.Equal(t, node2.Report.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, node2.Report.NodeStatus.Usage[string(coreV1.ResourceMemory)], s2)
+	assert.Equal(t, node2.Report.NodeStatus.Usage[string(coreV1.ResourceCPU)], "1")
+	assert.Equal(t, node2.Report.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0.5")
+	assert.Equal(t, node2.Report.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.5")
+	assert.Equal(t, node2.Ready, true)
+
+	node3 := NodeView{
+		Report: &ReportView{
+			NodeStatus: &NodeStatus{
+				Usage: map[string]string{
+					"cpu":    "500m",
+					"memory": "512Mi",
+				},
+				Capacity: map[string]string{
+					"cpu":    "2.0",
+					"memory": "1024Mi",
+				},
 			},
 		},
 	}
-	err3 := report2.NodeStatus.populateNodeStatus()
-	assert.NoError(t, err3)
-	assert.Equal(t, report2.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "2")
-	assert.Equal(t, report2.NodeStatus.Usage[string(coreV1.ResourceCPU)], "0.5")
-	assert.Equal(t, report2.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0.5")
-	assert.Equal(t, report2.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.25")
 
-	report3 := &ReportView{
-		NodeStatus: &NodeStatus{
-			Usage: map[string]string{
-				"cpu":    "0.5",
-				"memory": "512a",
-			},
-			Capacity: map[string]string{
-				"cpu":    "2.5",
-				"memory": "1024a",
+	err = node3.populateNodeStatus(time.Minute)
+	assert.NoError(t, err)
+	assert.Equal(t, node3.Report.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, node3.Report.NodeStatus.Usage[string(coreV1.ResourceCPU)], "0.5")
+	assert.Equal(t, node3.Report.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0.5")
+	assert.Equal(t, node3.Report.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.25")
+	assert.Equal(t, node2.Ready, true)
+
+	node4 := NodeView{
+		Report: &ReportView{
+			NodeStatus: &NodeStatus{
+				Usage: map[string]string{
+					"cpu":    "0.5",
+					"memory": "512a",
+				},
+				Capacity: map[string]string{
+					"cpu":    "2.5",
+					"memory": "1024a",
+				},
 			},
 		},
 	}
-	err4 := report3.NodeStatus.populateNodeStatus()
-	assert.Error(t, err4)
 
-	report4 := &ReportView{
-		NodeStatus: &NodeStatus{
-			Usage: map[string]string{
-				"cpu":    "0.5a",
-				"memory": "512Mi",
-			},
-			Capacity: map[string]string{
-				"cpu":    "2.5s",
-				"memory": "1024Mi",
+	err = node4.populateNodeStatus(time.Minute)
+	assert.Error(t, err)
+
+	node5 := NodeView{
+		Report: &ReportView{
+			NodeStatus: &NodeStatus{
+				Usage: map[string]string{
+					"cpu":    "0.5a",
+					"memory": "512Mi",
+				},
+				Capacity: map[string]string{
+					"cpu":    "2.5s",
+					"memory": "1024Mi",
+				},
 			},
 		},
 	}
-	err5 := report4.NodeStatus.populateNodeStatus()
-	assert.Error(t, err5)
 
-	report5 := &ReportView{
-		NodeStatus: &NodeStatus{
-			Usage: map[string]string{
-				"cpu":    "0",
-				"memory": "0",
-			},
-			Capacity: map[string]string{
-				"cpu":    "0",
-				"memory": "0",
+	err = node5.populateNodeStatus(time.Minute)
+	assert.Error(t, err)
+
+	node6 := NodeView{
+		Report: &ReportView{
+			NodeStatus: &NodeStatus{
+				Usage: map[string]string{
+					"cpu":    "0",
+					"memory": "0",
+				},
+				Capacity: map[string]string{
+					"cpu":    "0",
+					"memory": "0",
+				},
 			},
 		},
 	}
-	err6 := report5.NodeStatus.populateNodeStatus()
-	assert.NoError(t, err6)
-	assert.Equal(t, report5.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "0")
-	assert.Equal(t, report5.NodeStatus.Usage[string(coreV1.ResourceCPU)], "0")
-	assert.Equal(t, report5.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0")
-	assert.Equal(t, report5.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0")
+	err = node6.populateNodeStatus(time.Minute)
+	assert.NoError(t, err)
+	assert.Equal(t, node6.Report.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "0")
+	assert.Equal(t, node6.Report.NodeStatus.Usage[string(coreV1.ResourceCPU)], "0")
+	assert.Equal(t, node6.Report.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0")
+	assert.Equal(t, node6.Report.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0")
 }
