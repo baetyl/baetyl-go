@@ -45,6 +45,8 @@ type Service struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// specifies the security context of service
 	SecurityContext *SecurityContext `json:"security,omitempty"`
+	// specifies host network mode of service
+	HostNetwork bool `json:"hostNetwork,omitempty"`
 }
 
 type SecurityContext struct {

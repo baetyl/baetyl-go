@@ -17,6 +17,7 @@ import (
 const (
 	maxJSONLevel   = 5
 	milliPrecision = 1000
+	TimePattern    = "2006-01-02T15:04:05.999999999Z"
 )
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
@@ -36,12 +37,16 @@ type Node struct {
 }
 
 type NodeView struct {
-	Namespace string      `json:"namespace,omitempty"`
-	Name      string      `json:"name,omitempty"`
-	Version   string      `json:"version,omitempty"`
-	Report    *ReportView `json:"report,omitempty"`
-	Desire    Desire      `json:"desire,omitempty"`
-	Ready     bool        `json:"ready"`
+	Namespace         string            `json:"namespace,omitempty"`
+	Name              string            `json:"name,omitempty"`
+	Version           string            `json:"version,omitempty"`
+	CreationTimestamp time.Time         `json:"createTime,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty"`
+	Report            *ReportView       `json:"report,omitempty"`
+	Desire            Desire            `json:"desire,omitempty"`
+	Description       string            `json:"description,omitempty"`
+	Ready             bool              `json:"ready"`
 }
 
 type ReportView struct {
@@ -94,7 +99,7 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
 }
 
-func (n *Node) View() *NodeView {
+func (n *Node) View(timeout time.Duration) *NodeView {
 	view := new(NodeView)
 	nodeStr, err := json.Marshal(n)
 	if err != nil {
@@ -106,15 +111,35 @@ func (n *Node) View() *NodeView {
 		log.L().Error("failed to convert to node view", log.Error(err))
 		return nil
 	}
-	if view.Report != nil && view.Report.NodeStatus != nil {
-		if err := view.Report.NodeStatus.populateNodeStatus(); err != nil {
-			log.L().Error("failed to populate node status", log.Error(err))
-		}
+	if err = view.populateNodeStatus(timeout); err != nil {
+		log.L().Error("failed to populate node status", log.Error(err))
+		return nil
 	}
 	return view
 }
 
-func (s *NodeStatus) populateNodeStatus() error {
+func (n *Node) UpdateReadyStatus(timeout time.Duration) bool {
+	if n.Report == nil {
+		return false
+	}
+
+	timeStr, ok := n.Report["time"]
+	if !ok {
+		return false
+	}
+	t, err := time.Parse(TimePattern, timeStr.(string))
+	if err != nil {
+		return false
+	}
+	return time.Now().Before(t.Add(timeout))
+}
+
+func (view *NodeView) populateNodeStatus(timeout time.Duration) error {
+	if view.Report == nil || view.Report.NodeStatus == nil {
+		return nil
+	}
+
+	s := view.Report.NodeStatus
 	s.Percent = map[string]string{}
 	memory := string(coreV1.ResourceMemory)
 	mPercent, err := s.processResourcePercent(s, memory, populateMemoryResource)
@@ -129,6 +154,8 @@ func (s *NodeStatus) populateNodeStatus() error {
 		return err
 	}
 	s.Percent[cpu] = cpuPercent
+
+	view.Ready = time.Now().Before(view.Report.Time.Add(timeout))
 	return nil
 }
 
