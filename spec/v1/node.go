@@ -35,11 +35,12 @@ type Node struct {
 	Description       string            `json:"description,omitempty"`
 }
 
-type NodeReportView struct {
+type NodeView struct {
 	Namespace string      `json:"namespace,omitempty"`
 	Name      string      `json:"name,omitempty"`
 	Version   string      `json:"version,omitempty"`
 	Report    *ReportView `json:"report,omitempty"`
+	Desire    Desire      `json:"desire,omitempty"`
 	Ready     bool        `json:"ready"`
 }
 
@@ -91,6 +92,67 @@ func (d Desire) Merge(desired Desire) error {
 // Diff diff with reported data, return the delta fo desire
 func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
+}
+
+func (n *Node) View() *NodeView {
+	view := new(NodeView)
+	nodeStr, err := json.Marshal(n)
+	if err != nil {
+		log.L().Error("failed to convert to node view", log.Error(err))
+		return nil
+	}
+	err = json.Unmarshal(nodeStr, view)
+	if err != nil {
+		log.L().Error("failed to convert to node view", log.Error(err))
+		return nil
+	}
+	if view.Report != nil && view.Report.NodeStatus != nil {
+		if err := view.Report.NodeStatus.populateNodeStatus(); err != nil {
+			log.L().Error("failed to populate node status", log.Error(err))
+		}
+	}
+	return view
+}
+
+func (s *NodeStatus) populateNodeStatus() error {
+	s.Percent = map[string]string{}
+	memory := string(coreV1.ResourceMemory)
+	mPercent, err := s.processResourcePercent(s, memory, populateMemoryResource)
+	if err != nil {
+		return err
+	}
+	s.Percent[memory] = mPercent
+
+	cpu := string(coreV1.ResourceCPU)
+	cpuPercent, err := s.processResourcePercent(s, cpu, populateCPUResource)
+	if err != nil {
+		return err
+	}
+	s.Percent[cpu] = cpuPercent
+	return nil
+}
+
+func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType string,
+	populate func(usage string, resource map[string]string) (int64, error)) (string, error) {
+	cap, capOk := status.Capacity[resourceType]
+	usg, usageOk := status.Usage[resourceType]
+	var total, usage int64
+	var err error
+	if capOk {
+		if total, err = populate(cap, status.Capacity); err != nil {
+			return "0", err
+		}
+	}
+	if usageOk {
+		if usage, err = populate(usg, status.Usage); err != nil {
+			return "0", err
+		}
+	}
+
+	if capOk && usageOk && total != 0 {
+		return strconv.FormatFloat(float64(usage)/float64(total), 'f', -1, 64), nil
+	}
+	return "0", nil
 }
 
 func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
@@ -174,66 +236,6 @@ func clean(m map[string]interface{}) {
 			clean(vm)
 		}
 	}
-}
-
-func translateNodeToNodeReportView(node *Node) (*NodeReportView, error) {
-	view := new(NodeReportView)
-	nodeStr, err := json.Marshal(node)
-	if err != nil {
-		log.L().Error("node to node report view error", log.Error(err))
-		return nil, err
-	}
-	err = json.Unmarshal(nodeStr, view)
-	if err != nil {
-		log.L().Error("node to node report view error", log.Error(err))
-		return nil, err
-	}
-
-	return view, nil
-}
-
-func populateNodeStatus(nodeStatus *NodeStatus) error {
-	if nodeStatus == nil {
-		return nil
-	}
-	nodeStatus.Percent = map[string]string{}
-	memory := string(coreV1.ResourceMemory)
-	mPercent, err := processResourcePercent(nodeStatus, memory, populateMemoryResource)
-	if err != nil {
-		return err
-	}
-	nodeStatus.Percent[memory] = mPercent
-
-	cpu := string(coreV1.ResourceCPU)
-	cpuPercent, err := processResourcePercent(nodeStatus, cpu, populateCPUResource)
-	if err != nil {
-		return err
-	}
-	nodeStatus.Percent[cpu] = cpuPercent
-	return nil
-}
-
-func processResourcePercent(status *NodeStatus, resourceType string,
-	populate func(usage string, resource map[string]string) (int64, error)) (string, error) {
-	cap, capOk := status.Capacity[resourceType]
-	usg, usageOk := status.Usage[resourceType]
-	var total, usage int64
-	var err error
-	if capOk {
-		if total, err = populate(cap, status.Capacity); err != nil {
-			return "0", err
-		}
-	}
-	if usageOk {
-		if usage, err = populate(usg, status.Usage); err != nil {
-			return "0", err
-		}
-	}
-
-	if capOk && usageOk && total != 0 {
-		return strconv.FormatFloat(float64(usage)/float64(total), 'f', -1, 64), nil
-	}
-	return "0", nil
 }
 
 func populateCPUResource(usage string, resource map[string]string) (int64, error) {
