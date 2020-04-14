@@ -2,7 +2,10 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/baetyl/baetyl-go/log"
+	v1 "github.com/census-instrumentation/opencensus-proto/gen-go/agent/common/v1"
 	"reflect"
 	"strconv"
 	"time"
@@ -14,8 +17,8 @@ import (
 
 // maxJSONLevel the max level of json
 const (
-	maxJSONLevel = 5
-	divisor      = 1000
+	maxJSONLevel   = 5
+	milliPrecision = 1000
 )
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
@@ -24,7 +27,7 @@ var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max lim
 // Node the spec of node
 type Node struct {
 	Namespace         string            `json:"namespace,omitempty"`
-	Name              string            `json:"name,omitempty"`
+	Name              string            `json:"name,omitempty" validate:"omitempty,resourceName"`
 	Version           string            `json:"version,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
@@ -32,6 +35,14 @@ type Node struct {
 	Report            Report            `json:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty"`
 	Description       string            `json:"description,omitempty"`
+}
+
+type NodeReportView struct {
+	Namespace string      `json:"namespace,omitempty"`
+	Name      string      `json:"name,omitempty"`
+	Version   string      `json:"version,omitempty"`
+	Report    *ReportView `json:"report,omitempty"`
+	Ready     bool        `json:"ready"`
 }
 
 type ReportView struct {
@@ -167,6 +178,22 @@ func clean(m map[string]interface{}) {
 	}
 }
 
+func translateNodeToNodeReportView(node *v1.Node) (*NodeReportView, error) {
+	view := new(NodeReportView)
+	nodeStr, err := json.Marshal(node)
+	if err != nil {
+		log.L().Error("node to node report view error", log.Error(err))
+		return nil, err
+	}
+	err = json.Unmarshal(nodeStr, view)
+	if err != nil {
+		log.L().Error("node to node report view error", log.Error(err))
+		return nil, err
+	}
+
+	return view, nil
+}
+
 func processPercent(report *ReportView) error {
 	if report == nil || report.NodeStatus == nil {
 		return nil
@@ -175,13 +202,13 @@ func processPercent(report *ReportView) error {
 	nodeStatus.Percent = map[string]string{}
 
 	memory := string(coreV1.ResourceMemory)
-	mPercent, err := getMemoryUsagePercent(nodeStatus, memory)
+	mPercent, err := getResourceUsagePercent(nodeStatus, memory)
 	if err != nil {
 		return err
 	}
 	nodeStatus.Percent[memory] = mPercent
 	cpu := string(coreV1.ResourceCPU)
-	cpuPercent, err := getCPUUsagePercent(nodeStatus, cpu)
+	cpuPercent, err := getResourceUsagePercent(nodeStatus, cpu)
 	if err != nil {
 		return err
 	}
@@ -189,59 +216,48 @@ func processPercent(report *ReportView) error {
 	return nil
 }
 
-func getMemoryUsagePercent(status *NodeStatus, resourceType string) (string, error) {
+func getResourceUsagePercent(status *NodeStatus, resourceType string) (string, error) {
 	cap, capOk := status.Capacity[resourceType]
 	usg, usageOk := status.Usage[resourceType]
 	total := int64(0)
 	usage := int64(0)
 	var err error
 	if capOk {
-		total, err = translateQuantityToDecimal(cap, false)
-		if err != nil {
-			return "", err
+		switch resourceType {
+		case string(coreV1.ResourceCPU):
+			total, err = translateQuantityToDecimal(cap, true)
+			if err != nil {
+				return "", err
+			}
+			status.Capacity[resourceType] = strconv.FormatFloat(float64(total)/milliPrecision, 'f', -1, 64)
+		case string(coreV1.ResourceMemory):
+			total, err = translateQuantityToDecimal(cap, false)
+			if err != nil {
+				return "", err
+			}
+			status.Capacity[resourceType] = strconv.FormatInt(total, 10)
+		default:
+			return "", errors.New("unsupported resource type")
 		}
-		status.Capacity[resourceType] = strconv.FormatInt(total, 10)
 	}
 
 	if usageOk {
-		usage, err = translateQuantityToDecimal(usg, false)
-		if err != nil {
-			return "", err
+		switch resourceType {
+		case string(coreV1.ResourceCPU):
+			usage, err = translateQuantityToDecimal(usg, true)
+			if err != nil {
+				return "", err
+			}
+			status.Usage[resourceType] = strconv.FormatFloat(float64(usage)/milliPrecision, 'f', -1, 64)
+		case string(coreV1.ResourceMemory):
+			usage, err = translateQuantityToDecimal(usg, false)
+			if err != nil {
+				return "", err
+			}
+			status.Usage[resourceType] = strconv.FormatInt(usage, 10)
+		default:
+			return "", errors.New("unsupported resource type")
 		}
-		status.Usage[resourceType] = strconv.FormatInt(usage, 10)
-	}
-
-	ratio := float64(0)
-
-	if capOk && usageOk {
-		if total != 0 {
-			ratio = float64(usage) / float64(total)
-		}
-	}
-
-	return strconv.FormatFloat(ratio, 'f', -1, 64), nil
-}
-
-func getCPUUsagePercent(status *NodeStatus, resourceType string) (string, error) {
-	cap, capOk := status.Capacity[resourceType]
-	usg, usageOk := status.Usage[resourceType]
-	total := int64(0)
-	usage := int64(0)
-	var err error
-	if capOk {
-		total, err = translateQuantityToDecimal(cap, true)
-		if err != nil {
-			return "", err
-		}
-		status.Capacity[resourceType] = strconv.FormatFloat(float64(total)/divisor, 'f', -1, 64)
-	}
-
-	if usageOk {
-		usage, err = translateQuantityToDecimal(usg, true)
-		if err != nil {
-			return "", err
-		}
-		status.Usage[resourceType] = strconv.FormatFloat(float64(usage)/divisor, 'f', -1, 64)
 	}
 
 	ratio := float64(0)
