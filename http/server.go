@@ -7,14 +7,14 @@ import (
 
 type Server struct {
 	conf ServerConfig
-	fasthttp.Server
+	*fasthttp.Server
 }
 
 // NewServer new server
-func NewServer(cfg ServerConfig, handler fasthttp.RequestHandler) Server {
-	return Server{
+func NewServer(cfg ServerConfig, handler fasthttp.RequestHandler) *Server {
+	return &Server{
 		conf: cfg,
-		Server: fasthttp.Server{
+		Server: &fasthttp.Server{
 			Handler:            handler,
 			Concurrency:        cfg.Concurrency,
 			DisableKeepalive:   cfg.DisableKeepalive,
@@ -44,5 +44,7 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Close() {
-	s.Server.Shutdown()
+	if s.Server != nil {
+		s.Server.Shutdown()
+	}
 }
