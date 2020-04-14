@@ -118,22 +118,6 @@ func (n *Node) View(timeout time.Duration) *NodeView {
 	return view
 }
 
-func (n *Node) UpdateReadyStatus(timeout time.Duration) bool {
-	if n.Report == nil {
-		return false
-	}
-
-	timeStr, ok := n.Report["time"]
-	if !ok {
-		return false
-	}
-	t, err := time.Parse(TimePattern, timeStr.(string))
-	if err != nil {
-		return false
-	}
-	return time.Now().Before(t.Add(timeout))
-}
-
 func (view *NodeView) populateNodeStatus(timeout time.Duration) error {
 	if view.Report == nil || view.Report.NodeStatus == nil {
 		return nil
