@@ -46,7 +46,8 @@ func TestServerHttp(t *testing.T) {
 	}
 
 	for _, conf := range confs {
-		NewServer(conf.serverConf, mockRoute())
+		server := NewServer(conf.serverConf, mockRoute())
+		server.Start()
 		time.Sleep(100 * time.Millisecond)
 
 		client, err := newMockClient(conf.cliConf)
@@ -103,6 +104,7 @@ func TestServerHttp(t *testing.T) {
 		assert.NoError(t, err5)
 		assert.Equal(t, resp5.StatusCode(), 200)
 		assert.Equal(t, string(resp5.Body()), "update")
+		server.Close()
 	}
 }
 
