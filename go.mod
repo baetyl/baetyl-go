@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/256dpi/gomqtt v0.13.0
-	github.com/census-instrumentation/opencensus-proto v0.2.1
 	github.com/creasty/defaults v1.3.0
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
@@ -32,6 +31,6 @@ require (
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/validator.v2 v2.0.0-20191107172027-c3144fdedc21
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.18.1
-	k8s.io/apimachinery v0.18.1
+	k8s.io/api v0.0.0-20190819141258-3544db3b9e44
+	k8s.io/apimachinery v0.0.0-20190817020851-f2f3a405f61d
 )
