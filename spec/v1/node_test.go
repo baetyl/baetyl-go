@@ -252,7 +252,7 @@ func TestProcessPercent(t *testing.T) {
 			},
 		},
 	}
-	err := processPercent(report1)
+	err := populateNodeStatus(report1.NodeStatus)
 	assert.NoError(t, err)
 	m1, err1 := translateQuantityToDecimal("1024Mi", false)
 	assert.NoError(t, err1)
@@ -279,7 +279,7 @@ func TestProcessPercent(t *testing.T) {
 			},
 		},
 	}
-	err3 := processPercent(report2)
+	err3 := populateNodeStatus(report2.NodeStatus)
 	assert.NoError(t, err3)
 	assert.Equal(t, report2.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "2")
 	assert.Equal(t, report2.NodeStatus.Usage[string(coreV1.ResourceCPU)], "0.5")
@@ -298,7 +298,7 @@ func TestProcessPercent(t *testing.T) {
 			},
 		},
 	}
-	err4 := processPercent(report3)
+	err4 := populateNodeStatus(report3.NodeStatus)
 	assert.Error(t, err4)
 
 	report4 := &ReportView{
@@ -313,6 +313,25 @@ func TestProcessPercent(t *testing.T) {
 			},
 		},
 	}
-	err5 := processPercent(report4)
+	err5 := populateNodeStatus(report4.NodeStatus)
 	assert.Error(t, err5)
+
+	report5 := &ReportView{
+		NodeStatus: &NodeStatus{
+			Usage: map[string]string{
+				"cpu":    "0",
+				"memory": "0",
+			},
+			Capacity: map[string]string{
+				"cpu":    "0",
+				"memory": "0",
+			},
+		},
+	}
+	err6 := populateNodeStatus(report5.NodeStatus)
+	assert.NoError(t, err6)
+	assert.Equal(t, report5.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "0")
+	assert.Equal(t, report5.NodeStatus.Usage[string(coreV1.ResourceCPU)], "0")
+	assert.Equal(t, report5.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0")
+	assert.Equal(t, report5.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0")
 }

@@ -2,10 +2,8 @@ package v1
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/baetyl/baetyl-go/log"
-	v1 "github.com/census-instrumentation/opencensus-proto/gen-go/agent/common/v1"
 	"reflect"
 	"strconv"
 	"time"
@@ -178,7 +176,7 @@ func clean(m map[string]interface{}) {
 	}
 }
 
-func translateNodeToNodeReportView(node *v1.Node) (*NodeReportView, error) {
+func translateNodeToNodeReportView(node *Node) (*NodeReportView, error) {
 	view := new(NodeReportView)
 	nodeStr, err := json.Marshal(node)
 	if err != nil {
@@ -194,21 +192,20 @@ func translateNodeToNodeReportView(node *v1.Node) (*NodeReportView, error) {
 	return view, nil
 }
 
-func processPercent(report *ReportView) error {
-	if report == nil || report.NodeStatus == nil {
+func populateNodeStatus(nodeStatus *NodeStatus) error {
+	if nodeStatus == nil {
 		return nil
 	}
-	nodeStatus := report.NodeStatus
 	nodeStatus.Percent = map[string]string{}
-
 	memory := string(coreV1.ResourceMemory)
-	mPercent, err := getResourceUsagePercent(nodeStatus, memory)
+	mPercent, err := processResourcePercent(nodeStatus, memory, populateMemoryResource)
 	if err != nil {
 		return err
 	}
 	nodeStatus.Percent[memory] = mPercent
+
 	cpu := string(coreV1.ResourceCPU)
-	cpuPercent, err := getResourceUsagePercent(nodeStatus, cpu)
+	cpuPercent, err := processResourcePercent(nodeStatus, cpu, populateCPUResource)
 	if err != nil {
 		return err
 	}
@@ -216,58 +213,45 @@ func processPercent(report *ReportView) error {
 	return nil
 }
 
-func getResourceUsagePercent(status *NodeStatus, resourceType string) (string, error) {
+func processResourcePercent(status *NodeStatus, resourceType string,
+	populate func(usage string, resource map[string]string) (int64, error)) (string, error) {
 	cap, capOk := status.Capacity[resourceType]
 	usg, usageOk := status.Usage[resourceType]
-	total := int64(0)
-	usage := int64(0)
+	var total, usage int64
 	var err error
 	if capOk {
-		switch resourceType {
-		case string(coreV1.ResourceCPU):
-			total, err = translateQuantityToDecimal(cap, true)
-			if err != nil {
-				return "", err
-			}
-			status.Capacity[resourceType] = strconv.FormatFloat(float64(total)/milliPrecision, 'f', -1, 64)
-		case string(coreV1.ResourceMemory):
-			total, err = translateQuantityToDecimal(cap, false)
-			if err != nil {
-				return "", err
-			}
-			status.Capacity[resourceType] = strconv.FormatInt(total, 10)
-		default:
-			return "", errors.New("unsupported resource type")
+		if total, err = populate(cap, status.Capacity); err != nil {
+			return "0", err
 		}
 	}
-
 	if usageOk {
-		switch resourceType {
-		case string(coreV1.ResourceCPU):
-			usage, err = translateQuantityToDecimal(usg, true)
-			if err != nil {
-				return "", err
-			}
-			status.Usage[resourceType] = strconv.FormatFloat(float64(usage)/milliPrecision, 'f', -1, 64)
-		case string(coreV1.ResourceMemory):
-			usage, err = translateQuantityToDecimal(usg, false)
-			if err != nil {
-				return "", err
-			}
-			status.Usage[resourceType] = strconv.FormatInt(usage, 10)
-		default:
-			return "", errors.New("unsupported resource type")
+		if usage, err = populate(usg, status.Usage); err != nil {
+			return "0", err
 		}
 	}
 
-	ratio := float64(0)
-	if capOk && usageOk {
-		if total != 0 {
-			ratio = float64(usage) / float64(total)
-		}
+	if capOk && usageOk && total != 0 {
+		return strconv.FormatFloat(float64(usage)/float64(total), 'f', -1, 64), nil
 	}
+	return "0", nil
+}
 
-	return strconv.FormatFloat(ratio, 'f', -1, 64), nil
+func populateCPUResource(usage string, resource map[string]string) (int64, error) {
+	usg, err := translateQuantityToDecimal(usage, true)
+	if err != nil {
+		return 0, err
+	}
+	resource[string(coreV1.ResourceCPU)] = strconv.FormatFloat(float64(usg)/milliPrecision, 'f', -1, 64)
+	return usg, nil
+}
+
+func populateMemoryResource(usage string, resource map[string]string) (int64, error) {
+	usg, err := translateQuantityToDecimal(usage, false)
+	if err != nil {
+		return 0, err
+	}
+	resource[string(coreV1.ResourceMemory)] = strconv.FormatInt(usg, 10)
+	return usg, nil
 }
 
 func translateQuantityToDecimal(q string, milli bool) (int64, error) {
