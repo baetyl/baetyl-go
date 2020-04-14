@@ -20,6 +20,7 @@ type NodeInfo struct {
 type NodeStatus struct {
 	Usage    map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
 	Capacity map[string]string `yaml:"capacity,omitempty" json:"capacity,omitempty"`
+	Percent  map[string]string `yaml:"percent,omitempty" json:"percent,omitempty"`
 }
 
 // AppInfo app info
