@@ -38,12 +38,16 @@ type Node struct {
 }
 
 type NodeView struct {
-	Namespace string      `json:"namespace,omitempty"`
-	Name      string      `json:"name,omitempty"`
-	Version   string      `json:"version,omitempty"`
-	Report    *ReportView `json:"report,omitempty"`
-	Desire    Desire      `json:"desire,omitempty"`
-	Ready     bool        `json:"ready"`
+	Namespace         string            `json:"namespace,omitempty"`
+	Name              string            `json:"name,omitempty"`
+	Version           string            `json:"version,omitempty"`
+	CreationTimestamp time.Time         `json:"createTime,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty"`
+	Report            *ReportView       `json:"report,omitempty"`
+	Desire            Desire            `json:"desire,omitempty"`
+	Description       string            `json:"description,omitempty"`
+	Ready             bool              `json:"ready"`
 }
 
 type ReportView struct {
@@ -108,12 +112,7 @@ func (n *Node) View() *NodeView {
 		log.L().Error("failed to convert to node view", log.Error(err))
 		return nil
 	}
-	if view.Report != nil && view.Report.NodeStatus != nil {
-		if err := view.Report.NodeStatus.populateNodeStatus(); err != nil {
-			log.L().Error("failed to populate node status", log.Error(err))
-		}
-	}
-	view.Ready = n.UpdateReadyStatus()
+	view.populateNodeStatus()
 	return view
 }
 
@@ -127,13 +126,28 @@ func (n *Node) UpdateReadyStatus() bool {
 		return false
 	}
 	t, err := time.Parse(TimePattern, timeStr.(string))
-	if err != nil {
+	if err != nil || t.IsZero() {
 		return false
 	}
 
 	start := time.Now().UTC().UnixNano()
 	end := t.UnixNano()
 	return start-end <= OfflineDuration
+}
+
+func (view *NodeView) populateNodeStatus() {
+	if view.Report != nil && view.Report.NodeStatus != nil {
+		if err := view.Report.NodeStatus.populateNodeStatus(); err != nil {
+			log.L().Error("failed to populate node status", log.Error(err))
+		}
+	}
+	if view.Report.Time.IsZero() {
+		view.Ready = false
+	} else {
+		start := time.Now().UTC().UnixNano()
+		end := view.Report.Time.UnixNano()
+		view.Ready = start-end <= OfflineDuration
+	}
 }
 
 func (s *NodeStatus) populateNodeStatus() error {
