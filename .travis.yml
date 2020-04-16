@@ -6,7 +6,6 @@ go:
   - "1.13"
 
 before_install:
-  - make prepare
 
 script:
   - make test

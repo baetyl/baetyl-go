@@ -3,14 +3,7 @@ GO_TEST_PKGS?=$(shell go list ./...)
 
 .PHONY: test
 test:
-	go test ${GO_TEST_FLAGS} ${GO_TEST_PKGS}
-
-.PHONY: prepare
-prepare:
-	go env -w GONOPROXY=\*\*.baidu.com\*\*
-	go env -w GOPROXY=https://goproxy.baidu.com
-	go env -w GONOSUMDB=\*
-	go mod download
+	env GO111MODULE=on GOPROXY=https://goproxy.cn go test ${GO_TEST_FLAGS} ${GO_TEST_PKGS}
 
 .PHONY: fmt format
 fmt: format
