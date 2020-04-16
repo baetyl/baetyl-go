@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	routing "github.com/qiangxue/fasthttp-routing"
+	"io"
 )
 
 const (
@@ -23,16 +24,25 @@ func NewResponse(code, msg string) Response {
 	}
 }
 
+// RespondMsg RespondMsg
 func RespondMsg(c *routing.Context, httpCode int, code, msg string) {
 	resp := NewResponse(code, msg)
 	b, _ := json.Marshal(&resp)
 	Respond(c, httpCode, b)
 }
 
+// Respond Respond
 func Respond(c *routing.Context, httpCode int, obj []byte) {
 	c.RequestCtx.Response.SetStatusCode(httpCode)
 	c.RequestCtx.Response.SetBody(obj)
 	if json.Valid(obj) {
 		c.RequestCtx.Response.Header.SetContentType(jsonContentTypeHeader)
 	}
+}
+
+// RespondStream RespondStream
+// If bodySize < 0, then bodyStream is read until io.EOF.
+func RespondStream(c *routing.Context, httpCode int, bodyStream io.Reader, bodySize int) {
+	c.RequestCtx.Response.SetStatusCode(httpCode)
+	c.RequestCtx.Response.SetBodyStream(bodyStream, bodySize)
 }

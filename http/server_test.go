@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -104,6 +105,16 @@ func TestServerHttp(t *testing.T) {
 		assert.NoError(t, err5)
 		assert.Equal(t, resp5.StatusCode(), 200)
 		assert.Equal(t, string(resp5.Body()), "update")
+
+		req6 := fasthttp.AcquireRequest()
+		resp6 := fasthttp.AcquireResponse()
+		url6 := fmt.Sprintf("%s/%s", conf.cliConf.Address, "stream")
+		req6.SetRequestURI(url6)
+		req6.Header.SetMethod("GET")
+		err6 := client.Do(req6, resp6)
+		assert.NoError(t, err6)
+		assert.Equal(t, resp6.StatusCode(), 200)
+		assert.Equal(t, string(resp6.Body()), "Hello, playground")
 		server.Close()
 	}
 }
@@ -129,6 +140,7 @@ func newMockClient(conf mockClientConf) (*fasthttp.Client, error) {
 
 func mockRoute() fasthttp.RequestHandler {
 	router := routing.New()
+	router.Get("/stream", mockStream)
 	router.Get("/<key>", mockGet)
 	router.Post("/", mockSet)
 	router.Delete("/<key>", mockDelete)
@@ -171,5 +183,14 @@ func mockDelete(c *routing.Context) error {
 // Update update
 func mockUpdate(c *routing.Context) error {
 	Respond(c, http.StatusOK, []byte("update"))
+	return nil
+}
+
+// Stream Stream
+func mockStream(c *routing.Context) error {
+	a := "Hello, playground"
+	reader := strings.NewReader(a)
+
+	RespondStream(c, http.StatusOK, reader, -1)
 	return nil
 }
