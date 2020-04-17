@@ -12,15 +12,15 @@ const (
 
 // Response Response
 type Response struct {
-	Code string `json:"code"`
-	Msg  string `json:"msg"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
 // NewResponse NewResponse
 func NewResponse(code, msg string) Response {
 	return Response{
-		Code: code,
-		Msg:  msg,
+		Code:    code,
+		Message: msg,
 	}
 }
 
