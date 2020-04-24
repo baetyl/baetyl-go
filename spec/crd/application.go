@@ -43,6 +43,14 @@ type Service struct {
 	Runtime string `json:"runtime,omitempty"`
 	// labels
 	Labels map[string]string `json:"labels,omitempty"`
+	// specifies the security context of service
+	SecurityContext *SecurityContext `json:"security,omitempty"`
+	// specifies host network mode of service
+	HostNetwork bool `json:"hostNetwork,omitempty"`
+}
+
+type SecurityContext struct {
+	Privileged bool `json:"privileged,omitempty"`
 }
 
 // Environment environment config

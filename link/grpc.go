@@ -28,7 +28,7 @@ func Launch(ops ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	gops := []grpc.ServerOption{}
+	var gops []grpc.ServerOption
 	if ops.TLSConfig != nil {
 		gops = append(gops, grpc.Creds(credentials.NewTLS(ops.TLSConfig)))
 	}

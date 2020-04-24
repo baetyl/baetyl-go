@@ -3,14 +3,22 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/baetyl/baetyl-go/log"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/evanphx/json-patch"
+	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // maxJSONLevel the max level of json
-const maxJSONLevel = 5
+const (
+	maxJSONLevel   = 5
+	milliPrecision = 1000
+	TimePattern    = "2006-01-02T15:04:05.999999999Z"
+)
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
 var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
@@ -18,7 +26,7 @@ var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max lim
 // Node the spec of node
 type Node struct {
 	Namespace         string            `json:"namespace,omitempty"`
-	Name              string            `json:"name,omitempty"`
+	Name              string            `json:"name,omitempty" validate:"omitempty,resourceName"`
 	Version           string            `json:"version,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
@@ -26,6 +34,28 @@ type Node struct {
 	Report            Report            `json:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty"`
 	Description       string            `json:"description,omitempty"`
+}
+
+type NodeView struct {
+	Namespace         string            `json:"namespace,omitempty"`
+	Name              string            `json:"name,omitempty"`
+	Version           string            `json:"version,omitempty"`
+	CreationTimestamp time.Time         `json:"createTime,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty"`
+	Report            *ReportView       `json:"report,omitempty"`
+	Desire            Desire            `json:"desire,omitempty"`
+	Description       string            `json:"description,omitempty"`
+	Ready             bool              `json:"ready"`
+}
+
+type ReportView struct {
+	Time       time.Time   `json:"time,omitempty"`
+	Apps       []AppInfo   `json:"apps,omitempty"`
+	Core       *CoreInfo   `json:"core,omitempty"`
+	Appstats   []AppStatus `json:"appstats,omitempty"`
+	Node       *NodeInfo   `json:"node,omitempty"`
+	NodeStatus *NodeStatus `json:"nodestats,omitempty"`
 }
 
 // Report report data
@@ -69,19 +99,90 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
 }
 
-func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
-	if data == nil || data[appType] == nil {
+func (n *Node) View(timeout time.Duration) *NodeView {
+	view := new(NodeView)
+	nodeStr, err := json.Marshal(n)
+	if err != nil {
+		log.L().Error("failed to convert to node view", log.Error(err))
 		return nil
 	}
-	res, ok := data[appType].([]AppInfo)
+	err = json.Unmarshal(nodeStr, view)
+	if err != nil {
+		log.L().Error("failed to convert to node view", log.Error(err))
+		return nil
+	}
+	if err = view.populateNodeStatus(timeout); err != nil {
+		log.L().Error("failed to populate node status", log.Error(err))
+		return nil
+	}
+	return view
+}
+
+func (view *NodeView) populateNodeStatus(timeout time.Duration) error {
+	if view.Report == nil || view.Report.NodeStatus == nil {
+		return nil
+	}
+
+	s := view.Report.NodeStatus
+	s.Percent = map[string]string{}
+	memory := string(coreV1.ResourceMemory)
+	mPercent, err := s.processResourcePercent(s, memory, populateMemoryResource)
+	if err != nil {
+		return err
+	}
+	s.Percent[memory] = mPercent
+
+	cpu := string(coreV1.ResourceCPU)
+	cpuPercent, err := s.processResourcePercent(s, cpu, populateCPUResource)
+	if err != nil {
+		return err
+	}
+	s.Percent[cpu] = cpuPercent
+
+	view.Ready = time.Now().Before(view.Report.Time.Add(timeout))
+	return nil
+}
+
+func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType string,
+	populate func(usage string, resource map[string]string) (int64, error)) (string, error) {
+	cap, capOk := status.Capacity[resourceType]
+	usg, usageOk := status.Usage[resourceType]
+	var total, usage int64
+	var err error
+	if capOk {
+		if total, err = populate(cap, status.Capacity); err != nil {
+			return "0", err
+		}
+	}
+	if usageOk {
+		if usage, err = populate(usg, status.Usage); err != nil {
+			return "0", err
+		}
+	}
+
+	if capOk && usageOk && total != 0 {
+		return strconv.FormatFloat(float64(usage)/float64(total), 'f', -1, 64), nil
+	}
+	return "0", nil
+}
+
+func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
+	if data == nil {
+		return nil
+	}
+	apps, ok := data[appType]
+	if !ok || apps == nil {
+		return nil
+	}
+	res, ok := apps.([]AppInfo)
 	if ok {
 		return res
 	}
-	ais, ok := data[appType].([]interface{})
-	if !ok || len(ais) == 0 {
+	res = []AppInfo{}
+	ais, ok := apps.([]interface{})
+	if !ok {
 		return nil
 	}
-	res = []AppInfo{}
 	for _, ai := range ais {
 		aim := ai.(map[string]interface{})
 		if aim == nil {
@@ -146,4 +247,33 @@ func clean(m map[string]interface{}) {
 			clean(vm)
 		}
 	}
+}
+
+func populateCPUResource(usage string, resource map[string]string) (int64, error) {
+	usg, err := translateQuantityToDecimal(usage, true)
+	if err != nil {
+		return 0, err
+	}
+	resource[string(coreV1.ResourceCPU)] = strconv.FormatFloat(float64(usg)/milliPrecision, 'f', -1, 64)
+	return usg, nil
+}
+
+func populateMemoryResource(usage string, resource map[string]string) (int64, error) {
+	usg, err := translateQuantityToDecimal(usage, false)
+	if err != nil {
+		return 0, err
+	}
+	resource[string(coreV1.ResourceMemory)] = strconv.FormatInt(usg, 10)
+	return usg, nil
+}
+
+func translateQuantityToDecimal(q string, milli bool) (int64, error) {
+	num, err := resource.ParseQuantity(q)
+	if err != nil {
+		return 0, err
+	}
+	if milli {
+		return num.MilliValue(), nil
+	}
+	return num.Value(), nil
 }
