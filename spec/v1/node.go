@@ -116,6 +116,10 @@ func (n *Node) View(timeout time.Duration) *NodeView {
 		log.L().Error("failed to populate node status", log.Error(err))
 		return nil
 	}
+
+	if report := view.Report; report != nil {
+		report.translateServiceResouceQuantity()
+	}
 	return view
 }
 
@@ -165,6 +169,44 @@ func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType str
 		return strconv.FormatFloat(float64(usage)/float64(total), 'f', -1, 64), nil
 	}
 	return "0", nil
+}
+
+func (view *ReportView) translateServiceResouceQuantity() {
+	for idx := range view.Appstats {
+		services := view.Appstats[idx].ServiceInfos
+		if services == nil {
+			continue
+		}
+
+		for _, v := range services {
+			v.translateResouceQuantity()
+		}
+	}
+}
+
+func (s *ServiceInfo) translateResouceQuantity() {
+	if s.Usage == nil {
+		return
+	}
+
+	cpu := string(coreV1.ResourceCPU)
+	cpuUsage, cpuOk := s.Usage[cpu]
+
+	if cpuOk {
+		// ignore the error
+		// if has error the original data wasnot changed
+		populateCPUResource(cpuUsage, s.Usage)
+	}
+
+	memory := string(coreV1.ResourceMemory)
+	memoryUsage, mOk := s.Usage[memory]
+
+	if mOk {
+		// ignore the error
+		// if has error the original data wasnot changed
+		populateMemoryResource(memoryUsage, s.Usage)
+	}
+
 }
 
 func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
