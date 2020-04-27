@@ -35,8 +35,6 @@ type Service struct {
 	Args []string `json:"args,omitempty"`
 	// specifies the environment variable of the service program
 	Env []Environment `json:"env,omitempty"`
-	// specifies the restart policy of the instance of the service
-	Restart *RestartPolicyInfo `json:"restart,omitempty"`
 	// specifies resource limits for a single instance of the service,  only for Docker container mode
 	Resources *Resources `json:"resources,omitempty"`
 	// specifies runtime to use, only for Docker container mode
@@ -110,23 +108,9 @@ type VolumeMount struct {
 	ReadOnly bool `json:"readOnly,omitempty"`
 }
 
-// RestartPolicyInfo restart policy config
-type RestartPolicyInfo struct {
-	Retry   *Retry       `json:"retry,omitempty"`
-	Policy  string       `json:"policy,omitempty"`
-	Backoff *BackoffInfo `json:"backoff,omitempty"`
-}
-
 // Retry retry config
 type Retry struct {
 	Max int `json:"max,omitempty"`
-}
-
-// BackoffInfo holds backoff value
-type BackoffInfo struct {
-	Min    string  `json:"min,omitempty" validate:"duration"`
-	Max    string  `json:"max,omitempty" validate:"duration"`
-	Factor float64 `json:"factor,omitempty"`
 }
 
 // Resources resources config
