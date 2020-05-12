@@ -21,7 +21,7 @@ message Context {
     uint64 ID      = 1;
     uint64 TS      = 2;
     uint32 QOS     = 3;
-    bool   Retain  = 4;
+    uint32 Flags   = 4;
     string Topic   = 5;
 }
 
