@@ -13,7 +13,6 @@ func TestRun(t *testing.T) {
 		cfg := ctx.ServiceConfig()
 		assert.Equal(t, "http://baetyl-function:80", cfg.HTTP.Address)
 		assert.Equal(t, "tcp://baetyl-broker:1883", cfg.MQTT.Address)
-		assert.Equal(t, "link://baetyl-broker:8886", cfg.Link.Address)
 		assert.Equal(t, "info", cfg.Logger.Level)
 		assert.Equal(t, "json", cfg.Logger.Encoding)
 		assert.Empty(t, cfg.Logger.Filename)

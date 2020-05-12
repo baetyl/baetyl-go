@@ -118,10 +118,6 @@ func NewContext(confFile string) Context {
 			c.cfg.MQTT.Address = "ssl://baetyl-broker:8883"
 		}
 	}
-
-	if c.cfg.Link.Address == "" {
-		c.cfg.Link.Address = "link://baetyl-broker:8886"
-	}
 	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", c.cfg))
 	return c
 }
