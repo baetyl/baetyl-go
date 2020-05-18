@@ -5,124 +5,123 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/baetyl/baetyl-go/spec/crd"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCRDData(t *testing.T) {
 	{
 		// --- app
-		crddata := &CRDData{}
-		crddata.Name = "app"
-		crddata.Version = "123"
-		crddata.Kind = crd.KindApplication
-		crddata.Value.Value = &crd.Application{Name: "c"}
+		desireddata := &ResourceValue{}
+		desireddata.Name = "app"
+		desireddata.Version = "123"
+		desireddata.Kind = KindApplication
+		desireddata.Value.Value = &Application{Name: "c"}
 		expected := "{\"name\":\"c\",\"createTime\":\"0001-01-01T00:00:00Z\"}"
 
-		appdata, err := json.Marshal(crddata)
+		appdata, err := json.Marshal(desireddata)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, string(crddata.Value.Data))
+		assert.Equal(t, expected, string(desireddata.Value.Data))
 		fmt.Printf(string(appdata))
 
-		crddata2 := &CRDData{}
-		err = json.Unmarshal(appdata, crddata2)
+		desireddata2 := &ResourceValue{}
+		err = json.Unmarshal(appdata, desireddata2)
 		assert.NoError(t, err)
-		assert.Nil(t, crddata2.Value.Value)
-		assert.Equal(t, expected, string(crddata.Value.Data))
+		assert.Nil(t, desireddata2.Value.Value)
+		assert.Equal(t, expected, string(desireddata.Value.Data))
 
 		// success
-		app := crddata2.App()
-		assert.Equal(t, crddata.Value.Value, app)
-		assert.Equal(t, crddata.Value.Value, crddata2.Value.Value)
+		app := desireddata2.App()
+		assert.Equal(t, desireddata.Value.Value, app)
+		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
-		crddata.Kind = crd.KindApp
-		app = crddata2.App()
-		assert.Equal(t, crddata.Value.Value, app)
-		assert.Equal(t, crddata.Value.Value, crddata2.Value.Value)
+		desireddata.Kind = KindApp
+		app = desireddata2.App()
+		assert.Equal(t, desireddata.Value.Value, app)
+		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
 		// failure
-		cfg := crddata2.Config()
+		cfg := desireddata2.Config()
 		assert.Nil(t, cfg)
-		assert.Equal(t, crddata.Value.Value, crddata2.Value.Value)
+		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
 		// failure
-		scr := crddata2.Secret()
+		scr := desireddata2.Secret()
 		assert.Nil(t, scr)
-		assert.Equal(t, crddata.Value.Value, crddata2.Value.Value)
+		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 	}
 	{
 		// --- config
-		crddata := &CRDData{}
-		crddata.Name = "cfg"
-		crddata.Version = "123"
-		crddata.Kind = crd.KindConfiguration
-		crddata.Value.Value = &crd.Configuration{Name: "c"}
+		desireddata := &ResourceValue{}
+		desireddata.Name = "cfg"
+		desireddata.Version = "123"
+		desireddata.Kind = KindConfiguration
+		desireddata.Value.Value = &Configuration{Name: "c"}
 		expected := "{\"name\":\"c\",\"createTime\":\"0001-01-01T00:00:00Z\",\"updateTime\":\"0001-01-01T00:00:00Z\"}"
 
-		appdata, err := json.Marshal(crddata)
+		appdata, err := json.Marshal(desireddata)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, string(crddata.Value.Data))
+		assert.Equal(t, expected, string(desireddata.Value.Data))
 		fmt.Printf(string(appdata))
 
-		crddata2 := &CRDData{}
-		err = json.Unmarshal(appdata, crddata2)
+		desireddata2 := &ResourceValue{}
+		err = json.Unmarshal(appdata, desireddata2)
 		assert.NoError(t, err)
-		assert.Nil(t, crddata2.Value.Value)
-		assert.Equal(t, expected, string(crddata.Value.Data))
+		assert.Nil(t, desireddata2.Value.Value)
+		assert.Equal(t, expected, string(desireddata.Value.Data))
 
 		// failure
-		app := crddata2.App()
+		app := desireddata2.App()
 		assert.Nil(t, app)
-		assert.Nil(t, crddata2.Value.Value)
+		assert.Nil(t, desireddata2.Value.Value)
 
 		// sucees
-		cfg := crddata2.Config()
-		assert.Equal(t, crddata.Value.Value, cfg)
-		assert.Equal(t, crddata.Value.Value, crddata2.Value.Value)
+		cfg := desireddata2.Config()
+		assert.Equal(t, desireddata.Value.Value, cfg)
+		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
-		crddata.Kind = crd.KindConfig
-		cfg = crddata2.Config()
-		assert.Equal(t, crddata.Value.Value, cfg)
-		assert.Equal(t, crddata.Value.Value, crddata2.Value.Value)
+		desireddata.Kind = KindConfig
+		cfg = desireddata2.Config()
+		assert.Equal(t, desireddata.Value.Value, cfg)
+		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
 		// failure
-		scr := crddata2.Secret()
+		scr := desireddata2.Secret()
 		assert.Nil(t, scr)
-		assert.Equal(t, crddata.Value.Value, crddata2.Value.Value)
+		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 	}
 	{
 		// --- secret
-		crddata := &CRDData{}
-		crddata.Name = "scr"
-		crddata.Version = "123"
-		crddata.Kind = crd.KindSecret
-		crddata.Value.Value = &crd.Secret{Name: "c"}
+		desireddata := &ResourceValue{}
+		desireddata.Name = "scr"
+		desireddata.Version = "123"
+		desireddata.Kind = KindSecret
+		desireddata.Value.Value = &Secret{Name: "c"}
 		expected := "{\"name\":\"c\",\"createTime\":\"0001-01-01T00:00:00Z\",\"updateTime\":\"0001-01-01T00:00:00Z\"}"
 
-		appdata, err := json.Marshal(crddata)
+		appdata, err := json.Marshal(desireddata)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, string(crddata.Value.Data))
+		assert.Equal(t, expected, string(desireddata.Value.Data))
 		fmt.Printf(string(appdata))
 
-		crddata2 := &CRDData{}
-		err = json.Unmarshal(appdata, crddata2)
+		desireddata2 := &ResourceValue{}
+		err = json.Unmarshal(appdata, desireddata2)
 		assert.NoError(t, err)
-		assert.Nil(t, crddata2.Value.Value)
-		assert.Equal(t, expected, string(crddata.Value.Data))
+		assert.Nil(t, desireddata2.Value.Value)
+		assert.Equal(t, expected, string(desireddata.Value.Data))
 
 		// failure
-		app := crddata2.App()
+		app := desireddata2.App()
 		assert.Nil(t, app)
-		assert.Nil(t, crddata2.Value.Value)
+		assert.Nil(t, desireddata2.Value.Value)
 
 		// failure
-		cfg := crddata2.Config()
+		cfg := desireddata2.Config()
 		assert.Nil(t, cfg)
-		assert.Nil(t, crddata2.Value.Value)
+		assert.Nil(t, desireddata2.Value.Value)
 
 		// failure
-		scr := crddata2.Secret()
-		assert.Equal(t, crddata.Value.Value, scr)
-		assert.Equal(t, crddata.Value.Value, crddata2.Value.Value)
+		scr := desireddata2.Secret()
+		assert.Equal(t, desireddata.Value.Value, scr)
+		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 	}
 }
