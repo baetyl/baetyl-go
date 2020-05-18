@@ -1,4 +1,4 @@
-package crd
+package v1
 
 import (
 	"time"
@@ -14,4 +14,11 @@ type Configuration struct {
 	UpdateTimestamp   time.Time         `json:"updateTime,omitempty"`
 	Description       string            `json:"description,omitempty"`
 	Version           string            `json:"version,omitempty"`
+}
+
+// ConfigurationObject extended feature for object configuration
+type ConfigurationObject struct {
+	MD5         string `json:"md5,omitempty" yaml:"md5"`
+	URL         string `json:"url,omitempty" yaml:"url"`
+	Compression string `json:"compression,omitempty" yaml:"compression"`
 }

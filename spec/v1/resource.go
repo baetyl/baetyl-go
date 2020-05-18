@@ -1,4 +1,4 @@
-package crd
+package v1
 
 // Kind app model kind, crd on k8s
 type Kind string
