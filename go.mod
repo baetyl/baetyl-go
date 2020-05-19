@@ -3,7 +3,7 @@ module github.com/baetyl/baetyl-go
 go 1.13
 
 require (
-	github.com/256dpi/gomqtt v0.13.0
+	github.com/256dpi/gomqtt v0.14.2
 	github.com/creasty/defaults v1.3.0
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
