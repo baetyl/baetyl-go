@@ -127,7 +127,7 @@ func (s *stream) receiving() error {
 				s.die("failed to handle connack", err)
 				return err
 			}
-			s.future.Complete()
+			s.future.Complete(nil)
 			continue
 		}
 
@@ -198,7 +198,7 @@ func (s *stream) pinging() error {
 
 func (s *stream) die(msg string, err error) {
 	s.once.Do(func() {
-		s.future.Cancel()
+		s.future.Cancel(nil)
 		s.tomb.Kill(err)
 		if err == nil {
 			s.send(NewDisconnect(), false)
