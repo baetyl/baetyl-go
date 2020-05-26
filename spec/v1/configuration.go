@@ -18,14 +18,7 @@ type Configuration struct {
 
 // ConfigurationObject extended feature for object configuration
 type ConfigurationObject struct {
-	MD5         string                  `json:"md5,omitempty" yaml:"md5"`
-	URL         string                  `json:"url,omitempty" yaml:"url"`
-	Compression string                  `json:"compression,omitempty" yaml:"compression"`
-	Meta        ConfigurationObjectMeta `json:"meta,omitempty" yaml:"meta"`
-}
-
-type ConfigurationObjectMeta struct {
-	Kind   string
-	Bucket string
-	Object string
+	MD5         string `json:"md5,omitempty" yaml:"md5"`
+	URL         string `json:"url,omitempty" yaml:"url"`
+	Compression string `json:"compression,omitempty" yaml:"compression"`
 }
