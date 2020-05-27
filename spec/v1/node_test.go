@@ -265,7 +265,7 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 	assert.NotNil(t, view.Report)
 	assert.NotNil(t, view.Report.Apps)
 	assert.NotNil(t, view.Report.NodeStatus)
-	assert.NotNil(t, view.Report.Appstats)
+	assert.NotNil(t, view.Report.AppStats)
 	assert.NotNil(t, view.Desire)
 	assert.Equal(t, view.Report.NodeStatus.Capacity[string(coreV1.ResourceMemory)], "4129955840")
 	assert.Equal(t, view.Report.NodeStatus.Capacity[string(coreV1.ResourceCPU)], "2")
@@ -273,8 +273,8 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 	assert.Equal(t, view.Report.NodeStatus.Usage[string(coreV1.ResourceCPU)], "0.337")
 	assert.Equal(t, view.Report.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.1685")
 	assert.Equal(t, view.Report.NodeStatus.Percent[string(coreV1.ResourceMemory)], "0.2991579803429569")
-	assert.Equal(t, view.Report.Appstats[0].ServiceInfos["baetyl-function"].Usage[string(coreV1.ResourceCPU)], "0.001")
-	assert.Equal(t, view.Report.Appstats[0].ServiceInfos["baetyl-function"].Usage[string(coreV1.ResourceMemory)], "1769472")
+	assert.Equal(t, view.Report.AppStats[0].ServiceInfos["baetyl-function"].Usage[string(coreV1.ResourceCPU)], "0.001")
+	assert.Equal(t, view.Report.AppStats[0].ServiceInfos["baetyl-function"].Usage[string(coreV1.ResourceMemory)], "1769472")
 	assert.Equal(t, view.Ready, false)
 }
 

@@ -50,13 +50,14 @@ type NodeView struct {
 }
 
 type ReportView struct {
-	Time       time.Time   `json:"time,omitempty"`
-	Apps       []AppInfo   `json:"apps,omitempty"`
-	SysApps    []AppInfo   `json:"sysapps,omitempty"`
-	Core       *CoreInfo   `json:"core,omitempty"`
-	Appstats   []AppStatus `json:"appstats,omitempty"`
-	Node       *NodeInfo   `json:"node,omitempty"`
-	NodeStatus *NodeStatus `json:"nodestats,omitempty"`
+	Time        time.Time   `json:"time,omitempty"`
+	Apps        []AppInfo   `json:"apps,omitempty"`
+	SysApps     []AppInfo   `json:"sysapps,omitempty"`
+	Core        *CoreInfo   `json:"core,omitempty"`
+	AppStats    []AppStatus `json:"appstats,omitempty"`
+	SysAppStats []AppStatus `json:"sysappstats,omitempty"`
+	Node        *NodeInfo   `json:"node,omitempty"`
+	NodeStatus  *NodeStatus `json:"nodestats,omitempty"`
 }
 
 // Report report data
@@ -152,8 +153,8 @@ func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType str
 }
 
 func (view *ReportView) translateServiceResouceQuantity() {
-	for idx := range view.Appstats {
-		services := view.Appstats[idx].ServiceInfos
+	for idx := range view.AppStats {
+		services := view.AppStats[idx].ServiceInfos
 		if services == nil {
 			continue
 		}
