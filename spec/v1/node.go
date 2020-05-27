@@ -54,8 +54,8 @@ type ReportView struct {
 	Apps        []AppInfo   `json:"apps,omitempty"`
 	SysApps     []AppInfo   `json:"sysapps,omitempty"`
 	Core        *CoreInfo   `json:"core,omitempty"`
-	Appstats    []AppStatus `json:"appstats,omitempty"`
-	SysAppstats []AppStatus `json:"sysappstats,omitempty"`
+	AppStats    []AppStatus `json:"appstats,omitempty"`
+	SysAppStats []AppStatus `json:"sysappstats,omitempty"`
 	Node        *NodeInfo   `json:"node,omitempty"`
 	NodeStatus  *NodeStatus `json:"nodestats,omitempty"`
 }
