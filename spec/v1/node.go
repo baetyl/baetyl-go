@@ -65,29 +65,9 @@ type Report map[string]interface{}
 // Desire desire data
 type Desire map[string]interface{}
 
-// AppInfos return app infos
-func (r Report) AppInfos() []AppInfo {
-	return getAppInfos("apps", r)
-}
-
-// AppInfos return sysapps infos
-func (r Report) SysAppInfos() []AppInfo {
-	return getAppInfos("sysapps", r)
-}
-
 // Merge merge new reported data
 func (r Report) Merge(reported Report) error {
 	return merge(r, reported, 1, maxJSONLevel)
-}
-
-// AppInfos return app infos
-func (d Desire) AppInfos() []AppInfo {
-	return getAppInfos("apps", d)
-}
-
-// AppInfos return sysapps infos
-func (d Desire) SysAppInfos() []AppInfo {
-	return getAppInfos("sysapps", d)
 }
 
 // Merge merge new reported data
@@ -209,7 +189,7 @@ func (s *ServiceInfo) translateResouceQuantity() {
 
 }
 
-func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
+func GetAppInfos(appType string, data map[string]interface{}) []AppInfo {
 	if data == nil {
 		return nil
 	}
@@ -243,7 +223,7 @@ func merge(left, right map[string]interface{}, depth, maxDepth int) error {
 	}
 	for rk, rv := range right {
 		lv, ok := left[rk]
-		if !ok || rv == nil || reflect.TypeOf(rv).Kind() != reflect.Map || reflect.TypeOf(lv).Kind() != reflect.Map {
+		if !ok || lv == nil || rv == nil || reflect.TypeOf(rv).Kind() != reflect.Map || reflect.TypeOf(lv).Kind() != reflect.Map {
 			left[rk] = rv
 			continue
 		}

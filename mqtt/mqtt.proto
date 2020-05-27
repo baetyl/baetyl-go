@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package link;
+package mqtt;
 
 option (gogoproto.sizer_all) = true;
 option (gogoproto.marshaler_all) = true;
@@ -17,19 +17,12 @@ option (gogoproto.gostring_all) = true;
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
-enum Type {
-    option (gogoproto.goproto_enum_prefix) = false;
-    Msg    = 0; // 0: message
-    MsgRtn = 1; // 1: message with retain flag
-    Ack    = 2; // 2: acknowledge
-}
-
 message Context {
-    uint64 ID    = 1;
-    uint64 TS    = 2;
-    uint32 QOS   = 3;
-    Type   Type  = 4;
-    string Topic = 5;
+    uint64 ID      = 1;
+    uint64 TS      = 2;
+    uint32 QOS     = 3;
+    uint32 Flags   = 4;
+    string Topic   = 5;
 }
 
 message Message {
@@ -37,9 +30,4 @@ message Message {
     bytes Content   = 2;
 }
 
-service Link {
-    rpc Talk (stream Message) returns (stream Message) {}
-    rpc Call (Message) returns (Message) {}
-}
-
-// protoc -I=. -I=$GOPATH/src -I=$GOPATH/src/github.com/gogo/protobuf/protobuf --gogofaster_out=plugins=grpc:. link.proto
+// protoc -I=. -I=$GOPATH/src -I=$GOPATH/src/github.com/gogo/protobuf/protobuf --gogofaster_out=plugins=grpc:. mqtt.proto
