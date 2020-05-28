@@ -1,6 +1,8 @@
 package log
 
 import (
+	goerrors "errors"
+	"github.com/baetyl/baetyl-go/errors"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -10,11 +12,55 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLogger(t *testing.T) {
+func TestLoggerError(t *testing.T) {
+	f, err := ioutil.TempFile("", t.Name())
+	assert.NoError(t, err)
+	defer os.RemoveAll(f.Name())
+
+	cfg := Config{
+		Filename:   f.Name(),
+		Level:      "info",
+		Encoding:   "json",
+		MaxAge:     15,
+		MaxSize:    1,
+		MaxBackups: 15,
+	}
+
+	log, err := Init(cfg)
+	assert.NoError(t, err)
+	log.Info("baetyl1", Code(err), Error(err))
+	log.Sync()
+
+	bytes, err := ioutil.ReadFile(f.Name())
+	assert.NoError(t, err)
+	res, _ := regexp.MatchString(`{"level":"info","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"baetyl1"`, string(bytes))
+	assert.True(t, res)
+
+	// go error
+	ge := goerrors.New("abc")
+	log.Info("baetyl2", Code(ge), Error(ge))
+	log.Sync()
+
+	bytes, err = ioutil.ReadFile(f.Name())
+	assert.NoError(t, err)
+	res, _ = regexp.MatchString(`{"level":"info","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"baetyl2","error":"abc"`, string(bytes))
+	assert.True(t, res)
+
+	// baetyl error
+	be := errors.New("code", "message")
+	log.Info("baetyl3", Code(be), Error(be))
+	log.Sync()
+
+	bytes, err = ioutil.ReadFile(f.Name())
+	assert.NoError(t, err)
+	res, _ = regexp.MatchString(`{"level":"info","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"baetyl3","errorCode":"code","error":"message","errorVerbose":"message.*logger_test.go.*"`, string(bytes))
+	assert.True(t, res)
+}
+
+func TestLoggerNormal(t *testing.T) {
 	log := With(Any("height", "122"))
 	log.Info("test")
 
@@ -34,13 +80,13 @@ func TestLogger(t *testing.T) {
 
 	log, err = Init(cfg)
 	assert.NoError(t, err)
-	log.Info("baetyl", Any("age", 12), Error(errors.New("custom error")), Any("icon", "baetyl"), Any("duration", time.Duration(1)))
+	log.Info("baetyl", Any("age", 12), Any("icon", "baetyl"), Any("duration", time.Duration(1)))
 	log.Sync()
 	assert.FileExists(t, jsonFile)
 
 	bytes, err := ioutil.ReadFile(jsonFile)
 	assert.NoError(t, err)
-	res, _ := regexp.MatchString(`{"level":"info","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"baetyl","age":12,"error":"custom error","errorVerbose":".*logger_test.*","icon":"baetyl","duration":.*}`, string(bytes))
+	res, _ := regexp.MatchString(`{"level":"info","ts":[0-9T:\.]+,"caller":".*logger_test.*","msg":"baetyl","age":12,"icon":"baetyl","duration":.*}`, string(bytes))
 	assert.True(t, res)
 
 	log.Error("test error")
@@ -128,7 +174,7 @@ func TestLogger(t *testing.T) {
 	assert.Contains(t, string(bytes), `{"height": "122"}`)
 }
 
-func TestParseLevel(t *testing.T) {
+func TestLoggerParseLevel(t *testing.T) {
 	level := parseLevel("fatal")
 	assert.Equal(t, FatalLevel, level)
 
@@ -154,7 +200,7 @@ func TestParseLevel(t *testing.T) {
 	assert.Equal(t, InfoLevel, level)
 }
 
-func TestNewFileHook(t *testing.T) {
+func TestLoggerNewFileHook(t *testing.T) {
 	cfg := Config{
 		Filename:   "&name=chen&log=wang",
 		Compress:   true,
