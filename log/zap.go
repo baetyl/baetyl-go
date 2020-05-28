@@ -1,6 +1,7 @@
 package log
 
 import (
+	"github.com/baetyl/baetyl-go/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -32,9 +33,24 @@ func Any(key string, val interface{}) Field {
 	return zap.Any(key, val)
 }
 
-// Error is shorthand for the common idiom NamedError("error", err).
+// Code constructs a field with the given value and code key
+func Code(err error) Field {
+	switch e := err.(type) {
+	case *errors.CodeError:
+		return zap.Any("errorCode", e.Code())
+	default:
+		return zap.Skip()
+	}
+}
+
+// Error constructs a field with the given value and error key
 func Error(err error) Field {
-	return zap.Error(err)
+	switch e := err.(type) {
+	case *errors.CodeError:
+		return zap.Error(e.Unwrap())
+	default:
+		return zap.Error(e)
+	}
 }
 
 // L returns the global Logger, which can be reconfigured with ReplaceGlobals.
