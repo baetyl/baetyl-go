@@ -29,7 +29,7 @@ type Node struct {
 	Name              string            `json:"name,omitempty" validate:"omitempty,resourceName"`
 	Version           string            `json:"version,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty"`
-	Labels            map[string]string `json:"labels,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty" validate:"omitempty,validLabels"`
 	Annotations       map[string]string `json:"annotations,omitempty"`
 	Report            Report            `json:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty"`
