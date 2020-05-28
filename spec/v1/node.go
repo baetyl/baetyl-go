@@ -20,6 +20,14 @@ const (
 	TimePattern    = "2006-01-02T15:04:05.999999999Z"
 )
 
+type Scope string
+
+const (
+	SYSTEM Scope = "system"
+	USER Scope = "user"
+	ALL Scope = "all"
+)
+
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
 var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
 
@@ -79,6 +87,40 @@ func (d Desire) Merge(desired Desire) error {
 // Diff diff with reported data, return the delta fo desire
 func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
+}
+
+func (r Report) AppInfos(scope Scope) []AppInfo {
+	if scope == SYSTEM {
+		return getAppInfos("sysapps", r)
+	} else if scope == USER {
+		return getAppInfos("apps", r)
+	}
+	return nil
+}
+
+func (r Report) SetAppInfos(scope Scope, apps []AppInfo)  {
+	if scope == SYSTEM {
+		r["sysapps"] = apps
+	} else if scope == USER {
+		r["apps"] = apps
+	}
+}
+
+func (d Desire) AppInfos(scope Scope) []AppInfo {
+	if scope == SYSTEM {
+		return getAppInfos("sysapps", d)
+	} else if scope == USER {
+		return getAppInfos("apps", d)
+	}
+	return nil
+}
+
+func (d Desire) SetAppInfos(scope Scope, apps []AppInfo)  {
+	if scope == SYSTEM {
+		d["sysapps"] = apps
+	} else if scope == USER {
+		d["apps"] = apps
+	}
 }
 
 func (n *Node) View(timeout time.Duration) *NodeView {
@@ -190,7 +232,7 @@ func (s *ServiceInfo) translateResouceQuantity() {
 
 }
 
-func GetAppInfos(appType string, data map[string]interface{}) []AppInfo {
+func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
 	if data == nil {
 		return nil
 	}
