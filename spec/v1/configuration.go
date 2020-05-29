@@ -16,16 +16,18 @@ type Configuration struct {
 	Version           string            `json:"version,omitempty"`
 }
 
+// TODO：MD5 using []byte
 // ConfigurationObject extended feature for object configuration
 type ConfigurationObject struct {
-	MD5         string                  `json:"md5,omitempty" yaml:"md5"`
-	URL         string                  `json:"url,omitempty" yaml:"url"`
-	Compression string                  `json:"compression,omitempty" yaml:"compression"`
-	Meta        ConfigurationObjectMeta `json:"meta,omitempty" yaml:"meta"`
+	MD5         string                      `json:"md5,omitempty" yaml:"md5"`
+	URL         string                      `json:"url,omitempty" yaml:"url"`
+	Compression string                      `json:"compression,omitempty" yaml:"compression"`
+	Metadata    ConfigurationObjectMetadata `json:"metadata,omitempty" yaml:"metadata"`
 }
 
-type ConfigurationObjectMeta struct {
-	Kind   string
-	Bucket string
-	Object string
+type ConfigurationObjectMetadata struct {
+	Source string `json:"source,omitempty" yaml:"source"`
+	Bucket string `json:"bucket,omitempty" yaml:"bucket"`
+	Object string `json:"object,omitempty" yaml:"object"`
+	Token  string `json:"token,omitempty" yaml:"token"`
 }

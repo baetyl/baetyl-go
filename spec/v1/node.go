@@ -20,6 +20,14 @@ const (
 	TimePattern    = "2006-01-02T15:04:05.999999999Z"
 )
 
+type Scope string
+
+const (
+	SYSTEM Scope = "system"
+	USER Scope = "user"
+	ALL Scope = "all"
+)
+
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
 var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
 
@@ -29,7 +37,7 @@ type Node struct {
 	Name              string            `json:"name,omitempty" validate:"omitempty,resourceName"`
 	Version           string            `json:"version,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty"`
-	Labels            map[string]string `json:"labels,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty" validate:"omitempty,validLabels"`
 	Annotations       map[string]string `json:"annotations,omitempty"`
 	Report            Report            `json:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty"`
@@ -50,13 +58,14 @@ type NodeView struct {
 }
 
 type ReportView struct {
-	Time       time.Time   `json:"time,omitempty"`
-	Apps       []AppInfo   `json:"apps,omitempty"`
-	SysApps    []AppInfo   `json:"sysapps,omitempty"`
-	Core       *CoreInfo   `json:"core,omitempty"`
-	Appstats   []AppStatus `json:"appstats,omitempty"`
-	Node       *NodeInfo   `json:"node,omitempty"`
-	NodeStatus *NodeStatus `json:"nodestats,omitempty"`
+	Time        time.Time   `json:"time,omitempty"`
+	Apps        []AppInfo   `json:"apps,omitempty"`
+	SysApps     []AppInfo   `json:"sysapps,omitempty"`
+	Core        *CoreInfo   `json:"core,omitempty"`
+	AppStats    []AppStatus `json:"appstats,omitempty"`
+	SysAppStats []AppStatus `json:"sysappstats,omitempty"`
+	Node        *NodeInfo   `json:"node,omitempty"`
+	NodeStatus  *NodeStatus `json:"nodestats,omitempty"`
 }
 
 // Report report data
@@ -78,6 +87,40 @@ func (d Desire) Merge(desired Desire) error {
 // Diff diff with reported data, return the delta fo desire
 func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
+}
+
+func (r Report) AppInfos(scope Scope) []AppInfo {
+	if scope == SYSTEM {
+		return getAppInfos("sysapps", r)
+	} else if scope == USER {
+		return getAppInfos("apps", r)
+	}
+	return nil
+}
+
+func (r Report) SetAppInfos(scope Scope, apps []AppInfo)  {
+	if scope == SYSTEM {
+		r["sysapps"] = apps
+	} else if scope == USER {
+		r["apps"] = apps
+	}
+}
+
+func (d Desire) AppInfos(scope Scope) []AppInfo {
+	if scope == SYSTEM {
+		return getAppInfos("sysapps", d)
+	} else if scope == USER {
+		return getAppInfos("apps", d)
+	}
+	return nil
+}
+
+func (d Desire) SetAppInfos(scope Scope, apps []AppInfo)  {
+	if scope == SYSTEM {
+		d["sysapps"] = apps
+	} else if scope == USER {
+		d["apps"] = apps
+	}
 }
 
 func (n *Node) View(timeout time.Duration) *NodeView {
@@ -152,8 +195,8 @@ func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType str
 }
 
 func (view *ReportView) translateServiceResouceQuantity() {
-	for idx := range view.Appstats {
-		services := view.Appstats[idx].ServiceInfos
+	for idx := range view.AppStats {
+		services := view.AppStats[idx].ServiceInfos
 		if services == nil {
 			continue
 		}
@@ -189,7 +232,7 @@ func (s *ServiceInfo) translateResouceQuantity() {
 
 }
 
-func GetAppInfos(appType string, data map[string]interface{}) []AppInfo {
+func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
 	if data == nil {
 		return nil
 	}
