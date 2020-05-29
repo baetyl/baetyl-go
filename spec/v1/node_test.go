@@ -256,7 +256,7 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 	err := json.Unmarshal([]byte(nodeData), node)
 	assert.NoError(t, err)
 
-	view := node.View(time.Minute)
+	view, err := node.View(time.Minute)
 	assert.NoError(t, err)
 	assert.NotNil(t, view)
 	assert.Equal(t, view.Namespace, "default")
