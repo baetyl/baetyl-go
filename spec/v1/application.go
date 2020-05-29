@@ -13,6 +13,7 @@ type Application struct {
 	Services          []Service         `json:"services,omitempty"`
 	Volumes           []Volume          `json:"volumes,omitempty"`
 	Description       string            `json:"description,omitempty"`
+	IsSystem          bool              `json:"isSystem,omitempty"`
 }
 
 // Service service config1ma1

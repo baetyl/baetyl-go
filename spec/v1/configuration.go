@@ -14,6 +14,7 @@ type Configuration struct {
 	UpdateTimestamp   time.Time         `json:"updateTime,omitempty"`
 	Description       string            `json:"description,omitempty"`
 	Version           string            `json:"version,omitempty"`
+	IsSystem          bool              `json:"isSystem,omitempty"`
 }
 
 // TODO：MD5 using []byte
