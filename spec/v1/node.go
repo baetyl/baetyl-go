@@ -20,14 +20,6 @@ const (
 	TimePattern    = "2006-01-02T15:04:05.999999999Z"
 )
 
-type Scope string
-
-const (
-	SYSTEM Scope = "system"
-	USER Scope = "user"
-	ALL Scope = "all"
-)
-
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
 var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
 
@@ -89,37 +81,67 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 	return diff(d, reported)
 }
 
-func (r Report) AppInfos(scope Scope) []AppInfo {
-	if scope == SYSTEM {
+func (r Report) AppInfos(isSys bool) []AppInfo {
+	if isSys {
 		return getAppInfos("sysapps", r)
-	} else if scope == USER {
+	} else {
 		return getAppInfos("apps", r)
 	}
-	return nil
 }
 
-func (r Report) SetAppInfos(scope Scope, apps []AppInfo)  {
-	if scope == SYSTEM {
+func (r Report) SetAppInfos(isSys bool, apps []AppInfo) {
+	if isSys {
 		r["sysapps"] = apps
-	} else if scope == USER {
+	} else {
 		r["apps"] = apps
 	}
 }
 
-func (d Desire) AppInfos(scope Scope) []AppInfo {
-	if scope == SYSTEM {
+func (d Desire) AppInfos(isSys bool) []AppInfo {
+	if isSys {
 		return getAppInfos("sysapps", d)
-	} else if scope == USER {
+	} else {
 		return getAppInfos("apps", d)
 	}
-	return nil
 }
 
-func (d Desire) SetAppInfos(scope Scope, apps []AppInfo)  {
-	if scope == SYSTEM {
+func (d Desire) SetAppInfos(isSys bool, apps []AppInfo) {
+	if isSys {
 		d["sysapps"] = apps
-	} else if scope == USER {
+	} else {
 		d["apps"] = apps
+	}
+}
+
+func (r Report) SetAppStats(isSys bool, stats []AppStatus) {
+	if isSys {
+		r["sysappstats"] = stats
+	} else {
+		r["appstats"] = stats
+	}
+}
+
+func (d Desire) SetAppStats(isSys bool, stats []AppStatus) {
+	if isSys {
+		d["sysappstats"] = stats
+	} else {
+		d["appstats"] = stats
+	}
+}
+
+func (r Report) AppStats(isSys bool) []AppStatus {
+	if isSys {
+		return getAppStats("sysappstats", r)
+	} else {
+		return getAppStats("appstats", r)
+	}
+}
+
+func (d Desire) AppStats(isSys bool) []AppStatus {
+	if isSys {
+		return getAppStats("sysappstats", d)
+	} else {
+		return getAppStats("appstats", d)
 	}
 }
 
@@ -257,6 +279,21 @@ func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
 		res = append(res, AppInfo{Name: aim["name"].(string), Version: aim["version"].(string)})
 	}
 	return res
+}
+
+func getAppStats(statsType string, data map[string]interface{}) []AppStatus {
+	if data == nil {
+		return nil
+	}
+	apps, ok := data[statsType]
+	if !ok || apps == nil {
+		return nil
+	}
+	if res, ok := apps.([]AppStatus); ok {
+		return res
+	} else {
+		return nil
+	}
 }
 
 // merge right map into left map
