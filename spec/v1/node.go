@@ -3,7 +3,6 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/baetyl/baetyl-go/log"
 	"reflect"
 	"strconv"
 	"time"
@@ -145,30 +144,28 @@ func (d Desire) AppStats(isSys bool) []AppStatus {
 	}
 }
 
-func (n *Node) View(timeout time.Duration) *NodeView {
+func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 	view := new(NodeView)
 	nodeStr, err := json.Marshal(n)
 	if err != nil {
-		log.L().Error("failed to convert to node view", log.Error(err))
-		return nil
+		return nil, err
 	}
 	err = json.Unmarshal(nodeStr, view)
 	if err != nil {
-		log.L().Error("failed to convert to node view", log.Error(err))
-		return nil
+		return nil, err
 	}
 	if err = view.populateNodeStatus(timeout); err != nil {
-		log.L().Error("failed to populate node status", log.Error(err))
-		return nil
+		return nil, err
 	}
-
 	if report := view.Report; report != nil {
-		report.translateServiceResouceQuantity()
+		if err = report.translateServiceResouceQuantity(); err != nil {
+			return nil, err
+		}
 	}
-	return view
+	return view, nil
 }
 
-func (view *NodeView) populateNodeStatus(timeout time.Duration) error {
+func (view *NodeView) populateNodeStatus(timeout time.Duration) (err error) {
 	if view.Report == nil || view.Report.NodeStatus == nil {
 		return nil
 	}
@@ -176,21 +173,17 @@ func (view *NodeView) populateNodeStatus(timeout time.Duration) error {
 	s := view.Report.NodeStatus
 	s.Percent = map[string]string{}
 	memory := string(coreV1.ResourceMemory)
-	mPercent, err := s.processResourcePercent(s, memory, populateMemoryResource)
-	if err != nil {
+	if s.Percent[memory], err = s.processResourcePercent(s, memory, populateMemoryResource); err != nil {
 		return err
 	}
-	s.Percent[memory] = mPercent
 
 	cpu := string(coreV1.ResourceCPU)
-	cpuPercent, err := s.processResourcePercent(s, cpu, populateCPUResource)
-	if err != nil {
+	if s.Percent[cpu], err = s.processResourcePercent(s, cpu, populateCPUResource); err != nil {
 		return err
 	}
-	s.Percent[cpu] = cpuPercent
 
 	view.Ready = time.Now().Before(view.Report.Time.Add(timeout))
-	return nil
+	return
 }
 
 func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType string,
@@ -216,42 +209,38 @@ func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType str
 	return "0", nil
 }
 
-func (view *ReportView) translateServiceResouceQuantity() {
+func (view *ReportView) translateServiceResouceQuantity() error {
 	for idx := range view.AppStats {
 		services := view.AppStats[idx].ServiceInfos
 		if services == nil {
 			continue
 		}
-
 		for _, v := range services {
-			v.translateResouceQuantity()
+			if err := v.translateResouceQuantity(); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func (s *ServiceInfo) translateResouceQuantity() {
+func (s *ServiceInfo) translateResouceQuantity() error {
 	if s.Usage == nil {
-		return
+		return nil
 	}
 
-	cpu := string(coreV1.ResourceCPU)
-	cpuUsage, cpuOk := s.Usage[cpu]
-
-	if cpuOk {
-		// ignore the error
-		// if has error the original data wasnot changed
-		populateCPUResource(cpuUsage, s.Usage)
+	if cpuUsage, cpuOk := s.Usage[string(coreV1.ResourceCPU)]; cpuOk {
+		if _, err := populateCPUResource(cpuUsage, s.Usage); err != nil {
+			return err
+		}
 	}
 
-	memory := string(coreV1.ResourceMemory)
-	memoryUsage, mOk := s.Usage[memory]
-
-	if mOk {
-		// ignore the error
-		// if has error the original data wasnot changed
-		populateMemoryResource(memoryUsage, s.Usage)
+	if memoryUsage, mOk := s.Usage[string(coreV1.ResourceMemory)]; mOk {
+		if _, err := populateMemoryResource(memoryUsage, s.Usage); err != nil {
+			return err
+		}
 	}
-
+	return nil
 }
 
 func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
