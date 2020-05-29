@@ -12,4 +12,5 @@ type Secret struct {
 	UpdateTimestamp   time.Time         `json:"updateTime,omitempty"`
 	Description       string            `json:"description,omitempty"`
 	Version           string            `json:"version,omitempty"`
+	System            bool              `json:"system,omitempty"`
 }
