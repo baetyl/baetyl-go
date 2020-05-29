@@ -84,7 +84,7 @@ func TestShadowDiff(t *testing.T) {
 			gotDelta, err := tt.desire.Diff(tt.report)
 			assert.Equal(t, tt.wantErr, err)
 			assert.Equal(t, tt.wantDelta, gotDelta)
-			assert.Equal(t, tt.desire.AppInfos(USER), tt.desire.AppInfos(USER), gotDelta.AppInfos(USER))
+			assert.Equal(t, tt.desire.AppInfos(false), tt.desire.AppInfos(false), gotDelta.AppInfos(false))
 		})
 	}
 }
@@ -172,7 +172,7 @@ func TestShadowMerge(t *testing.T) {
 				assert.Equal(t, tt.wantErr, err)
 				assert.Equal(t, Desire(tt.wantData), od)
 			} else {
-				assert.Equal(t, nr.AppInfos(USER), or.AppInfos(USER))
+				assert.Equal(t, nr.AppInfos(false), or.AppInfos(false))
 			}
 		})
 	}
@@ -197,20 +197,20 @@ func TestDesireSysAppInfos(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expectApps, sysApps.AppInfos(SYSTEM))
+	assert.Equal(t, expectApps, sysApps.AppInfos(true))
 }
 
 func TestAppInfos(t *testing.T) {
-	assert.Nil(t, Report{}.AppInfos(USER))
-	assert.Nil(t, Report{}.AppInfos(SYSTEM))
-	assert.Nil(t, Report{"apps": nil}.AppInfos(USER))
-	assert.Nil(t, Report{"sysapps": nil}.AppInfos(SYSTEM))
-	assert.Nil(t, Report{"apps": []string{}}.AppInfos(USER))
-	assert.Nil(t, Report{"sysapps": []string{}}.AppInfos(SYSTEM))
-	assert.Equal(t, []AppInfo{}, Report{"apps": []AppInfo{}}.AppInfos(USER))
-	assert.Equal(t, []AppInfo{}, Report{"sysapps": []AppInfo{}}.AppInfos(SYSTEM))
-	assert.Equal(t, []AppInfo{}, Report{"apps": []interface{}{}}.AppInfos(USER))
-	assert.Equal(t, []AppInfo{}, Report{"sysapps": []interface{}{}}.AppInfos(SYSTEM))
+	assert.Nil(t, Report{}.AppInfos(false))
+	assert.Nil(t, Report{}.AppInfos(true))
+	assert.Nil(t, Report{"apps": nil}.AppInfos(false))
+	assert.Nil(t, Report{"sysapps": nil}.AppInfos(true))
+	assert.Nil(t, Report{"apps": []string{}}.AppInfos(false))
+	assert.Nil(t, Report{"sysapps": []string{}}.AppInfos(true))
+	assert.Equal(t, []AppInfo{}, Report{"apps": []AppInfo{}}.AppInfos(false))
+	assert.Equal(t, []AppInfo{}, Report{"sysapps": []AppInfo{}}.AppInfos(true))
+	assert.Equal(t, []AppInfo{}, Report{"apps": []interface{}{}}.AppInfos(false))
+	assert.Equal(t, []AppInfo{}, Report{"sysapps": []interface{}{}}.AppInfos(true))
 
 	expectApps := []AppInfo{
 		{
@@ -229,7 +229,7 @@ func TestAppInfos(t *testing.T) {
 			map[string]interface{}{"name": "app2", "version": "2"},
 		},
 	}
-	assert.Equal(t, expectApps, r.AppInfos(USER))
+	assert.Equal(t, expectApps, r.AppInfos(false))
 
 	r = Report{
 		"sysapps": []AppInfo{
@@ -238,7 +238,7 @@ func TestAppInfos(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expectApps, r.AppInfos(SYSTEM))
+	assert.Equal(t, expectApps, r.AppInfos(true))
 }
 
 func TestTranslateNodeToNodeReportView(t *testing.T) {
