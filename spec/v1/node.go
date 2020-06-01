@@ -49,7 +49,7 @@ type NodeView struct {
 }
 
 type ReportView struct {
-	Time        time.Time   `json:"time,omitempty"`
+	Time        *time.Time   `json:"time,omitempty"`
 	Apps        []AppInfo   `json:"apps,omitempty"`
 	SysApps     []AppInfo   `json:"sysapps,omitempty"`
 	Core        *CoreInfo   `json:"core,omitempty"`
