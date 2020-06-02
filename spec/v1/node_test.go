@@ -279,6 +279,7 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 }
 
 func TestPopulateNodeStatus(t *testing.T) {
+	t1 := time.Now().Add(-2 * time.Minute)
 	node1 := NodeView{
 		Report: &ReportView{
 			NodeStatus: &NodeStatus{
@@ -291,7 +292,7 @@ func TestPopulateNodeStatus(t *testing.T) {
 					"memory": "1024Mi",
 				},
 			},
-			Time: time.Now().Add(-2 * time.Minute),
+			Time: &t1,
 		},
 	}
 	err := node1.populateNodeStatus(time.Minute)
@@ -310,6 +311,7 @@ func TestPopulateNodeStatus(t *testing.T) {
 	assert.Equal(t, node1.Report.NodeStatus.Percent[string(coreV1.ResourceCPU)], "0.5")
 	assert.Equal(t, node1.Ready, false)
 
+	t2 := time.Now().Add(-30 * time.Second)
 	node2 := NodeView{
 		Report: &ReportView{
 			NodeStatus: &NodeStatus{
@@ -322,7 +324,7 @@ func TestPopulateNodeStatus(t *testing.T) {
 					"memory": "1024Mi",
 				},
 			},
-			Time: time.Now().Add(-30 * time.Second),
+			Time: &t2,
 		},
 	}
 	err = node2.populateNodeStatus(time.Minute)

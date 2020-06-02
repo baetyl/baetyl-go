@@ -49,7 +49,7 @@ type NodeView struct {
 }
 
 type ReportView struct {
-	Time        time.Time   `json:"time,omitempty"`
+	Time        *time.Time  `json:"time,omitempty"`
 	Apps        []AppInfo   `json:"apps,omitempty"`
 	SysApps     []AppInfo   `json:"sysapps,omitempty"`
 	Core        *CoreInfo   `json:"core,omitempty"`
@@ -182,7 +182,10 @@ func (view *NodeView) populateNodeStatus(timeout time.Duration) (err error) {
 		return err
 	}
 
-	view.Ready = time.Now().Before(view.Report.Time.Add(timeout))
+	if view.Report.Time != nil {
+		view.Ready = time.Now().Before(view.Report.Time.Add(timeout))
+	}
+
 	return
 }
 
