@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/256dpi/gomqtt/packet"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
 	"github.com/jpillora/backoff"
@@ -11,11 +12,12 @@ import (
 
 // Client auto reconnection client
 type Client struct {
-	ops   ClientOptions
-	ids   *Counter
-	cache chan Packet
-	log   *log.Logger
-	tomb  utils.Tomb
+	ops      ClientOptions
+	ids      *Counter
+	cache    chan Packet
+	observer Observer
+	log      *log.Logger
+	tomb     utils.Tomb
 }
 
 // NewClient creates a new client
@@ -26,17 +28,14 @@ func NewClient(ops ClientOptions) *Client {
 		cache: make(chan Packet, ops.MaxCacheMessages),
 		log:   log.With(log.Any("mqtt", "client"), log.Any("cid", ops.ClientID)),
 	}
-	c.tomb.Go(c.connecting)
 	return c
 }
 
-// Subscribe sends a subscribe packet
-func (c *Client) Subscribe(s []Subscription) error {
-	subscribe := &Subscribe{
-		ID:            c.ids.NextID(),
-		Subscriptions: s,
+func (c *Client) Start(obs Observer) error {
+	if obs != nil {
+		c.observer = obs
 	}
-	return c.Send(subscribe)
+	return c.tomb.Go(c.connecting)
 }
 
 // Publish sends a publish packet
@@ -130,22 +129,22 @@ func (c *Client) onConnack(pkt Packet) error {
 }
 
 func (c *Client) onPublish(pkt *Publish) error {
-	if c.ops.Observer == nil {
+	if c.observer == nil {
 		return nil
 	}
-	return c.ops.Observer.OnPublish(pkt)
+	return c.observer.OnPublish(pkt)
 }
 
 func (c *Client) onPuback(pkt *Puback) error {
-	if c.ops.Observer == nil {
+	if c.observer == nil {
 		return nil
 	}
-	return c.ops.Observer.OnPuback(pkt)
+	return c.observer.OnPuback(pkt)
 }
 
 func (c *Client) onSuback(pkt *Suback) error {
 	for _, code := range pkt.ReturnCodes {
-		if code == QOSFailure {
+		if code == packet.QOSFailure {
 			return ErrClientSubscriptionFailed
 		}
 	}
@@ -153,9 +152,9 @@ func (c *Client) onSuback(pkt *Suback) error {
 }
 
 func (c *Client) onError(msg string, err error) {
-	if c.ops.Observer == nil || err == nil {
+	if c.observer == nil || err == nil {
 		return
 	}
 	c.log.Error(msg, log.Error(err))
-	c.ops.Observer.OnError(err)
+	c.observer.OnError(err)
 }

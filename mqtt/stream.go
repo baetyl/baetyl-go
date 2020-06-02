@@ -6,18 +6,22 @@ import (
 	"sync"
 	"time"
 
+	"github.com/256dpi/gomqtt/packet"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
 )
 
+const subscribeId = 1
+
 type stream struct {
-	cli     *Client
-	conn    Connection
-	future  *Future
-	tracker *Tracker
-	tomb    utils.Tomb
-	once    sync.Once
-	mu      sync.Mutex
+	cli             *Client
+	conn            Connection
+	connectFuture   *Future
+	subscribeFuture *Future
+	tracker         *Tracker
+	tomb            utils.Tomb
+	once            sync.Once
+	mu              sync.Mutex
 }
 
 func (c *Client) connect() (*stream, error) {
@@ -42,20 +46,39 @@ func (c *Client) connect() (*stream, error) {
 		return nil, err
 	}
 
+	if len(c.ops.Subscriptions) != 0 {
+		subscribe := packet.NewSubscribe()
+		subscribe.ID = subscribeId
+		subscribe.Subscriptions = c.ops.Subscriptions
+		err = conn.Send(subscribe, false)
+		if err != nil {
+			conn.Close()
+			return nil, err
+		}
+	}
+
 	s := &stream{
-		cli:     c,
-		conn:    conn,
-		future:  NewFuture(),
-		tracker: NewTracker(c.ops.KeepAlive),
+		cli:             c,
+		conn:            conn,
+		connectFuture:   NewFuture(),
+		subscribeFuture: NewFuture(),
+		tracker:         NewTracker(c.ops.KeepAlive),
 	}
 	s.tomb.Go(s.receiving)
 	if c.ops.KeepAlive > 0 {
 		s.tomb.Go(s.pinging)
 	}
-	err = s.future.Wait(c.ops.Timeout)
+	err = s.connectFuture.Wait(c.ops.Timeout)
 	if err != nil {
 		s.close()
 		return nil, err
+	}
+	if len(c.ops.Subscriptions) != 0 {
+		err = s.subscribeFuture.Wait(c.ops.Timeout)
+		if err != nil {
+			s.close()
+			return nil, err
+		}
 	}
 	return s, nil
 }
@@ -97,8 +120,10 @@ func (s *stream) sending(curr Packet) Packet {
 				return pkt
 			}
 		case <-s.cli.tomb.Dying():
+			s.send(NewDisconnect(), false)
 			return nil
 		case <-s.tomb.Dying():
+			s.tomb.Wait()
 			return nil
 		}
 	}
@@ -112,7 +137,8 @@ func (s *stream) receiving() error {
 	for {
 		pkt, err := s.conn.Receive()
 		if err != nil {
-			s.die("failed to receive packet", err)
+			s.die("client failed to receive packet", err)
+			s.connectFuture.Cancel(nil)
 			return err
 		}
 
@@ -125,9 +151,10 @@ func (s *stream) receiving() error {
 			err = s.cli.onConnack(pkt)
 			if err != nil {
 				s.die("failed to handle connack", err)
+				s.connectFuture.Cancel(nil)
 				return err
 			}
-			s.future.Complete(nil)
+			s.connectFuture.Complete(nil)
 			continue
 		}
 
@@ -145,7 +172,18 @@ func (s *stream) receiving() error {
 		case *Puback:
 			err = s.cli.onPuback(p)
 		case *Suback:
+			if p.ID != subscribeId {
+				s.cli.log.Warn("received unexpected suback", log.Any("packet", p.String()))
+				continue
+			}
 			err = s.cli.onSuback(p)
+			if err != nil {
+				s.subscribeFuture.Cancel(fmt.Errorf("failed to handle suback: %s", err.Error()))
+				s.die("failed to handle suback", err)
+				return err
+			}
+			s.subscribeFuture.Complete(nil)
+			continue
 		case *Pingresp:
 			s.tracker.Pong()
 		case *Connack:
@@ -188,8 +226,6 @@ func (s *stream) pinging() error {
 		select {
 		case <-time.After(window):
 			continue
-		case <-s.cli.tomb.Dying():
-			return nil
 		case <-s.tomb.Dying():
 			return nil
 		}
@@ -198,18 +234,13 @@ func (s *stream) pinging() error {
 
 func (s *stream) die(msg string, err error) {
 	s.once.Do(func() {
-		s.future.Cancel(nil)
 		s.tomb.Kill(err)
-		if err == nil {
-			s.send(NewDisconnect(), false)
-		}
+		s.conn.Close()
 		s.cli.onError(msg, err)
 	})
 }
 
-// ! called in the same goroutine with sending
 func (s *stream) close() error {
 	s.die("", nil)
-	s.conn.Close()
 	return s.tomb.Wait()
 }
