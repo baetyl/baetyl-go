@@ -84,13 +84,13 @@ func safeReceive(ch chan struct{}) {
 	}
 }
 
-func newClientOptions(t *testing.T, port string) ClientOptions {
+func newClientOptions(t *testing.T, port string, Subscriptions []Subscription) ClientOptions {
 	c := NewClientOptions()
 	c.Address = "tcp://localhost:" + port
 	c.KeepAlive = 0
 	c.CleanSession = true
 	c.DisableAutoAck = true
-	c.Observer = newMockObserver(t)
+	c.Subscriptions = Subscriptions
 	return c
 }
 
