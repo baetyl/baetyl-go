@@ -21,8 +21,8 @@ type ClientOptions struct {
 	MaxReconnectInterval time.Duration
 	MaxMessageSize       utils.Size
 	MaxCacheMessages     int
+	Subscriptions        []Subscription
 	DisableAutoAck       bool
-	Observer             Observer
 }
 
 // NewClientOptions creates client options with default values
@@ -42,18 +42,6 @@ type QOSTopic struct {
 	Topic string `yaml:"topic" json:"topic" validate:"nonzero"`
 }
 
-// Subscriptions subscriptions
-type Subscriptions []QOSTopic
-
-// ToMQTTSubscriptions converts to mqtt subscriptions
-func (ss Subscriptions) ToMQTTSubscriptions() []Subscription {
-	var subs []Subscription
-	for _, topic := range ss {
-		subs = append(subs, Subscription{Topic: topic.Topic, QOS: QOS(topic.QOS)})
-	}
-	return subs
-}
-
 // ClientConfig client config
 type ClientConfig struct {
 	Address              string        `yaml:"address" json:"address"`
@@ -66,12 +54,12 @@ type ClientConfig struct {
 	MaxReconnectInterval time.Duration `yaml:"maxReconnectInterval" json:"maxReconnectInterval" default:"3m"`
 	MaxCacheMessages     int           `yaml:"maxCacheMessages" json:"maxCacheMessages" default:"10"`
 	DisableAutoAck       bool          `yaml:"disableAutoAck" json:"disableAutoAck"`
-	Subscriptions        Subscriptions `yaml:"subscriptions" json:"subscriptions" default:"[]"`
+	Subscriptions        []QOSTopic    `yaml:"subscriptions" json:"subscriptions" default:"[]"`
 	utils.Certificate    `yaml:",inline" json:",inline"`
 }
 
 // ToClientOptions converts client config to client options
-func (cc ClientConfig) ToClientOptions(obs Observer) (*ClientOptions, error) {
+func (cc ClientConfig) ToClientOptions() (*ClientOptions, error) {
 	ops := &ClientOptions{
 		Address:              cc.Address,
 		Username:             cc.Username,
@@ -83,7 +71,6 @@ func (cc ClientConfig) ToClientOptions(obs Observer) (*ClientOptions, error) {
 		MaxReconnectInterval: cc.MaxReconnectInterval,
 		MaxCacheMessages:     cc.MaxCacheMessages,
 		DisableAutoAck:       cc.DisableAutoAck,
-		Observer:             obs,
 	}
 	if cc.Certificate.Key != "" || cc.Certificate.Cert != "" {
 		tlsconfig, err := utils.NewTLSConfigClient(cc.Certificate)
@@ -91,6 +78,9 @@ func (cc ClientConfig) ToClientOptions(obs Observer) (*ClientOptions, error) {
 			return nil, errors.Trace(err)
 		}
 		ops.TLSConfig = tlsconfig
+	}
+	for _, topic := range cc.Subscriptions {
+		ops.Subscriptions = append(ops.Subscriptions, Subscription{Topic: topic.Topic, QOS: QOS(topic.QOS)})
 	}
 	return ops, nil
 }

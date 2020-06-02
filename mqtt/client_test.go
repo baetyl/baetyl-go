@@ -13,23 +13,27 @@ import (
 )
 
 func TestMqttClientConnectErrorMissingAddress(t *testing.T) {
-	ops := newClientOptions(t, "")
+	ops := newClientOptions(t, "", nil)
 	ops.Address = ""
-	obs := ops.Observer.(*mockObserver)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
-	obs.assertErrs(errors.New("parse : empty url"))
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
+	obs.assertErrs(errors.New(`parse : empty url`))
 }
 
 func TestMqttClientConnectErrorWrongPort(t *testing.T) {
-	ops := newClientOptions(t, "1234567")
-	obs := ops.Observer.(*mockObserver)
+	ops := newClientOptions(t, "1234567", nil)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 	obs.assertErrs(errors.New("dial tcp: address 1234567: invalid port"))
 }
 
@@ -48,14 +52,16 @@ func TestMqttClientConnectWithCredentials(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
+	ops := newClientOptions(t, port, nil)
 	ops.Username = "test"
 	ops.Password = "test"
-	obs := ops.Observer.(*mockObserver)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 	obs.assertErrs(errors.New("connection refused: bad user name or password"))
 	safeReceive(done)
 }
@@ -71,12 +77,14 @@ func TestMqttClientConnectionDenied(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
-	obs := ops.Observer.(*mockObserver)
+	ops := newClientOptions(t, port, nil)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 	obs.assertErrs(errors.New("connection refused: not authorized"))
 	safeReceive(done)
 }
@@ -89,12 +97,14 @@ func TestMqttClientExpectedConnack(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
-	obs := ops.Observer.(*mockObserver)
+	ops := newClientOptions(t, port, nil)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 	defer cli.Close()
 
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 	obs.assertErrs(ErrClientExpectedConnack)
 	safeReceive(done)
 }
@@ -113,11 +123,13 @@ func TestMqttClientNotExpectedConnack(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
-	obs := ops.Observer.(*mockObserver)
+	ops := newClientOptions(t, port, nil)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 	obs.assertErrs(ErrClientAlreadyConnecting)
 	assert.NoError(t, cli.Close())
 	safeReceive(done)
@@ -146,10 +158,14 @@ func TestMqttClientKeepAlive(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
+	ops := newClientOptions(t, port, nil)
 	ops.KeepAlive = time.Millisecond * 100
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 
 	time.Sleep(250 * time.Millisecond)
 
@@ -169,11 +185,14 @@ func TestMqttClientKeepAliveTimeout(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
+	ops := newClientOptions(t, port, nil)
 	ops.KeepAlive = time.Millisecond * 100
-	obs := ops.Observer.(*mockObserver)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 
 	safeReceive(done)
 	obs.assertErrs(ErrClientMissingPong)
@@ -189,9 +208,13 @@ func TestMqttClientKeepAliveNone(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
+	ops := newClientOptions(t, port, nil)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 
 	<-time.After(time.Second)
 
@@ -202,11 +225,11 @@ func TestMqttClientKeepAliveNone(t *testing.T) {
 func TestMqttClientPublishSubscribeQOS0(t *testing.T) {
 	subscribe := NewSubscribe()
 	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
-	subscribe.ID = 1
+	subscribe.ID = subscribeId
 
 	suback := NewSuback()
 	suback.ReturnCodes = []QOS{0}
-	suback.ID = 1
+	suback.ID = subscribeId
 
 	publish := NewPublish()
 	publish.Message.Topic = "test"
@@ -224,17 +247,19 @@ func TestMqttClientPublishSubscribeQOS0(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
-	obs := ops.Observer.(*mockObserver)
+	ops := newClientOptions(t, port, []Subscription{{Topic: "test"}})
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
-	err := cli.Subscribe([]Subscription{Subscription{Topic: "test"}})
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
 	assert.NoError(t, err)
 
 	err = cli.Publish(publish.Message.QOS, publish.Message.Topic, publish.Message.Payload, publish.ID, publish.Message.Retain, publish.Dup)
 	assert.NoError(t, err)
 	obs.assertPkts(publish)
+
+	time.Sleep(time.Second)
 
 	assert.NoError(t, cli.Close())
 	safeReceive(done)
@@ -273,12 +298,12 @@ func TestMqttClientPublishSubscribeQOS1(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
-	obs := ops.Observer.(*mockObserver)
+	ops := newClientOptions(t, port, []Subscription{{Topic: "test", QOS: 1}})
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
-	err := cli.Subscribe([]Subscription{Subscription{Topic: "test", QOS: 1}})
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
 	assert.NoError(t, err)
 
 	err = cli.Publish(publish.Message.QOS, publish.Message.Topic, publish.Message.Payload, publish.ID, publish.Message.Retain, publish.Dup)
@@ -334,13 +359,13 @@ func TestMqttClientAutoAck(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
+	ops := newClientOptions(t, port, []Subscription{{Topic: "test", QOS: 1}})
 	ops.DisableAutoAck = false
-	obs := ops.Observer.(*mockObserver)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
-	err := cli.Subscribe([]Subscription{Subscription{Topic: "test", QOS: 1}})
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
 	assert.NoError(t, err)
 
 	err = cli.Publish(pub1.Message.QOS, pub1.Message.Topic, pub1.Message.Payload, pub1.ID, pub1.Message.Retain, pub1.Dup)
@@ -366,10 +391,13 @@ func TestMqttClientUnexpectedClose(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
-	obs := ops.Observer.(*mockObserver)
+	ops := newClientOptions(t, port, nil)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 
 	safeReceive(done)
 	obs.assertErrs(io.EOF)
@@ -383,10 +411,13 @@ func TestMqttClientConnackTimeout1(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
-	obs := ops.Observer.(*mockObserver)
+	ops := newClientOptions(t, port, nil)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 
 	obs.assertErrs(io.EOF)
 	safeReceive(done)
@@ -396,16 +427,18 @@ func TestMqttClientConnackTimeout1(t *testing.T) {
 func TestMqttClientConnackTimeout2(t *testing.T) {
 	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
-		Receive(disconnectPacket()).
 		End()
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
+	ops := newClientOptions(t, port, nil)
 	ops.Timeout = time.Millisecond * 100
-	obs := ops.Observer.(*mockObserver)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 
 	obs.assertErrs(errors.New("future timeout"))
 	cli.Close()
@@ -415,11 +448,11 @@ func TestMqttClientConnackTimeout2(t *testing.T) {
 func TestMqttClientSubscribe(t *testing.T) {
 	subscribe := NewSubscribe()
 	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
-	subscribe.ID = 1
+	subscribe.ID = subscribeId
 
 	suback := NewSuback()
 	suback.ReturnCodes = []QOS{QOSFailure}
-	suback.ID = 1
+	suback.ID = subscribeId
 
 	broker := mock.NewFlow().Debug().
 		Receive(connectPacket()).
@@ -430,14 +463,15 @@ func TestMqttClientSubscribe(t *testing.T) {
 
 	done, port := initMockBroker(t, broker)
 
-	ops := newClientOptions(t, port)
-	obs := ops.Observer.(*mockObserver)
+	ops := newClientOptions(t, port, []Subscription{{Topic: "test"}})
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
 
-	err := cli.Subscribe([]Subscription{Subscription{Topic: "test"}})
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
 	assert.NoError(t, err)
-	obs.assertErrs(errors.New("failed subscription"))
+
+	time.Sleep(time.Second)
 
 	assert.NoError(t, cli.Close())
 	safeReceive(done)
@@ -477,11 +511,14 @@ func TestMqttClientReconnect(t *testing.T) {
 
 	done, port := initMockBroker(t, broker1, broker2, broker3)
 
-	ops := newClientOptions(t, port)
+	ops := newClientOptions(t, port, nil)
 	ops.Timeout = time.Second
-	obs := ops.Observer.(*mockObserver)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 
 	cli.Send(publish)
 	obs.assertPkts(publish)
@@ -526,11 +563,14 @@ func TestMqttClientReconnect2(t *testing.T) {
 
 	done, port := initMockBroker(t, broker1, broker2, broker3)
 
-	ops := newClientOptions(t, port)
+	ops := newClientOptions(t, port, nil)
 	ops.Timeout = time.Second
-	obs := ops.Observer.(*mockObserver)
 	cli := NewClient(ops)
 	assert.NotNil(t, cli)
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
 
 	obs.assertErrs(io.EOF)
 	obs.assertErrs(ErrFutureCanceled)
