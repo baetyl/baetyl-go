@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	gohttp "net/http"
@@ -14,8 +15,8 @@ const ContentTypeJSON = "application/json"
 
 // Client client of http server
 type Client struct {
-	ops *ClientOptions
-	*gohttp.Client
+	ops  *ClientOptions
+	http *gohttp.Client
 }
 
 // NewClient creates a new http client
@@ -36,7 +37,7 @@ func NewClient(ops *ClientOptions) *Client {
 	}
 	return &Client{
 		ops: ops,
-		Client: &gohttp.Client{
+		http: &gohttp.Client{
 			Timeout:   ops.Timeout,
 			Transport: transport,
 		},
@@ -49,7 +50,7 @@ func (c *Client) Call(service, function string, payload []byte) ([]byte, error) 
 	if function != "" {
 		url += "/" + function
 	}
-	r, err := c.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
+	r, err := c.http.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (c *Client) Call(service, function string, payload []byte) ([]byte, error) 
 // PostJSON post data with json content type
 func (c *Client) PostJSON(url string, payload []byte) ([]byte, error) {
 	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
-	r, err := c.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
+	r, err := c.http.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
 	}
@@ -69,11 +70,37 @@ func (c *Client) PostJSON(url string, payload []byte) ([]byte, error) {
 // GetJSON get data with json content type
 func (c *Client) GetJSON(url string) ([]byte, error) {
 	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
-	r, err := c.Get(url)
+	r, err := c.http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	return HandleResponse(r)
+}
+
+func (c *Client) GetURL(url string, header ...map[string]string) (*gohttp.Response, error) {
+	req, err := gohttp.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range header {
+		for kk, vv := range v {
+			req.Header.Set(kk, vv)
+		}
+	}
+	return c.http.Do(req)
+}
+
+func (c *Client) PostURL(url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
+	req, err := gohttp.NewRequest("POST", url, body)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range header {
+		for kk, vv := range v {
+			req.Header.Set(kk, vv)
+		}
+	}
+	return c.http.Do(req)
 }
 
 // HandleResponse handles response
