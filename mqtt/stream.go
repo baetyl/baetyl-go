@@ -8,6 +8,7 @@ import (
 
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
+	"github.com/pkg/errors"
 )
 
 type stream struct {
@@ -25,7 +26,7 @@ func (c *Client) connect() (*stream, error) {
 	dialer := NewDialer(c.ops.TLSConfig, c.ops.Timeout)
 	conn, err := dialer.Dial(c.ops.Address)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	// send connect
@@ -39,7 +40,7 @@ func (c *Client) connect() (*stream, error) {
 	err = conn.Send(connect, false)
 	if err != nil {
 		conn.Close()
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	s := &stream{
@@ -55,7 +56,7 @@ func (c *Client) connect() (*stream, error) {
 	err = s.future.Wait(c.ops.Timeout)
 	if err != nil {
 		s.close()
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return s, nil
 }
@@ -68,7 +69,7 @@ func (s *stream) send(pkt Packet, async bool) error {
 	s.mu.Unlock()
 	if err != nil {
 		s.die("failed to send packet", err)
-		return err
+		return errors.WithStack(err)
 	}
 
 	if ent := s.cli.log.Check(log.DebugLevel, "client sent a packet"); ent != nil {
@@ -113,7 +114,7 @@ func (s *stream) receiving() error {
 		pkt, err := s.conn.Receive()
 		if err != nil {
 			s.die("failed to receive packet", err)
-			return err
+			return errors.WithStack(err)
 		}
 
 		if ent := s.cli.log.Check(log.DebugLevel, "client received a packet"); ent != nil {
@@ -151,7 +152,7 @@ func (s *stream) receiving() error {
 		case *Connack:
 			err = ErrClientAlreadyConnecting
 		default:
-			err = fmt.Errorf("packet (%v) not supported", p)
+			err = errors.Errorf("packet (%v) not supported", p)
 		}
 
 		if err != nil {

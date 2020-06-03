@@ -3,9 +3,10 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 // PathExists checks path exists
@@ -42,37 +43,37 @@ func FileExists(path string) bool {
 func WriteFile(fn string, r io.Reader) error {
 	f, err := os.Create(fn)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer f.Close()
 
 	_, err = io.Copy(f, r)
-	return err
+	return errors.WithStack(err)
 }
 
 // CopyFile copy data from one file to another
 func CopyFile(s, t string) error {
 	sf, err := os.Open(s)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer sf.Close()
 
-	return WriteFile(t, sf)
+	return errors.WithStack(WriteFile(t, sf))
 }
 
 // CalculateFileMD5 calculates file MD5
 func CalculateFileMD5(fn string) (string, error) {
 	f, err := os.Open(fn)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	defer f.Close()
 
 	hasher := md5.New()
 	_, err = io.Copy(hasher, f)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	return base64.StdEncoding.EncodeToString(hasher.Sum(nil)), nil
 }
@@ -89,7 +90,7 @@ func CreateSymlink(target, symlink string) error {
 	}
 	err := os.Symlink(target, symlink)
 	if err != nil {
-		return fmt.Errorf("failed to make symlink %s of %s: %s", target, symlink, err.Error())
+		return errors.Errorf("failed to make symlink %s of %s: %s", target, symlink, err.Error())
 	}
 	return nil
 }

@@ -3,6 +3,8 @@ package utils
 import (
 	"net/url"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // ParseURL parses a url string
@@ -14,5 +16,6 @@ func ParseURL(addr string) (*url.URL, error) {
 			Host:   parts[1],
 		}, nil
 	}
-	return url.Parse(addr)
+	res, err := url.Parse(addr)
+	return res, errors.WithStack(err)
 }

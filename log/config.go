@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
 
 // Config for logging
@@ -30,27 +32,31 @@ func (c *Config) String() string {
 }
 
 // FromURL creates config from url
-func FromURL(u *url.URL) (c Config, err error) {
+func FromURL(u *url.URL) (*Config, error) {
 	args := u.Query()
+	c := new(Config)
 	c.Level = args.Get("level")
 	c.Encoding = args.Get("encoding")
 	filename, err := base64.URLEncoding.DecodeString(args.Get("filename"))
 	if err != nil {
-		return
+		return nil, errors.WithStack(err)
 	}
 	c.Filename = string(filename)
 	c.Compress, err = strconv.ParseBool(args.Get("compress"))
 	if err != nil {
-		return
+		return nil, errors.WithStack(err)
 	}
 	c.MaxAge, err = strconv.Atoi(args.Get("maxAge"))
 	if err != nil {
-		return
+		return nil, errors.WithStack(err)
 	}
 	c.MaxSize, err = strconv.Atoi(args.Get("maxSize"))
 	if err != nil {
-		return
+		return nil, errors.WithStack(err)
 	}
 	c.MaxBackups, err = strconv.Atoi(args.Get("maxBackups"))
-	return
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return c, nil
 }

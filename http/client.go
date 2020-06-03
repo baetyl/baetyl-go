@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net"
@@ -52,7 +53,7 @@ func (c *Client) Call(service, function string, payload []byte) ([]byte, error) 
 	}
 	r, err := c.http.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return HandleResponse(r)
 }
@@ -62,7 +63,7 @@ func (c *Client) PostJSON(url string, payload []byte) ([]byte, error) {
 	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
 	r, err := c.http.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return HandleResponse(r)
 }
@@ -72,7 +73,7 @@ func (c *Client) GetJSON(url string) ([]byte, error) {
 	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
 	r, err := c.http.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return HandleResponse(r)
 }
@@ -80,27 +81,29 @@ func (c *Client) GetJSON(url string) ([]byte, error) {
 func (c *Client) GetURL(url string, header ...map[string]string) (*gohttp.Response, error) {
 	req, err := gohttp.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	for _, v := range header {
 		for kk, vv := range v {
 			req.Header.Set(kk, vv)
 		}
 	}
-	return c.http.Do(req)
+	r, err := c.http.Do(req)
+	return r, errors.WithStack(err)
 }
 
 func (c *Client) PostURL(url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
 	req, err := gohttp.NewRequest("POST", url, body)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	for _, v := range header {
 		for kk, vv := range v {
 			req.Header.Set(kk, vv)
 		}
 	}
-	return c.http.Do(req)
+	r, err := c.http.Do(req)
+	return r, errors.WithStack(err)
 }
 
 // HandleResponse handles response
@@ -114,5 +117,5 @@ func HandleResponse(r *gohttp.Response) ([]byte, error) {
 		}
 		err = fmt.Errorf("[%d] %s", r.StatusCode, msg)
 	}
-	return data, err
+	return data, errors.WithStack(err)
 }

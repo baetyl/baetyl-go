@@ -2,12 +2,12 @@ package v1
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strconv"
 	"time"
 
 	"github.com/evanphx/json-patch"
+	"github.com/pkg/errors"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -16,11 +16,10 @@ import (
 const (
 	maxJSONLevel   = 5
 	milliPrecision = 1000
-	TimePattern    = "2006-01-02T15:04:05.999999999Z"
 )
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
-var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
+var ErrJSONLevelExceedsLimit = errors.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
 
 // Node the spec of node
 type Node struct {
@@ -148,11 +147,11 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 	view := new(NodeView)
 	nodeStr, err := json.Marshal(n)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	err = json.Unmarshal(nodeStr, view)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	if err = view.populateNodeStatus(timeout); err != nil {
 		return nil, err
@@ -310,19 +309,19 @@ func diff(desired, reported map[string]interface{}) (map[string]interface{}, err
 	var delta map[string]interface{}
 	r, err := json.Marshal(reported)
 	if err != nil {
-		return delta, err
+		return delta, errors.WithStack(err)
 	}
 	d, err := json.Marshal(desired)
 	if err != nil {
-		return delta, err
+		return delta, errors.WithStack(err)
 	}
 	patch, err := jsonpatch.CreateMergePatch(r, d)
 	if err != nil {
-		return delta, err
+		return delta, errors.WithStack(err)
 	}
 	err = json.Unmarshal(patch, &delta)
 	if err != nil {
-		return delta, err
+		return delta, errors.WithStack(err)
 	}
 	clean(delta)
 	return delta, nil
@@ -365,7 +364,7 @@ func populateMemoryResource(usage string, resource map[string]string) (int64, er
 func translateQuantityToDecimal(q string, milli bool) (int64, error) {
 	num, err := resource.ParseQuantity(q)
 	if err != nil {
-		return 0, err
+		return 0, errors.WithStack(err)
 	}
 	if milli {
 		return num.MilliValue(), nil

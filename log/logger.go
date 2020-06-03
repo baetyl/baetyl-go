@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
@@ -34,7 +35,7 @@ func init() {
 	}
 	err = zap.RegisterSink("lumberjack", newFileHook)
 	if err != nil {
-		l.Error("failed to register lumberjack", Error(err))
+		l.Error("failed to register lumberjack", Error(errors.WithStack(err)))
 	}
 	zap.ReplaceGlobals(l)
 }
@@ -53,7 +54,7 @@ func Init(cfg Config, fields ...Field) (*Logger, error) {
 	c.Level = zap.NewAtomicLevelAt(parseLevel(cfg.Level))
 	l, err := c.Build(zap.Fields(fields...))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	zap.ReplaceGlobals(l)
 	return L(), nil
@@ -70,13 +71,11 @@ func (*lumberjackSink) Sync() error {
 func newFileHook(u *url.URL) (zap.Sink, error) {
 	cfg, err := FromURL(u)
 	if err != nil {
-		L().Warn("failed to parse config for file hook", Error(err))
 		return nil, err
 	}
 	err = os.MkdirAll(filepath.Dir(cfg.Filename), 0755)
 	if err != nil {
-		L().Warn("failed to create log directory", Error(err))
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return &lumberjackSink{&lumberjack.Logger{
 		Compress:   cfg.Compress,
