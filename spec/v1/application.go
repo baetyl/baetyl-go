@@ -19,7 +19,7 @@ type Application struct {
 // Service service config1ma1
 type Service struct {
 	// specifies the unique name of the service
-	Name string `json:"name,omitempty" binding:"required"`
+	Name string `json:"name,omitempty" binding:"required" validate:"omitempty,resourceName"`
 	// specifies the hostname of the service
 	Hostname string `json:"hostname,omitempty"`
 	// specifies the image of the service, usually using the Docker image name
@@ -76,7 +76,7 @@ type ContainerPort struct {
 // Volume volume config
 type Volume struct {
 	// specified name of the volume
-	Name string `json:"name,omitempty" binding:"required"`
+	Name string `json:"name,omitempty" binding:"required" validate:"omitempty,resourceName"`
 	// specified driver for the storage volume
 	VolumeSource `json:",inline"`
 }
