@@ -2,7 +2,6 @@ package mqtt
 
 import (
 	"crypto/tls"
-	"errors"
 	"net"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/topic"
 	"github.com/256dpi/gomqtt/transport"
+	"github.com/pkg/errors"
 )
 
 // The supported MQTT versions.

@@ -2,6 +2,8 @@ package v1
 
 import (
 	"encoding/json"
+
+	"github.com/pkg/errors"
 )
 
 // DesireRequest body of request to sync desired data
@@ -83,5 +85,5 @@ func (v *VariableValue) MarshalJSON() ([]byte, error) {
 	if v.Data == nil && v.Value != nil {
 		v.Data, err = json.Marshal(v.Value)
 	}
-	return v.Data, err
+	return v.Data, errors.WithStack(err)
 }

@@ -4,6 +4,7 @@ import (
 	"compress/flate"
 
 	"github.com/mholt/archiver"
+	"github.com/pkg/errors"
 )
 
 var defaultZip = &archiver.Zip{
@@ -15,10 +16,10 @@ var defaultZip = &archiver.Zip{
 
 // Zip zip source files to destination file
 func Zip(sources []string, destination string) error {
-	return defaultZip.Archive(sources, destination)
+	return errors.WithStack(defaultZip.Archive(sources, destination))
 }
 
 // Unzip unzip source file to destination
 func Unzip(source, destination string) error {
-	return defaultZip.Unarchive(source, destination)
+	return errors.WithStack(defaultZip.Unarchive(source, destination))
 }
