@@ -66,17 +66,18 @@ type Desire map[string]interface{}
 
 // Merge merge new reported data
 func (r Report) Merge(reported Report) error {
-	return merge(r, reported, 1, maxJSONLevel)
+	return errors.WithStack(merge(r, reported, 1, maxJSONLevel))
 }
 
 // Merge merge new reported data
 func (d Desire) Merge(desired Desire) error {
-	return merge(d, desired, 1, maxJSONLevel)
+	return errors.WithStack(merge(d, desired, 1, maxJSONLevel))
 }
 
 // Diff diff with reported data, return the delta fo desire
 func (d Desire) Diff(reported Report) (Desire, error) {
-	return diff(d, reported)
+	res, err := diff(d, reported)
+	return res, errors.WithStack(err)
 }
 
 func (r Report) AppInfos(isSys bool) []AppInfo {

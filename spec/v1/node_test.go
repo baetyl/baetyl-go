@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baetyl/baetyl-go/log"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
 )
@@ -95,7 +96,7 @@ func TestShadowMerge(t *testing.T) {
 		oldData  map[string]interface{}
 		newData  map[string]interface{}
 		wantData map[string]interface{}
-		wantErr  error
+		wantErr  string
 	}{
 		{
 			name:     "nil-1",
@@ -132,7 +133,7 @@ func TestShadowMerge(t *testing.T) {
 			oldData:  map[string]interface{}{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"5": map[string]interface{}{"6": "y"}}}}}},
 			newData:  map[string]interface{}{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"n": nil, "5": map[string]interface{}{"n": nil, "6": "x"}}}}}},
 			wantData: map[string]interface{}{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"5": map[string]interface{}{"6": "y"}}}}}},
-			wantErr:  ErrJSONLevelExceedsLimit,
+			wantErr:  ErrJSONLevelExceedsLimit.Error(),
 		},
 		{
 			name:     "apps-1",
@@ -163,15 +164,16 @@ func TestShadowMerge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			or, nr := Report(tt.oldData), Report(tt.newData)
 			err := or.Merge(nr)
-			assert.Equal(t, tt.wantErr, err)
 			assert.Equal(t, Report(tt.wantData), or)
 
 			if tt.name == "err" {
 				od, nd := Desire(tt.oldData), Desire(tt.newData)
 				err = od.Merge(nd)
-				assert.Equal(t, tt.wantErr, err)
+				assert.EqualError(t, err, tt.wantErr)
 				assert.Equal(t, Desire(tt.wantData), od)
+				log.With(log.Error(err)).Info("error case")
 			} else {
+				assert.NoError(t, err)
 				assert.Equal(t, nr.AppInfos(false), or.AppInfos(false))
 			}
 		})
