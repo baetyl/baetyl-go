@@ -2,7 +2,7 @@ package mqtt
 
 import (
 	"crypto/tls"
-	"errors"
+	"fmt"
 	"net"
 	"time"
 
@@ -219,7 +219,7 @@ var (
 	ErrClientMissingPong        = gomqtt.ErrClientMissingPong
 	ErrClientExpectedConnack    = gomqtt.ErrClientExpectedConnack
 	ErrClientSubscriptionFailed = gomqtt.ErrFailedSubscription
-	ErrClientAlreadyClosed      = errors.New("client is closed")
+	ErrClientAlreadyClosed      = fmt.Errorf("client is closed")
 
 	// future's errors
 	ErrFutureTimeout  = future.ErrTimeout
