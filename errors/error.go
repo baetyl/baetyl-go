@@ -1,28 +1,43 @@
 package errors
 
-import "github.com/pkg/errors"
+import (
+	"fmt"
+	"github.com/pkg/errors"
+)
 
-func New(code, message string) error {
-	return &CodeError{errors.New(message), code}
+type Coder interface {
+	Code() string
 }
 
-func Wrap(err error, code, message string) error {
-	return &CodeError{errors.Wrap(err, message), code}
+func Trace(err error) error {
+	if err == nil {
+		return nil
+	}
+	switch err.(type) {
+	case fmt.Formatter:
+		return err
+	default:
+		return errors.WithStack(err)
+	}
 }
 
-type CodeError struct {
+type codeError struct {
 	e error
 	c string
 }
 
-func (e *CodeError) Code() string {
+func New(code, message string) error {
+	return &codeError{errors.New(message), code}
+}
+
+func (e *codeError) Code() string {
 	return e.c
 }
 
-func (e *CodeError) Error() string {
+func (e *codeError) Error() string {
 	return e.e.Error()
 }
 
-func (e *CodeError) Unwrap() error {
-	return e.e
+func (e *codeError) Format(s fmt.State, verb rune) {
+	e.e.(fmt.Formatter).Format(s, verb)
 }

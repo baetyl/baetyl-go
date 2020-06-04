@@ -36,7 +36,7 @@ func Any(key string, val interface{}) Field {
 // Code constructs a field with the given value and code key
 func Code(err error) Field {
 	switch e := err.(type) {
-	case *errors.CodeError:
+	case errors.Coder:
 		return zap.Any("errorCode", e.Code())
 	default:
 		return zap.Skip()
@@ -45,12 +45,7 @@ func Code(err error) Field {
 
 // Error constructs a field with the given value and error key
 func Error(err error) Field {
-	switch e := err.(type) {
-	case *errors.CodeError:
-		return zap.Error(e.Unwrap())
-	default:
-		return zap.Error(e)
-	}
+	return zap.Error(err)
 }
 
 // L returns the global Logger, which can be reconfigured with ReplaceGlobals.
