@@ -18,6 +18,10 @@ func Errorf(format string, args ...interface{}) error {
 	return errors.Errorf(format, args...)
 }
 
+func Cause(err error) error {
+	return errors.Cause(err)
+}
+
 func Trace(err error) error {
 	if err == nil {
 		return nil
