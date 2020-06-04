@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/pkg/errors"
+	"github.com/baetyl/baetyl-go/errors"
 )
 
 // Config for logging
@@ -39,24 +39,24 @@ func FromURL(u *url.URL) (*Config, error) {
 	c.Encoding = args.Get("encoding")
 	filename, err := base64.URLEncoding.DecodeString(args.Get("filename"))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	c.Filename = string(filename)
 	c.Compress, err = strconv.ParseBool(args.Get("compress"))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	c.MaxAge, err = strconv.Atoi(args.Get("maxAge"))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	c.MaxSize, err = strconv.Atoi(args.Get("maxSize"))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	c.MaxBackups, err = strconv.Atoi(args.Get("maxBackups"))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	return c, nil
 }

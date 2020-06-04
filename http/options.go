@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"time"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/baetyl/baetyl-go/utils"
 )
 
@@ -70,7 +71,7 @@ func (cc ClientConfig) ToClientOptions() (*ClientOptions, error) {
 	if cc.Certificate.Key != "" || cc.Certificate.Cert != "" {
 		tlsconfig, err := utils.NewTLSConfigClient(cc.Certificate)
 		if err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 		ops.TLSConfig = tlsconfig
 	}

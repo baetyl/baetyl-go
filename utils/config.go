@@ -10,8 +10,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/docker/go-units"
-	"github.com/pkg/errors"
 	"gopkg.in/validator.v2"
 	"gopkg.in/yaml.v2"
 )
@@ -20,7 +20,7 @@ import (
 func LoadYAML(path string, out interface{}) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	res, err := ParseEnv(data)
 	if err != nil {
@@ -41,12 +41,12 @@ func ParseEnv(data []byte) ([]byte, error) {
 	}
 	tmpl, err := template.New("template").Option("missingkey=error").Parse(text)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	buffer := bytes.NewBuffer(nil)
 	err = tmpl.Execute(buffer, envMap)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	return buffer.Bytes(), nil
 }
@@ -55,15 +55,15 @@ func ParseEnv(data []byte) ([]byte, error) {
 func UnmarshalYAML(in []byte, out interface{}) error {
 	err := yaml.Unmarshal(in, out)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	err = SetDefaults(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	err = validator.Validate(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	return nil
 }
@@ -72,15 +72,15 @@ func UnmarshalYAML(in []byte, out interface{}) error {
 func UnmarshalJSON(in []byte, out interface{}) error {
 	err := json.Unmarshal(in, out)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	err = SetDefaults(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	err = validator.Validate(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	return nil
 }
@@ -98,11 +98,11 @@ func (s *Size) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var str string
 	err := unmarshal(&str)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	v, err := units.RAMInBytes(str)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	*s = Size(v)
 	return nil
@@ -122,7 +122,7 @@ func (s *Size) UnmarshalJSON(data []byte) error {
 	str = strings.Trim(str, "\"")
 	v, err := units.RAMInBytes(str)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	*s = Size(v)
 	return nil
@@ -150,12 +150,12 @@ func (l *Length) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var ls length
 	err := unmarshal(&ls)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	if ls.Max != "" {
 		l.Max, err = units.RAMInBytes(ls.Max)
 		if err != nil {
-			return errors.WithStack(err)
+			return errors.Trace(err)
 		}
 	}
 	return nil

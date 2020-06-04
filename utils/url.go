@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/baetyl/baetyl-go/errors"
 )
 
 // ParseURL parses a url string
@@ -17,5 +17,5 @@ func ParseURL(addr string) (*url.URL, error) {
 		}, nil
 	}
 	res, err := url.Parse(addr)
-	return res, errors.WithStack(err)
+	return res, errors.Trace(err)
 }
