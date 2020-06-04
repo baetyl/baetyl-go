@@ -1,9 +1,9 @@
 package mqtt
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
 	"github.com/jpillora/backoff"
@@ -60,7 +60,7 @@ func (c *Client) Send(pkt Packet) error {
 	case c.cache <- pkt:
 		return nil
 	case <-c.tomb.Dying():
-		return ErrClientAlreadyClosed
+		return errors.Trace(ErrClientAlreadyClosed)
 	}
 }
 
@@ -70,7 +70,7 @@ func (c *Client) Close() error {
 	defer c.log.Info("client has closed")
 
 	c.tomb.Kill(nil)
-	return c.tomb.Wait()
+	return errors.Trace(c.tomb.Wait())
 }
 
 func (c *Client) connecting() error {
@@ -121,10 +121,10 @@ func (c *Client) connecting() error {
 func (c *Client) onConnack(pkt Packet) error {
 	p, ok := pkt.(*Connack)
 	if !ok {
-		return ErrClientExpectedConnack
+		return errors.Trace(ErrClientExpectedConnack)
 	}
 	if p.ReturnCode != ConnectionAccepted {
-		return fmt.Errorf(p.ReturnCode.String())
+		return errors.Errorf(p.ReturnCode.String())
 	}
 	return nil
 }
@@ -146,7 +146,7 @@ func (c *Client) onPuback(pkt *Puback) error {
 func (c *Client) onSuback(pkt *Suback) error {
 	for _, code := range pkt.ReturnCodes {
 		if code == QOSFailure {
-			return ErrClientSubscriptionFailed
+			return errors.Trace(ErrClientSubscriptionFailed)
 		}
 	}
 	return nil

@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/tls"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/docker/go-connections/tlsconfig"
 )
 
@@ -20,10 +21,12 @@ type Certificate struct {
 
 // NewTLSConfigServer loads tls config for server
 func NewTLSConfigServer(c Certificate) (*tls.Config, error) {
-	return tlsconfig.Server(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, ClientAuth: tls.VerifyClientCertIfGiven})
+	cfg, err := tlsconfig.Server(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, ClientAuth: tls.VerifyClientCertIfGiven})
+	return cfg, errors.Trace(err)
 }
 
 // NewTLSConfigClient loads tls config for client
 func NewTLSConfigClient(c Certificate) (*tls.Config, error) {
-	return tlsconfig.Client(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, InsecureSkipVerify: c.InsecureSkipVerify})
+	cfg, err := tlsconfig.Client(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, InsecureSkipVerify: c.InsecureSkipVerify})
+	return cfg, errors.Trace(err)
 }

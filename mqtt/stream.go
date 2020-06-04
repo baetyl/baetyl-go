@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
-	"github.com/pkg/errors"
 )
 
 type stream struct {
@@ -26,7 +26,7 @@ func (c *Client) connect() (*stream, error) {
 	dialer := NewDialer(c.ops.TLSConfig, c.ops.Timeout)
 	conn, err := dialer.Dial(c.ops.Address)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 
 	// send connect
@@ -40,7 +40,7 @@ func (c *Client) connect() (*stream, error) {
 	err = conn.Send(connect, false)
 	if err != nil {
 		conn.Close()
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 
 	s := &stream{
@@ -56,7 +56,7 @@ func (c *Client) connect() (*stream, error) {
 	err = s.future.Wait(c.ops.Timeout)
 	if err != nil {
 		s.close()
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	return s, nil
 }
@@ -69,7 +69,7 @@ func (s *stream) send(pkt Packet, async bool) error {
 	s.mu.Unlock()
 	if err != nil {
 		s.die("failed to send packet", err)
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 
 	if ent := s.cli.log.Check(log.DebugLevel, "client sent a packet"); ent != nil {
@@ -114,7 +114,7 @@ func (s *stream) receiving() error {
 		pkt, err := s.conn.Receive()
 		if err != nil {
 			s.die("failed to receive packet", err)
-			return errors.WithStack(err)
+			return errors.Trace(err)
 		}
 
 		if ent := s.cli.log.Check(log.DebugLevel, "client received a packet"); ent != nil {
@@ -126,7 +126,7 @@ func (s *stream) receiving() error {
 			err = s.cli.onConnack(pkt)
 			if err != nil {
 				s.die("failed to handle connack", err)
-				return err
+				return errors.Trace(err)
 			}
 			s.future.Complete(nil)
 			continue
@@ -150,14 +150,14 @@ func (s *stream) receiving() error {
 		case *Pingresp:
 			s.tracker.Pong()
 		case *Connack:
-			err = ErrClientAlreadyConnecting
+			err = errors.Trace(ErrClientAlreadyConnecting)
 		default:
 			err = errors.Errorf("packet (%v) not supported", p)
 		}
 
 		if err != nil {
 			s.die("failed to handle packet", err)
-			return err
+			return errors.Trace(err)
 		}
 	}
 }
@@ -174,13 +174,13 @@ func (s *stream) pinging() error {
 			// check if a pong has already been sent
 			if s.tracker.Pending() {
 				s.die(ErrClientMissingPong.Error(), ErrClientMissingPong)
-				return ErrClientMissingPong
+				return errors.Trace(ErrClientMissingPong)
 			}
 
 			s.tracker.Ping()
 			err = s.send(NewPingreq(), false)
 			if err != nil {
-				return err
+				return errors.Trace(err)
 			}
 
 			s.cli.log.Debug("client sent a ping")
@@ -212,5 +212,5 @@ func (s *stream) die(msg string, err error) {
 func (s *stream) close() error {
 	s.die("", nil)
 	s.conn.Close()
-	return s.tomb.Wait()
+	return errors.Trace(s.tomb.Wait())
 }

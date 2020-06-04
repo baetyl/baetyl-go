@@ -2,11 +2,20 @@ package errors
 
 import (
 	"fmt"
+
 	"github.com/pkg/errors"
 )
 
 type Coder interface {
 	Code() string
+}
+
+func New(message string) error {
+	return errors.New(message)
+}
+
+func Errorf(format string, args ...interface{}) error {
+	return errors.Errorf(format, args...)
 }
 
 func Trace(err error) error {
@@ -21,13 +30,13 @@ func Trace(err error) error {
 	}
 }
 
+func CodeError(code, message string) error {
+	return &codeError{errors.New(message), code}
+}
+
 type codeError struct {
 	e error
 	c string
-}
-
-func New(code, message string) error {
-	return &codeError{errors.New(message), code}
 }
 
 func (e *codeError) Code() string {

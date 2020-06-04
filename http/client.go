@@ -3,12 +3,13 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net"
 	gohttp "net/http"
 	"strings"
+
+	"github.com/baetyl/baetyl-go/errors"
 )
 
 // ContentTypeJSON the json content type of request
@@ -53,7 +54,7 @@ func (c *Client) Call(service, function string, payload []byte) ([]byte, error) 
 	}
 	r, err := c.http.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	return HandleResponse(r)
 }
@@ -63,7 +64,7 @@ func (c *Client) PostJSON(url string, payload []byte) ([]byte, error) {
 	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
 	r, err := c.http.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	return HandleResponse(r)
 }
@@ -73,7 +74,7 @@ func (c *Client) GetJSON(url string) ([]byte, error) {
 	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
 	r, err := c.http.Get(url)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	return HandleResponse(r)
 }
@@ -81,7 +82,7 @@ func (c *Client) GetJSON(url string) ([]byte, error) {
 func (c *Client) GetURL(url string, header ...map[string]string) (*gohttp.Response, error) {
 	req, err := gohttp.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	for _, v := range header {
 		for kk, vv := range v {
@@ -89,13 +90,13 @@ func (c *Client) GetURL(url string, header ...map[string]string) (*gohttp.Respon
 		}
 	}
 	r, err := c.http.Do(req)
-	return r, errors.WithStack(err)
+	return r, errors.Trace(err)
 }
 
 func (c *Client) PostURL(url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
 	req, err := gohttp.NewRequest("POST", url, body)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	for _, v := range header {
 		for kk, vv := range v {
@@ -103,7 +104,7 @@ func (c *Client) PostURL(url string, body io.Reader, header ...map[string]string
 		}
 	}
 	r, err := c.http.Do(req)
-	return r, errors.WithStack(err)
+	return r, errors.Trace(err)
 }
 
 // HandleResponse handles response
@@ -115,7 +116,7 @@ func HandleResponse(r *gohttp.Response) ([]byte, error) {
 		if msg == "" {
 			msg = r.Status
 		}
-		err = fmt.Errorf("[%d] %s", r.StatusCode, msg)
+		err = errors.Errorf("[%d] %s", r.StatusCode, msg)
 	}
-	return data, errors.WithStack(err)
+	return data, errors.Trace(err)
 }

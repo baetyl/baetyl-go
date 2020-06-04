@@ -6,6 +6,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/baetyl/baetyl-go/log"
 	"github.com/baetyl/baetyl-go/utils"
 )
@@ -148,9 +149,9 @@ func (c *ctx) LoadCustomConfig(cfg interface{}, files ...string) error {
 		f = files[0]
 	}
 	if utils.FileExists(f) {
-		return utils.LoadYAML(f, cfg)
+		return errors.Trace(utils.LoadYAML(f, cfg))
 	}
-	return utils.UnmarshalYAML(nil, cfg)
+	return errors.Trace(utils.UnmarshalYAML(nil, cfg))
 }
 
 func (c *ctx) Log() *log.Logger {

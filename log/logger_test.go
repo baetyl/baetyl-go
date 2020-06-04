@@ -50,7 +50,7 @@ func TestLoggerError(t *testing.T) {
 	assert.True(t, res)
 
 	// baetyl error
-	be := errors.New("code", "message")
+	be := errors.CodeError("code", "message")
 	log.Info("baetyl3", Code(be), Error(be))
 	log.Sync()
 

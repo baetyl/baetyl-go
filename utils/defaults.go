@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"fmt"
 	"reflect"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/creasty/defaults"
 )
 
@@ -11,7 +11,7 @@ import (
 func SetDefaults(ptr interface{}) error {
 	err := defaults.Set(ptr)
 	if err != nil {
-		return fmt.Errorf("%v: %s", ptr, err.Error())
+		return errors.Errorf("%v: %s", ptr, err.Error())
 	}
 
 	v := reflect.ValueOf(ptr).Elem()
@@ -28,7 +28,7 @@ func SetDefaults(ptr interface{}) error {
 				}
 				err := setDefaults(item)
 				if err != nil {
-					return err
+					return errors.Trace(err)
 				}
 			}
 		}
@@ -43,7 +43,7 @@ func SetDefaults(ptr interface{}) error {
 				err := setDefaults(tmp.Elem())
 				vf.SetMapIndex(k, tmp.Elem())
 				if err != nil {
-					return err
+					return errors.Trace(err)
 				}
 			}
 		}
@@ -56,7 +56,7 @@ func setDefaults(v reflect.Value) error {
 	tmp.Elem().Set(v)
 	err := SetDefaults(tmp.Interface())
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	v.Set(tmp.Elem())
 	return nil

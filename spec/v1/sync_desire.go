@@ -3,7 +3,7 @@ package v1
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
+	"github.com/baetyl/baetyl-go/errors"
 )
 
 // DesireRequest body of request to sync desired data
@@ -85,5 +85,5 @@ func (v *VariableValue) MarshalJSON() ([]byte, error) {
 	if v.Data == nil && v.Value != nil {
 		v.Data, err = json.Marshal(v.Value)
 	}
-	return v.Data, errors.WithStack(err)
+	return v.Data, errors.Trace(err)
 }

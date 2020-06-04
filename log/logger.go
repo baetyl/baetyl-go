@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/baetyl/baetyl-go/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
@@ -54,7 +54,7 @@ func Init(cfg Config, fields ...Field) (*Logger, error) {
 	c.Level = zap.NewAtomicLevelAt(parseLevel(cfg.Level))
 	l, err := c.Build(zap.Fields(fields...))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	zap.ReplaceGlobals(l)
 	return L(), nil
@@ -71,11 +71,11 @@ func (*lumberjackSink) Sync() error {
 func newFileHook(u *url.URL) (zap.Sink, error) {
 	cfg, err := FromURL(u)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	err = os.MkdirAll(filepath.Dir(cfg.Filename), 0755)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	return &lumberjackSink{&lumberjack.Logger{
 		Compress:   cfg.Compress,

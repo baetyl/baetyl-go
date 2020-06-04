@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/pkg/errors"
+	"github.com/baetyl/baetyl-go/errors"
 )
 
 // PathExists checks path exists
@@ -43,37 +43,37 @@ func FileExists(path string) bool {
 func WriteFile(fn string, r io.Reader) error {
 	f, err := os.Create(fn)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	defer f.Close()
 
 	_, err = io.Copy(f, r)
-	return errors.WithStack(err)
+	return errors.Trace(err)
 }
 
 // CopyFile copy data from one file to another
 func CopyFile(s, t string) error {
 	sf, err := os.Open(s)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Trace(err)
 	}
 	defer sf.Close()
 
-	return errors.WithStack(WriteFile(t, sf))
+	return errors.Trace(WriteFile(t, sf))
 }
 
 // CalculateFileMD5 calculates file MD5
 func CalculateFileMD5(fn string) (string, error) {
 	f, err := os.Open(fn)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", errors.Trace(err)
 	}
 	defer f.Close()
 
 	hasher := md5.New()
 	_, err = io.Copy(hasher, f)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", errors.Trace(err)
 	}
 	return base64.StdEncoding.EncodeToString(hasher.Sum(nil)), nil
 }

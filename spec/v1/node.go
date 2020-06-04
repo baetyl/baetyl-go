@@ -2,12 +2,13 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 	"time"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/evanphx/json-patch"
-	"github.com/pkg/errors"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -19,7 +20,7 @@ const (
 )
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
-var ErrJSONLevelExceedsLimit = errors.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
+var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
 
 // Node the spec of node
 type Node struct {
@@ -66,18 +67,18 @@ type Desire map[string]interface{}
 
 // Merge merge new reported data
 func (r Report) Merge(reported Report) error {
-	return errors.WithStack(merge(r, reported, 1, maxJSONLevel))
+	return errors.Trace(merge(r, reported, 1, maxJSONLevel))
 }
 
 // Merge merge new reported data
 func (d Desire) Merge(desired Desire) error {
-	return errors.WithStack(merge(d, desired, 1, maxJSONLevel))
+	return errors.Trace(merge(d, desired, 1, maxJSONLevel))
 }
 
 // Diff diff with reported data, return the delta fo desire
 func (d Desire) Diff(reported Report) (Desire, error) {
 	res, err := diff(d, reported)
-	return res, errors.WithStack(err)
+	return res, errors.Trace(err)
 }
 
 func (r Report) AppInfos(isSys bool) []AppInfo {
@@ -148,18 +149,18 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 	view := new(NodeView)
 	nodeStr, err := json.Marshal(n)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	err = json.Unmarshal(nodeStr, view)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Trace(err)
 	}
 	if err = view.populateNodeStatus(timeout); err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	if report := view.Report; report != nil {
 		if err = report.translateServiceResouceQuantity(); err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 	}
 	return view, nil
@@ -174,12 +175,12 @@ func (view *NodeView) populateNodeStatus(timeout time.Duration) (err error) {
 	s.Percent = map[string]string{}
 	memory := string(coreV1.ResourceMemory)
 	if s.Percent[memory], err = s.processResourcePercent(s, memory, populateMemoryResource); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	cpu := string(coreV1.ResourceCPU)
 	if s.Percent[cpu], err = s.processResourcePercent(s, cpu, populateCPUResource); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	if view.Report.Time != nil {
@@ -197,12 +198,12 @@ func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType str
 	var err error
 	if capOk {
 		if total, err = populate(cap, status.Capacity); err != nil {
-			return "0", err
+			return "0", errors.Trace(err)
 		}
 	}
 	if usageOk {
 		if usage, err = populate(usg, status.Usage); err != nil {
-			return "0", err
+			return "0", errors.Trace(err)
 		}
 	}
 
@@ -220,7 +221,7 @@ func (view *ReportView) translateServiceResouceQuantity() error {
 		}
 		for _, v := range services {
 			if err := v.translateResouceQuantity(); err != nil {
-				return err
+				return errors.Trace(err)
 			}
 		}
 	}
@@ -234,13 +235,13 @@ func (s *ServiceInfo) translateResouceQuantity() error {
 
 	if cpuUsage, cpuOk := s.Usage[string(coreV1.ResourceCPU)]; cpuOk {
 		if _, err := populateCPUResource(cpuUsage, s.Usage); err != nil {
-			return err
+			return errors.Trace(err)
 		}
 	}
 
 	if memoryUsage, mOk := s.Usage[string(coreV1.ResourceMemory)]; mOk {
 		if _, err := populateMemoryResource(memoryUsage, s.Usage); err != nil {
-			return err
+			return errors.Trace(err)
 		}
 	}
 	return nil
@@ -300,7 +301,7 @@ func merge(left, right map[string]interface{}, depth, maxDepth int) error {
 			continue
 		}
 		if err := merge(lv.(map[string]interface{}), rv.(map[string]interface{}), depth+1, maxDepth); err != nil {
-			return err
+			return errors.Trace(err)
 		}
 	}
 	return nil
@@ -310,19 +311,19 @@ func diff(desired, reported map[string]interface{}) (map[string]interface{}, err
 	var delta map[string]interface{}
 	r, err := json.Marshal(reported)
 	if err != nil {
-		return delta, errors.WithStack(err)
+		return delta, errors.Trace(err)
 	}
 	d, err := json.Marshal(desired)
 	if err != nil {
-		return delta, errors.WithStack(err)
+		return delta, errors.Trace(err)
 	}
 	patch, err := jsonpatch.CreateMergePatch(r, d)
 	if err != nil {
-		return delta, errors.WithStack(err)
+		return delta, errors.Trace(err)
 	}
 	err = json.Unmarshal(patch, &delta)
 	if err != nil {
-		return delta, errors.WithStack(err)
+		return delta, errors.Trace(err)
 	}
 	clean(delta)
 	return delta, nil
@@ -347,7 +348,7 @@ func clean(m map[string]interface{}) {
 func populateCPUResource(usage string, resource map[string]string) (int64, error) {
 	usg, err := translateQuantityToDecimal(usage, true)
 	if err != nil {
-		return 0, err
+		return 0, errors.Trace(err)
 	}
 	resource[string(coreV1.ResourceCPU)] = strconv.FormatFloat(float64(usg)/milliPrecision, 'f', -1, 64)
 	return usg, nil
@@ -356,7 +357,7 @@ func populateCPUResource(usage string, resource map[string]string) (int64, error
 func populateMemoryResource(usage string, resource map[string]string) (int64, error) {
 	usg, err := translateQuantityToDecimal(usage, false)
 	if err != nil {
-		return 0, err
+		return 0, errors.Trace(err)
 	}
 	resource[string(coreV1.ResourceMemory)] = strconv.FormatInt(usg, 10)
 	return usg, nil
@@ -365,7 +366,7 @@ func populateMemoryResource(usage string, resource map[string]string) (int64, er
 func translateQuantityToDecimal(q string, milli bool) (int64, error) {
 	num, err := resource.ParseQuantity(q)
 	if err != nil {
-		return 0, errors.WithStack(err)
+		return 0, errors.Trace(err)
 	}
 	if milli {
 		return num.MilliValue(), nil

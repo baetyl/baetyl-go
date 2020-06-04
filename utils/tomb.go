@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"fmt"
 	"sync"
 
+	"github.com/pkg/errors"
 	tb "gopkg.in/tomb.v2"
 )
 
@@ -29,7 +29,7 @@ type Tomb struct {
 func (t *Tomb) Go(fs ...func() error) (err error) {
 	defer func() {
 		if p := recover(); p != nil {
-			err = fmt.Errorf("%v", p)
+			err = errors.Errorf("%v", p)
 		}
 	}()
 	t.m.Lock()

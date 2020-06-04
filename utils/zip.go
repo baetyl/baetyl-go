@@ -3,8 +3,8 @@ package utils
 import (
 	"compress/flate"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/mholt/archiver"
-	"github.com/pkg/errors"
 )
 
 var defaultZip = &archiver.Zip{
@@ -16,10 +16,10 @@ var defaultZip = &archiver.Zip{
 
 // Zip zip source files to destination file
 func Zip(sources []string, destination string) error {
-	return errors.WithStack(defaultZip.Archive(sources, destination))
+	return errors.Trace(defaultZip.Archive(sources, destination))
 }
 
 // Unzip unzip source file to destination
 func Unzip(source, destination string) error {
-	return errors.WithStack(defaultZip.Unarchive(source, destination))
+	return errors.Trace(defaultZip.Unarchive(source, destination))
 }
