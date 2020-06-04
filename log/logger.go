@@ -35,7 +35,7 @@ func init() {
 	}
 	err = zap.RegisterSink("lumberjack", newFileHook)
 	if err != nil {
-		l.Error("failed to register lumberjack", Error(errors.WithStack(err)))
+		l.Error("failed to register lumberjack", Error(err))
 	}
 	zap.ReplaceGlobals(l)
 }
