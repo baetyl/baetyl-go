@@ -48,7 +48,7 @@ type Service struct {
 	// specifies host network mode of service
 	HostNetwork bool `json:"hostNetwork,omitempty"`
 	// specifies function config of service
-	FunctionConfig ServiceFunctionConfig `json:"functionConfig,omitempty"`
+	FunctionConfig *ServiceFunctionConfig `json:"functionConfig,omitempty"`
 	// specifies functions of service
 	Functions []ServiceFunction `json:"functions,omitempty"`
 }
