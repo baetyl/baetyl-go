@@ -5,6 +5,7 @@ import "time"
 // Application application info
 type Application struct {
 	Name              string            `json:"name,omitempty" validate:"resourceName,nonBaetyl"`
+	Type              string            `json:"type,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Namespace         string            `json:"namespace,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty"`
@@ -46,6 +47,10 @@ type Service struct {
 	SecurityContext *SecurityContext `json:"security,omitempty"`
 	// specifies host network mode of service
 	HostNetwork bool `json:"hostNetwork,omitempty"`
+	// specifies function config of service
+	FunctionConfig ServiceFunctionConfig `json:"functionConfig,omitempty"`
+	// specifies functions of service
+	Functions []ServiceFunction `json:"functions,omitempty"`
 }
 
 type SecurityContext struct {
@@ -118,4 +123,15 @@ type Retry struct {
 type Resources struct {
 	Limits   map[string]string `json:"limits,omitempty"`
 	Requests map[string]string `json:"requests,omitempty"`
+}
+
+type ServiceFunctionConfig struct {
+	Name    string `json:"name,omitempty" validate:"resourceName"`
+	Runtime string `json:"runtime,omitempty"`
+}
+
+type ServiceFunction struct {
+	Name    string `json:"name,omitempty"`
+	Handler string `json:"handler,omitempty"`
+	CodeDir string `json:"codedir,omitempty"`
 }
