@@ -214,6 +214,18 @@ func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType str
 }
 
 func (view *ReportView) translateServiceResouceQuantity() error {
+	for idx := range view.SysAppStats {
+		services := view.SysAppStats[idx].ServiceInfos
+		if services == nil {
+			continue
+		}
+		for _, v := range services {
+			if err := v.translateResouceQuantity(); err != nil {
+				return errors.Trace(err)
+			}
+		}
+	}
+
 	for idx := range view.AppStats {
 		services := view.AppStats[idx].ServiceInfos
 		if services == nil {
@@ -225,6 +237,7 @@ func (view *ReportView) translateServiceResouceQuantity() error {
 			}
 		}
 	}
+
 	return nil
 }
 
