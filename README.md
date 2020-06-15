@@ -7,4 +7,4 @@ baetyl-go
 
 Golang SDK for BAETYL V2
 
-Please use [Old SDK](https://github.com/baetyl/baetyl/tree/master/sdk/baetyl-go) if working on [BAETYL V1](https://github.com/baetyl/baetyl).
+Please use [Old SDK](https://github.com/baetyl/baetyl/tree/stable/1/sdk/baetyl-go) if working on [BAETYL V1](https://github.com/baetyl/baetyl).
