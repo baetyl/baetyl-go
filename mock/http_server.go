@@ -8,8 +8,8 @@ import (
 
 // Response the mocked http repsonse
 type Response struct {
-	status int
-	body   []byte
+	Status int
+	Body   []byte
 }
 
 // NewResponse create a new repsonse
@@ -31,8 +31,8 @@ func NewServer(tlsConfig *tls.Config, responses ...*Response) *Server {
 		if len(ms.responses) == 0 {
 			return
 		}
-		w.WriteHeader(ms.responses[0].status)
-		w.Write(ms.responses[0].body)
+		w.WriteHeader(ms.responses[0].Status)
+		w.Write(ms.responses[0].Body)
 		ms.responses = ms.responses[1:]
 	}))
 	if tlsConfig == nil {

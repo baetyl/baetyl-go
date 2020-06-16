@@ -80,7 +80,7 @@ func (c *Client) GetJSON(url string) ([]byte, error) {
 }
 
 func (c *Client) GetURL(url string, header ...map[string]string) (*gohttp.Response, error) {
-	return c.SendUrl("POST", url, nil, header...)
+	return c.SendUrl("GET", url, nil, header...)
 }
 
 func (c *Client) PostURL(url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
