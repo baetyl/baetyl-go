@@ -80,23 +80,17 @@ func (c *Client) GetJSON(url string) ([]byte, error) {
 }
 
 func (c *Client) GetURL(url string, header ...map[string]string) (*gohttp.Response, error) {
-	req, err := gohttp.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, errors.Trace(err)
-	}
-	for _, v := range header {
-		for kk, vv := range v {
-			req.Header.Set(kk, vv)
-		}
-	}
-	r, err := c.http.Do(req)
-	return r, errors.Trace(err)
+	return c.SendUrl("GET", url, nil, header...)
 }
 
 func (c *Client) PostURL(url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
-	req, err := gohttp.NewRequest("POST", url, body)
+	return c.SendUrl("POST", url, body, header...)
+}
+
+func (c *Client) SendUrl(method, url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
+	req, err := gohttp.NewRequest(method, url, body)
 	if err != nil {
-		return nil, errors.Trace(err)
+		return nil, err
 	}
 	for _, v := range header {
 		for kk, vv := range v {

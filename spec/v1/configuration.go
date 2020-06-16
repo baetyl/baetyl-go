@@ -20,10 +20,10 @@ type Configuration struct {
 // ConfigurationObject extended feature for object configuration
 type ConfigurationObject struct {
 	// hex format
-	MD5    string `json:"md5,omitempty" yaml:"md5"`
-	Sha256 string `json:"sha256,omitempty" yaml:"sha256"`
-	URL    string `json:"url,omitempty" yaml:"url"`
-	Token  string `json:"token,omitempty" yaml:"token"`
-	Unpack string `json:"unpack,omitempty" yaml:"unpack"`
-	Metadata    map[string]string `json:"metadata,omitempty" yaml:"metadata"`
+	MD5      string            `json:"md5,omitempty" yaml:"md5"`
+	Sha256   string            `json:"sha256,omitempty" yaml:"sha256"`
+	URL      string            `json:"url,omitempty" yaml:"url"`
+	Token    string            `json:"token,omitempty" yaml:"token"`
+	Unpack   string            `json:"unpack,omitempty" yaml:"unpack"`
+	Metadata map[string]string `json:"metadata,omitempty" yaml:"metadata"`
 }

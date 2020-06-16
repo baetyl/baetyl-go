@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/baetyl/baetyl-go/mock"
@@ -61,4 +62,37 @@ func TestClieneBadRequests(t *testing.T) {
 	data, err = c.PostJSON(ms.URL, []byte("abc"))
 	assert.EqualError(t, err, "[400] abc")
 	assert.Equal(t, "abc", string(data))
+}
+
+func TestSendURL(t *testing.T) {
+	resp := []*mock.Response{
+		mock.NewResponse(200, []byte("Get")),
+		mock.NewResponse(200, []byte("Post")),
+		mock.NewResponse(200, []byte("Put")),
+	}
+	ms := mock.NewServer(nil, resp...)
+	defer ms.Close()
+
+	header := map[string]string{
+		"a": "b",
+	}
+
+	cli := NewClient(NewClientOptions())
+	res, err := cli.GetURL(ms.URL, header)
+	assert.NoError(t, err)
+	data, err := HandleResponse(res)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("Get"), data)
+
+	res, err = cli.PostURL(ms.URL, bytes.NewReader([]byte("body")), header)
+	assert.NoError(t, err)
+	data, err = HandleResponse(res)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("Post"), data)
+
+	res, err = cli.GetURL(ms.URL, header)
+	assert.NoError(t, err)
+	data, err = HandleResponse(res)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("Put"), data)
 }
