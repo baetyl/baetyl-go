@@ -66,9 +66,9 @@ func TestClieneBadRequests(t *testing.T) {
 
 func TestSendURL(t *testing.T) {
 	resp := []*mock.Response{
-		{Status: 200, Body: []byte("Get")},
-		{Status: 200, Body: []byte("Post")},
-		{Status: 200, Body: []byte("Put")},
+		mock.NewResponse(200, []byte("Get")),
+		mock.NewResponse(200, []byte("Post")),
+		mock.NewResponse(200, []byte("Put")),
 	}
 	ms := mock.NewServer(nil, resp...)
 	defer ms.Close()
