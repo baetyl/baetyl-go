@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"io"
 	"os"
 
@@ -62,7 +63,7 @@ func CopyFile(s, t string) error {
 	return errors.Trace(WriteFile(t, sf))
 }
 
-// CalculateFileMD5 calculates file MD5
+// CalculateFileMD5 calculates file MD5 in hex format
 func CalculateFileMD5(fn string) (string, error) {
 	f, err := os.Open(fn)
 	if err != nil {
@@ -75,7 +76,7 @@ func CalculateFileMD5(fn string) (string, error) {
 	if err != nil {
 		return "", errors.Trace(err)
 	}
-	return base64.StdEncoding.EncodeToString(hasher.Sum(nil)), nil
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 // CalculateBase64 calculates base64 encoding value of target string
