@@ -42,7 +42,7 @@ type AppInfo struct {
 type AppStats struct {
 	AppInfo       `yaml:",inline" json:",inline"`
 	Status        AppStatus                `yaml:"status,omitempty" json:"status,omitempty"`
-	InstanceInfos map[string]InstanceStats `yaml:"instances,omitempty" json:"instances,omitempty"`
+	InstanceStats map[string]InstanceStats `yaml:"instances,omitempty" json:"instances,omitempty"`
 }
 
 type CoreInfo struct {
