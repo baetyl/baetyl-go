@@ -2,13 +2,13 @@ package v1
 
 import "time"
 
-type ApplicationStatus string
+type AppStatus string
 
 const (
-	Pending ApplicationStatus = "Pending"
-	Failed  ApplicationStatus = "Failed"
-	Running ApplicationStatus = "Running"
-	Unknown ApplicationStatus = "Unknown"
+	Pending AppStatus = "Pending"
+	Failed  AppStatus = "Failed"
+	Running AppStatus = "Running"
+	Unknown AppStatus = "Unknown"
 )
 
 // NodeInfo node info
@@ -25,8 +25,8 @@ type NodeInfo struct {
 	OSImage          string `yaml:"osImage,omitempty" json:"osImage"`
 }
 
-// NodeStatus node status
-type NodeStatus struct {
+// NodeStats node statistics
+type NodeStats struct {
 	Usage    map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
 	Capacity map[string]string `yaml:"capacity,omitempty" json:"capacity,omitempty"`
 	Percent  map[string]string `yaml:"percent,omitempty" json:"percent,omitempty"`
@@ -38,11 +38,11 @@ type AppInfo struct {
 	Version string `yaml:"version,omitempty" json:"version,omitempty"`
 }
 
-// AppStatus app status
-type AppStatus struct {
+// AppStats app statistics
+type AppStats struct {
 	AppInfo       `yaml:",inline" json:",inline"`
-	Status        string                   `yaml:"status,omitempty" json:"status,omitempty"`
-	InstanceInfos map[string]*InstanceInfo `yaml:"instances,omitempty" json:"instances,omitempty"`
+	Status        AppStatus                `yaml:"status,omitempty" json:"status,omitempty"`
+	InstanceInfos map[string]InstanceStats `yaml:"instances,omitempty" json:"instances,omitempty"`
 }
 
 type CoreInfo struct {
@@ -52,11 +52,11 @@ type CoreInfo struct {
 }
 
 // ServiceInfo service info
-type InstanceInfo struct {
+type InstanceStats struct {
 	Name        string            `yaml:"name,omitempty" json:"name,omitempty"`
 	ServiceName string            `yaml:"serviceName,omitempty" json:"serviceName"`
 	Usage       map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
-	Status      string            `yaml:"status,omitempty" json:"status,omitempty"`
+	Status      AppStatus         `yaml:"status,omitempty" json:"status,omitempty"`
 	Cause       string            `yaml:"cause,omitempty" json:"cause,omitempty"`
 	CreateTime  time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
 }
