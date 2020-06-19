@@ -2,6 +2,15 @@ package v1
 
 import "time"
 
+type ApplicationStatus string
+
+const (
+	Pending ApplicationStatus = "Pending"
+	Failed  ApplicationStatus = "Failed"
+	Running ApplicationStatus = "Running"
+	Unknown ApplicationStatus = "Unknown"
+)
+
 // NodeInfo node info
 type NodeInfo struct {
 	Hostname         string `yaml:"hostname,omitempty" json:"hostname,omitempty"`
@@ -31,10 +40,9 @@ type AppInfo struct {
 
 // AppStatus app status
 type AppStatus struct {
-	AppInfo      `yaml:",inline" json:",inline"`
-	Status       string                  `yaml:"status,omitempty" json:"status,omitempty"`
-	Cause        string                  `yaml:"cause,omitempty" json:"cause,omitempty"`
-	ServiceInfos map[string]*ServiceInfo `yaml:"services,omitempty" json:"services,omitempty"`
+	AppInfo       `yaml:",inline" json:",inline"`
+	Status        string                   `yaml:"status,omitempty" json:"status,omitempty"`
+	InstanceInfos map[string]*InstanceInfo `yaml:"instances,omitempty" json:"instances,omitempty"`
 }
 
 type CoreInfo struct {
@@ -44,17 +52,11 @@ type CoreInfo struct {
 }
 
 // ServiceInfo service info
-type ServiceInfo struct {
-	Name       string            `yaml:"name,omitempty" json:"name,omitempty"`
-	Container  Container         `yaml:"container,omitempty" json:"container,omitempty"`
-	Usage      map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
-	Status     string            `yaml:"status,omitempty" json:"status,omitempty"`
-	Cause      string            `yaml:"cause,omitempty" json:"cause,omitempty"`
-	CreateTime time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
-}
-
-// Container container info
-type Container struct {
-	Name string `yaml:"name,omitempty" json:"name,omitempty"`
-	ID   string `yaml:"id,omitempty" json:"id,omitempty"`
+type InstanceInfo struct {
+	Name        string            `yaml:"name,omitempty" json:"name,omitempty"`
+	ServiceName string            `yaml:"serviceName,omitempty" json:"serviceName"`
+	Usage       map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
+	Status      string            `yaml:"status,omitempty" json:"status,omitempty"`
+	Cause       string            `yaml:"cause,omitempty" json:"cause,omitempty"`
+	CreateTime  time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
 }
