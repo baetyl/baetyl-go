@@ -49,14 +49,14 @@ type NodeView struct {
 }
 
 type ReportView struct {
-	Time        *time.Time  `json:"time,omitempty"`
-	Apps        []AppInfo   `json:"apps,omitempty"`
-	SysApps     []AppInfo   `json:"sysapps,omitempty"`
-	Core        *CoreInfo   `json:"core,omitempty"`
-	AppStats    []AppStatus `json:"appstats,omitempty"`
-	SysAppStats []AppStatus `json:"sysappstats,omitempty"`
-	Node        *NodeInfo   `json:"node,omitempty"`
-	NodeStatus  *NodeStatus `json:"nodestats,omitempty"`
+	Time        *time.Time `json:"time,omitempty"`
+	Apps        []AppInfo  `json:"apps,omitempty"`
+	SysApps     []AppInfo  `json:"sysapps,omitempty"`
+	Core        *CoreInfo  `json:"core,omitempty"`
+	AppStats    []AppStats `json:"appstats,omitempty"`
+	SysAppStats []AppStats `json:"sysappstats,omitempty"`
+	Node        *NodeInfo  `json:"node,omitempty"`
+	NodeStats   *NodeStats `json:"nodestats,omitempty"`
 }
 
 // Report report data
@@ -167,11 +167,11 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 }
 
 func (view *NodeView) populateNodeStatus(timeout time.Duration) (err error) {
-	if view.Report == nil || view.Report.NodeStatus == nil {
+	if view.Report == nil || view.Report.NodeStats == nil {
 		return nil
 	}
 
-	s := view.Report.NodeStatus
+	s := view.Report.NodeStats
 	s.Percent = map[string]string{}
 	memory := string(coreV1.ResourceMemory)
 	if s.Percent[memory], err = s.processResourcePercent(s, memory, populateMemoryResource); err != nil {
@@ -190,7 +190,7 @@ func (view *NodeView) populateNodeStatus(timeout time.Duration) (err error) {
 	return
 }
 
-func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType string,
+func (s *NodeStats) processResourcePercent(status *NodeStats, resourceType string,
 	populate func(usage string, resource map[string]string) (int64, error)) (string, error) {
 	cap, capOk := status.Capacity[resourceType]
 	usg, usageOk := status.Usage[resourceType]
@@ -215,11 +215,11 @@ func (s *NodeStatus) processResourcePercent(status *NodeStatus, resourceType str
 
 func (view *ReportView) translateServiceResouceQuantity() error {
 	for idx := range view.SysAppStats {
-		services := view.SysAppStats[idx].ServiceInfos
-		if services == nil {
+		instances := view.SysAppStats[idx].InstanceStats
+		if instances == nil {
 			continue
 		}
-		for _, v := range services {
+		for _, v := range instances {
 			if err := v.translateResouceQuantity(); err != nil {
 				return errors.Trace(err)
 			}
@@ -227,7 +227,7 @@ func (view *ReportView) translateServiceResouceQuantity() error {
 	}
 
 	for idx := range view.AppStats {
-		services := view.AppStats[idx].ServiceInfos
+		services := view.AppStats[idx].InstanceStats
 		if services == nil {
 			continue
 		}
@@ -241,7 +241,7 @@ func (view *ReportView) translateServiceResouceQuantity() error {
 	return nil
 }
 
-func (s *ServiceInfo) translateResouceQuantity() error {
+func (s *InstanceStats) translateResouceQuantity() error {
 	if s.Usage == nil {
 		return nil
 	}
