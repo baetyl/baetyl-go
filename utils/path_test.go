@@ -115,7 +115,7 @@ func TestCalculateMD5(t *testing.T) {
 	ioutil.WriteFile(src, []byte("zyx"), 0644)
 	md5, err := CalculateFileMD5(src)
 	assert.NoError(t, err)
-	assert.Equal(t, "+sl+V5Y5vj8Q22caRGLtkQ==", md5)
+	assert.Equal(t, "fac97e579639be3f10db671a4462ed91", md5)
 }
 
 func TestCalculateBase64(t *testing.T) {
