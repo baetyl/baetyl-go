@@ -5,7 +5,7 @@ import "time"
 // Application application info
 type Application struct {
 	Name              string            `json:"name,omitempty" validate:"resourceName,nonBaetyl"`
-	Type              string            `json:"type,omitempty"`
+	Type              string            `json:"type,omitempty" default:"container"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Namespace         string            `json:"namespace,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty"`
