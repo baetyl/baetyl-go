@@ -284,7 +284,7 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 	assert.Equal(t, view.Ready, false)
 }
 
-func TestPopulateNodeStatus(t *testing.T) {
+func TestPopulateNodeStats(t *testing.T) {
 	t1 := time.Now().Add(-2 * time.Minute)
 	node1 := NodeView{
 		Report: &ReportView{
@@ -301,7 +301,7 @@ func TestPopulateNodeStatus(t *testing.T) {
 			Time: &t1,
 		},
 	}
-	err := node1.populateNodeStatus(time.Minute)
+	err := node1.populateNodeStats(time.Minute)
 	assert.NoError(t, err)
 	m1, err1 := translateQuantityToDecimal("1024Mi", false)
 	assert.NoError(t, err1)
@@ -333,7 +333,7 @@ func TestPopulateNodeStatus(t *testing.T) {
 			Time: &t2,
 		},
 	}
-	err = node2.populateNodeStatus(time.Minute)
+	err = node2.populateNodeStats(time.Minute)
 	assert.NoError(t, err)
 	assert.Equal(t, node2.Report.NodeStats.Capacity[string(coreV1.ResourceMemory)], s1)
 	assert.Equal(t, node2.Report.NodeStats.Capacity[string(coreV1.ResourceCPU)], "2")
@@ -358,7 +358,7 @@ func TestPopulateNodeStatus(t *testing.T) {
 		},
 	}
 
-	err = node3.populateNodeStatus(time.Minute)
+	err = node3.populateNodeStats(time.Minute)
 	assert.NoError(t, err)
 	assert.Equal(t, node3.Report.NodeStats.Capacity[string(coreV1.ResourceCPU)], "2")
 	assert.Equal(t, node3.Report.NodeStats.Usage[string(coreV1.ResourceCPU)], "0.5")
@@ -381,7 +381,7 @@ func TestPopulateNodeStatus(t *testing.T) {
 		},
 	}
 
-	err = node4.populateNodeStatus(time.Minute)
+	err = node4.populateNodeStats(time.Minute)
 	assert.Error(t, err)
 
 	node5 := NodeView{
@@ -399,7 +399,7 @@ func TestPopulateNodeStatus(t *testing.T) {
 		},
 	}
 
-	err = node5.populateNodeStatus(time.Minute)
+	err = node5.populateNodeStats(time.Minute)
 	assert.Error(t, err)
 
 	node6 := NodeView{
@@ -416,7 +416,7 @@ func TestPopulateNodeStatus(t *testing.T) {
 			},
 		},
 	}
-	err = node6.populateNodeStatus(time.Minute)
+	err = node6.populateNodeStats(time.Minute)
 	assert.NoError(t, err)
 	assert.Equal(t, node6.Report.NodeStats.Capacity[string(coreV1.ResourceCPU)], "0")
 	assert.Equal(t, node6.Report.NodeStats.Usage[string(coreV1.ResourceCPU)], "0")

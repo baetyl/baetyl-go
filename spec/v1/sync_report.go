@@ -2,13 +2,13 @@ package v1
 
 import "time"
 
-type AppStatus string
+type Status string
 
 const (
-	Pending AppStatus = "Pending"
-	Failed  AppStatus = "Failed"
-	Running AppStatus = "Running"
-	Unknown AppStatus = "Unknown"
+	Pending Status = "Pending"
+	Failed  Status = "Failed"
+	Running Status = "Running"
+	Unknown Status = "Unknown"
 )
 
 // NodeInfo node info
@@ -41,7 +41,7 @@ type AppInfo struct {
 // AppStats app statistics
 type AppStats struct {
 	AppInfo       `yaml:",inline" json:",inline"`
-	Status        AppStatus                `yaml:"status,omitempty" json:"status,omitempty"`
+	Status        Status                   `yaml:"status,omitempty" json:"status,omitempty"`
 	InstanceStats map[string]InstanceStats `yaml:"instances,omitempty" json:"instances,omitempty"`
 }
 
@@ -51,12 +51,12 @@ type CoreInfo struct {
 	GitRevision string `yaml:"gitRevision,omitempty" json:"gitRevision,omitempty"`
 }
 
-// ServiceInfo service info
+// InstanceStats instance stats
 type InstanceStats struct {
 	Name        string            `yaml:"name,omitempty" json:"name,omitempty"`
 	ServiceName string            `yaml:"serviceName,omitempty" json:"serviceName"`
 	Usage       map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
-	Status      AppStatus         `yaml:"status,omitempty" json:"status,omitempty"`
+	Status      Status            `yaml:"status,omitempty" json:"status,omitempty"`
 	Cause       string            `yaml:"cause,omitempty" json:"cause,omitempty"`
 	CreateTime  time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
 }
