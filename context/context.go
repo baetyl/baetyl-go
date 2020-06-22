@@ -17,6 +17,7 @@ const (
 	EnvKeyNodeName    = "BAETYL_NODE_NAME"
 	EnvKeyAppName     = "BAETYL_APP_NAME"
 	EnvKeyServiceName = "BAETYL_SERVICE_NAME"
+	EnvKeyCodePath    = "BAETYL_CODE_PATH"
 )
 
 // Context of service
