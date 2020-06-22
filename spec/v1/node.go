@@ -113,7 +113,7 @@ func (d Desire) SetAppInfos(isSys bool, apps []AppInfo) {
 	}
 }
 
-func (r Report) SetAppStats(isSys bool, stats []AppStatus) {
+func (r Report) SetAppStats(isSys bool, stats []AppStats) {
 	if isSys {
 		r["sysappstats"] = stats
 	} else {
@@ -121,7 +121,7 @@ func (r Report) SetAppStats(isSys bool, stats []AppStatus) {
 	}
 }
 
-func (d Desire) SetAppStats(isSys bool, stats []AppStatus) {
+func (d Desire) SetAppStats(isSys bool, stats []AppStats) {
 	if isSys {
 		d["sysappstats"] = stats
 	} else {
@@ -129,7 +129,7 @@ func (d Desire) SetAppStats(isSys bool, stats []AppStatus) {
 	}
 }
 
-func (r Report) AppStats(isSys bool) []AppStatus {
+func (r Report) AppStats(isSys bool) []AppStats {
 	if isSys {
 		return getAppStats("sysappstats", r)
 	} else {
@@ -137,7 +137,7 @@ func (r Report) AppStats(isSys bool) []AppStatus {
 	}
 }
 
-func (d Desire) AppStats(isSys bool) []AppStatus {
+func (d Desire) AppStats(isSys bool) []AppStats {
 	if isSys {
 		return getAppStats("sysappstats", d)
 	} else {
@@ -155,18 +155,18 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	if err = view.populateNodeStatus(timeout); err != nil {
+	if err = view.populateNodeStats(timeout); err != nil {
 		return nil, errors.Trace(err)
 	}
 	if report := view.Report; report != nil {
-		if err = report.translateServiceResouceQuantity(); err != nil {
+		if err = report.translateServiceResourceQuantity(); err != nil {
 			return nil, errors.Trace(err)
 		}
 	}
 	return view, nil
 }
 
-func (view *NodeView) populateNodeStatus(timeout time.Duration) (err error) {
+func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 	if view.Report == nil || view.Report.NodeStats == nil {
 		return nil
 	}
@@ -213,14 +213,14 @@ func (s *NodeStats) processResourcePercent(status *NodeStats, resourceType strin
 	return "0", nil
 }
 
-func (view *ReportView) translateServiceResouceQuantity() error {
+func (view *ReportView) translateServiceResourceQuantity() error {
 	for idx := range view.SysAppStats {
 		instances := view.SysAppStats[idx].InstanceStats
 		if instances == nil {
 			continue
 		}
 		for _, v := range instances {
-			if err := v.translateResouceQuantity(); err != nil {
+			if err := v.translateResourceQuantity(); err != nil {
 				return errors.Trace(err)
 			}
 		}
@@ -232,7 +232,7 @@ func (view *ReportView) translateServiceResouceQuantity() error {
 			continue
 		}
 		for _, v := range services {
-			if err := v.translateResouceQuantity(); err != nil {
+			if err := v.translateResourceQuantity(); err != nil {
 				return errors.Trace(err)
 			}
 		}
@@ -241,7 +241,7 @@ func (view *ReportView) translateServiceResouceQuantity() error {
 	return nil
 }
 
-func (s *InstanceStats) translateResouceQuantity() error {
+func (s *InstanceStats) translateResourceQuantity() error {
 	if s.Usage == nil {
 		return nil
 	}
@@ -287,7 +287,7 @@ func getAppInfos(appType string, data map[string]interface{}) []AppInfo {
 	return res
 }
 
-func getAppStats(statsType string, data map[string]interface{}) []AppStatus {
+func getAppStats(statsType string, data map[string]interface{}) []AppStats {
 	if data == nil {
 		return nil
 	}
@@ -295,7 +295,7 @@ func getAppStats(statsType string, data map[string]interface{}) []AppStatus {
 	if !ok || apps == nil {
 		return nil
 	}
-	if res, ok := apps.([]AppStatus); ok {
+	if res, ok := apps.([]AppStats); ok {
 		return res
 	} else {
 		return nil
