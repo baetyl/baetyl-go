@@ -42,6 +42,7 @@ type AppInfo struct {
 type AppStats struct {
 	AppInfo       `yaml:",inline" json:",inline"`
 	Status        Status                   `yaml:"status,omitempty" json:"status,omitempty"`
+	Cause         string                   `yaml:"cause,omitempty" json:"cause,omitempty"`
 	InstanceStats map[string]InstanceStats `yaml:"instances,omitempty" json:"instances,omitempty"`
 }
 
