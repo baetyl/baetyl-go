@@ -112,8 +112,8 @@ type VolumeMount struct {
 	MountPath string `json:"mountPath,omitempty"`
 	// specifies if the volume is read-only
 	ReadOnly bool `json:"readOnly,omitempty"`
-	// specifies if the volumeMount is mutable
-	Mutable bool `json:"mutable,omitempty"`
+	// specifies if the volumeMount is immutable
+	Immutable bool `json:"immutable,omitempty"`
 }
 
 // Retry retry config
