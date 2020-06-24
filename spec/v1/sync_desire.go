@@ -8,14 +8,12 @@ import (
 
 // DesireRequest body of request to sync desired data
 type DesireRequest struct {
-	CRDInfos []ResourceInfo `yaml:"crds" json:"crds"` // TODO: deprecated
-	Infos    []ResourceInfo `yaml:"infos" json:"infos"`
+	Infos []ResourceInfo `yaml:"infos" json:"infos"`
 }
 
 // DesireResponse body of response to sync desired data
 type DesireResponse struct {
-	CRDDatas []ResourceValue `yaml:"crds" json:"crds"` // TODO: deprecated
-	Values   []ResourceValue `yaml:"values" json:"values"`
+	Values []ResourceValue `yaml:"values" json:"values"`
 }
 
 // ResourceInfo desired info
