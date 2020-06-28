@@ -22,7 +22,6 @@ func TestMqttClientConnectErrorMissingAddress(t *testing.T) {
 	obs := newMockObserver(t)
 	err := cli.Start(obs)
 	assert.NoError(t, err)
-	obs.assertErrs(errors.New(`parse : empty url`))
 }
 
 func TestMqttClientConnectErrorWrongPort(t *testing.T) {
@@ -34,7 +33,6 @@ func TestMqttClientConnectErrorWrongPort(t *testing.T) {
 	obs := newMockObserver(t)
 	err := cli.Start(obs)
 	assert.NoError(t, err)
-	obs.assertErrs(errors.New("dial tcp: address 1234567: invalid port"))
 }
 
 func TestMqttClientConnectWithCredentials(t *testing.T) {
@@ -440,7 +438,7 @@ func TestMqttClientConnackTimeout2(t *testing.T) {
 	err := cli.Start(obs)
 	assert.NoError(t, err)
 
-	obs.assertErrs(errors.New("future timeout"))
+	obs.assertErrs(ErrFutureTimeout)
 	cli.Close()
 	safeReceive(done)
 }
@@ -573,9 +571,7 @@ func TestMqttClientReconnect2(t *testing.T) {
 	assert.NoError(t, err)
 
 	obs.assertErrs(io.EOF)
-	obs.assertErrs(ErrFutureCanceled)
 	obs.assertErrs(io.EOF)
-	obs.assertErrs(ErrFutureCanceled)
 
 	cli.Send(publish)
 	obs.assertPkts(publish)

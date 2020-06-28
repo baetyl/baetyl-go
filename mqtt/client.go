@@ -11,12 +11,12 @@ import (
 
 // Client auto reconnection client
 type Client struct {
-	ops      ClientOptions
-	ids      *Counter
-	cache    chan Packet
-	observer Observer
-	log      *log.Logger
-	tomb     utils.Tomb
+	ops   ClientOptions
+	ids   *Counter
+	cache chan Packet
+
+	log  *log.Logger
+	tomb utils.Tomb
 }
 
 // NewClient creates a new client
@@ -31,10 +31,9 @@ func NewClient(ops ClientOptions) *Client {
 }
 
 func (c *Client) Start(obs Observer) error {
-	if obs != nil {
-		c.observer = obs
-	}
-	return c.tomb.Go(c.connecting)
+	return c.tomb.Go(func() error {
+		return c.connecting(obs)
+	})
 }
 
 // Publish sends a publish packet
@@ -71,7 +70,7 @@ func (c *Client) Close() error {
 	return errors.Trace(c.tomb.Wait())
 }
 
-func (c *Client) connecting() error {
+func (c *Client) connecting(obs Observer) error {
 	c.log.Info("client starts to keep connecting")
 	defer c.log.Info("client has stopped connecting")
 
@@ -105,9 +104,9 @@ func (c *Client) connecting() error {
 
 		c.log.Info("client starts to connect")
 		next = time.Now().Add(bf.Duration())
-		stream, err = c.connect()
+		stream, err = c.connect(obs)
 		if err != nil {
-			c.onError("failed to connect", err)
+			c.log.Error("failed to connect", log.Error(err))
 			continue
 		}
 		c.log.Info("client has connected")
@@ -127,20 +126,6 @@ func (c *Client) onConnack(pkt Packet) error {
 	return nil
 }
 
-func (c *Client) onPublish(pkt *Publish) error {
-	if c.observer == nil {
-		return nil
-	}
-	return c.observer.OnPublish(pkt)
-}
-
-func (c *Client) onPuback(pkt *Puback) error {
-	if c.observer == nil {
-		return nil
-	}
-	return c.observer.OnPuback(pkt)
-}
-
 func (c *Client) onSuback(pkt *Suback) error {
 	for _, code := range pkt.ReturnCodes {
 		if code == QOSFailure {
@@ -148,12 +133,4 @@ func (c *Client) onSuback(pkt *Suback) error {
 		}
 	}
 	return nil
-}
-
-func (c *Client) onError(msg string, err error) {
-	if c.observer == nil || err == nil {
-		return
-	}
-	c.log.Error(msg, log.Error(err))
-	c.observer.OnError(err)
 }

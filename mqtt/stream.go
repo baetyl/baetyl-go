@@ -15,6 +15,7 @@ const subscribeId = 1
 
 type stream struct {
 	cli             *Client
+	observer        Observer
 	conn            Connection
 	connectFuture   *Future
 	subscribeFuture *Future
@@ -24,7 +25,7 @@ type stream struct {
 	mu              sync.Mutex
 }
 
-func (c *Client) connect() (*stream, error) {
+func (c *Client) connect(obs Observer) (s *stream, err error) {
 	// dialing
 	dialer := NewDialer(c.ops.TLSConfig, c.ops.Timeout)
 	conn, err := dialer.Dial(c.ops.Address)
@@ -57,8 +58,9 @@ func (c *Client) connect() (*stream, error) {
 		}
 	}
 
-	s := &stream{
+	s = &stream{
 		cli:             c,
+		observer:        obs,
 		conn:            conn,
 		connectFuture:   NewFuture(),
 		subscribeFuture: NewFuture(),
@@ -70,13 +72,13 @@ func (c *Client) connect() (*stream, error) {
 	}
 	err = s.connectFuture.Wait(c.ops.Timeout)
 	if err != nil {
-		s.close()
+		s.die("connect timeout", err)
 		return nil, errors.Trace(err)
 	}
 	if len(c.ops.Subscriptions) != 0 {
 		err = s.subscribeFuture.Wait(c.ops.Timeout)
 		if err != nil {
-			s.close()
+			s.die("subscribe timeout", err)
 			return nil, err
 		}
 	}
@@ -161,7 +163,7 @@ func (s *stream) receiving() error {
 		switch p := pkt.(type) {
 		case *Publish:
 			qos := p.Message.QOS
-			uerr := s.cli.onPublish(p)
+			uerr := s.onPublish(p)
 			if uerr != nil {
 				s.cli.log.Warn("failed to handle publish packet in user code", log.Error(uerr))
 			} else if !s.cli.ops.DisableAutoAck && qos == 1 {
@@ -170,7 +172,7 @@ func (s *stream) receiving() error {
 				err = s.send(ack, true)
 			}
 		case *Puback:
-			err = s.cli.onPuback(p)
+			err = s.onPuback(p)
 		case *Suback:
 			if p.ID != subscribeId {
 				s.cli.log.Warn("received unexpected suback", log.Any("packet", p.String()))
@@ -236,12 +238,33 @@ func (s *stream) die(msg string, err error) {
 	s.once.Do(func() {
 		s.tomb.Kill(err)
 		s.conn.Close()
-		s.cli.onError(msg, err)
+		s.onError(msg, err)
 	})
 }
 
 func (s *stream) close() error {
 	s.die("", nil)
-	s.conn.Close()
 	return errors.Trace(s.tomb.Wait())
+}
+
+func (s *stream) onPublish(pkt *Publish) error {
+	if s.observer == nil {
+		return nil
+	}
+	return s.observer.OnPublish(pkt)
+}
+
+func (s *stream) onPuback(pkt *Puback) error {
+	if s.observer == nil {
+		return nil
+	}
+	return s.observer.OnPuback(pkt)
+}
+
+func (s *stream) onError(msg string, err error) {
+	if s.observer == nil || err == nil {
+		return
+	}
+	s.cli.log.Error(msg, log.Error(err))
+	s.observer.OnError(err)
 }
