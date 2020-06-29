@@ -122,10 +122,8 @@ func (s *stream) sending(curr Packet) Packet {
 				return pkt
 			}
 		case <-s.cli.tomb.Dying():
-			s.send(NewDisconnect(), false)
 			return nil
 		case <-s.tomb.Dying():
-			s.tomb.Wait()
 			return nil
 		}
 	}
@@ -140,7 +138,6 @@ func (s *stream) receiving() error {
 		pkt, err := s.conn.Receive()
 		if err != nil {
 			s.die("client failed to receive packet", err)
-			s.connectFuture.Cancel(nil)
 			return errors.Trace(err)
 		}
 
@@ -153,7 +150,6 @@ func (s *stream) receiving() error {
 			err = s.cli.onConnack(pkt)
 			if err != nil {
 				s.die("failed to handle connack", err)
-				s.connectFuture.Cancel(nil)
 				return errors.Trace(err)
 			}
 			s.connectFuture.Complete(nil)
@@ -180,7 +176,6 @@ func (s *stream) receiving() error {
 			}
 			err = s.cli.onSuback(p)
 			if err != nil {
-				s.subscribeFuture.Cancel(fmt.Errorf("failed to handle suback: %s", err.Error()))
 				s.die("failed to handle suback", err)
 				return err
 			}
@@ -236,9 +231,16 @@ func (s *stream) pinging() error {
 
 func (s *stream) die(msg string, err error) {
 	s.once.Do(func() {
+		s.connectFuture.Cancel(nil)
+		s.subscribeFuture.Cancel(nil)
+		if err != nil {
+			s.onError(msg, err)
+			s.cli.log.Error("stream has died", log.Error(err))
+		} else {
+			s.send(NewDisconnect(), false)
+		}
 		s.tomb.Kill(err)
 		s.conn.Close()
-		s.onError(msg, err)
 	})
 }
 
