@@ -170,17 +170,7 @@ func (s *stream) receiving() error {
 		case *Puback:
 			err = s.onPuback(p)
 		case *Suback:
-			if p.ID != subscribeId {
-				s.cli.log.Warn("received unexpected suback", log.Any("packet", p.String()))
-				continue
-			}
-			err = s.cli.onSuback(p)
-			if err != nil {
-				s.die("failed to handle suback", err)
-				return err
-			}
-			s.subscribeFuture.Complete(nil)
-			continue
+			err = s.cli.onSuback(p, s.subscribeFuture)
 		case *Pingresp:
 			s.tracker.Pong()
 		case *Connack:
