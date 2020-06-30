@@ -147,7 +147,7 @@ func (s *stream) receiving() error {
 
 		if !connacked {
 			connacked = true
-			err = s.cli.onConnack(pkt)
+			err = s.onConnack(pkt)
 			if err != nil {
 				s.die("failed to handle connack", err)
 				return errors.Trace(err)
@@ -170,7 +170,7 @@ func (s *stream) receiving() error {
 		case *Puback:
 			err = s.onPuback(p)
 		case *Suback:
-			err = s.cli.onSuback(p, s.subscribeFuture)
+			err = s.onSuback(p)
 		case *Pingresp:
 			s.tracker.Pong()
 		case *Connack:
@@ -239,6 +239,17 @@ func (s *stream) close() error {
 	return errors.Trace(s.tomb.Wait())
 }
 
+func (s *stream) onConnack(pkt Packet) error {
+	p, ok := pkt.(*Connack)
+	if !ok {
+		return errors.Trace(ErrClientExpectedConnack)
+	}
+	if p.ReturnCode != ConnectionAccepted {
+		return errors.Errorf(p.ReturnCode.String())
+	}
+	return nil
+}
+
 func (s *stream) onPublish(pkt *Publish) error {
 	if s.observer == nil {
 		return nil
@@ -251,6 +262,20 @@ func (s *stream) onPuback(pkt *Puback) error {
 		return nil
 	}
 	return s.observer.OnPuback(pkt)
+}
+
+func (s *stream) onSuback(pkt *Suback) error {
+	if pkt.ID != subscribeId {
+		s.cli.log.Warn("received unexpected suback", log.Any("packet", pkt.String()))
+		return nil
+	}
+	for _, code := range pkt.ReturnCodes {
+		if code == QOSFailure {
+			return errors.Trace(ErrClientSubscriptionFailed)
+		}
+	}
+	s.subscribeFuture.Complete(nil)
+	return nil
 }
 
 func (s *stream) onError(msg string, err error) {
