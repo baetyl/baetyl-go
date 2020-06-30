@@ -15,7 +15,7 @@ type OnError func(error)
 type Observer interface {
 	OnPublish(*packet.Publish) error
 	OnPuback(*packet.Puback) error
-	// can't invoke client.Close() or will cause deadlock
+	// Do not invoke client.Close() in OnError, otherwise a deadlock will occur.
 	OnError(error)
 }
 

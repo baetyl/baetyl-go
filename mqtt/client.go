@@ -14,9 +14,8 @@ type Client struct {
 	ops   ClientOptions
 	ids   *Counter
 	cache chan Packet
-
-	log  *log.Logger
-	tomb utils.Tomb
+	log   *log.Logger
+	tomb  utils.Tomb
 }
 
 // NewClient creates a new client
@@ -126,11 +125,16 @@ func (c *Client) onConnack(pkt Packet) error {
 	return nil
 }
 
-func (c *Client) onSuback(pkt *Suback) error {
+func (c *Client) onSuback(pkt *Suback, subscribeFuture *Future) error {
+	if pkt.ID != subscribeId {
+		c.log.Warn("received unexpected suback", log.Any("packet", pkt.String()))
+		return nil
+	}
 	for _, code := range pkt.ReturnCodes {
 		if code == QOSFailure {
 			return errors.Trace(ErrClientSubscriptionFailed)
 		}
 	}
+	subscribeFuture.Complete(nil)
 	return nil
 }
