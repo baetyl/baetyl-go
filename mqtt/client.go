@@ -113,28 +113,3 @@ func (c *Client) connecting(obs Observer) error {
 		curr = stream.sending(curr)
 	}
 }
-
-func (c *Client) onConnack(pkt Packet) error {
-	p, ok := pkt.(*Connack)
-	if !ok {
-		return errors.Trace(ErrClientExpectedConnack)
-	}
-	if p.ReturnCode != ConnectionAccepted {
-		return errors.Errorf(p.ReturnCode.String())
-	}
-	return nil
-}
-
-func (c *Client) onSuback(pkt *Suback, subscribeFuture *Future) error {
-	if pkt.ID != subscribeId {
-		c.log.Warn("received unexpected suback", log.Any("packet", pkt.String()))
-		return nil
-	}
-	for _, code := range pkt.ReturnCodes {
-		if code == QOSFailure {
-			return errors.Trace(ErrClientSubscriptionFailed)
-		}
-	}
-	subscribeFuture.Complete(nil)
-	return nil
-}
