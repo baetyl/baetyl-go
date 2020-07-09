@@ -100,10 +100,11 @@ func NewContext(confFile string) Context {
 		utils.UnmarshalYAML(nil, &c.cfg)
 	}
 
-	c.log, err = log.Init(c.cfg.Logger, fs...)
+	_log, err := log.Init(c.cfg.Logger, fs...)
 	if err != nil {
 		c.log.Error("failed to init logger", log.Error(err))
 	}
+	c.log = _log
 
 	if c.cfg.HTTP.Address == "" {
 		if c.cfg.HTTP.Key == "" {
