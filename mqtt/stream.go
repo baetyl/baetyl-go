@@ -54,7 +54,7 @@ func (c *Client) connect(obs Observer) (s *stream, err error) {
 		err = conn.Send(subscribe, false)
 		if err != nil {
 			conn.Close()
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 	}
 
@@ -79,7 +79,7 @@ func (c *Client) connect(obs Observer) (s *stream, err error) {
 		err = s.subscribeFuture.Wait(c.ops.Timeout)
 		if err != nil {
 			s.die("subscribe timeout", err)
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 	}
 	return s, nil
