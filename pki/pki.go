@@ -4,13 +4,13 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/base64"
-	"github.com/baetyl/baetyl-go/errors"
 	"io"
 	"io/ioutil"
 	"math/big"
 	"strings"
 	"time"
 
+	"github.com/baetyl/baetyl-go/errors"
 	"github.com/baetyl/baetyl-go/pki/models"
 	"github.com/satori/go.uuid"
 )
