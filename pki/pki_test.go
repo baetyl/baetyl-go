@@ -70,14 +70,14 @@ w3xQdGBSx9ae6exKX6qVqsjQDv5X443H8yHcU0EQ8DUnth+jwK7H
 
 func TestCreateRootCert(t *testing.T) {
 	mockCtl := gomock.NewController(t)
-	mockPVC := mockPKI.NewMockPVC(mockCtl)
+	mockSto := mockPKI.NewMockStorage(mockCtl)
 
 	parentId := "12345678"
 
 	cli := &defaultPKIClient{
 		rootCaKey: []byte(caKey),
 		rootCaCrt: []byte(caCrt),
-		pvc:       mockPVC,
+		sto:       mockSto,
 	}
 
 	csrInfo := &x509.CertificateRequest{
@@ -95,7 +95,7 @@ func TestCreateRootCert(t *testing.T) {
 	}
 
 	// good case 0
-	mockPVC.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(3)
+	mockSto.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(3)
 	_, err := cli.CreateRootCert(csrInfo, "")
 	assert.NoError(t, err)
 
@@ -103,48 +103,48 @@ func TestCreateRootCert(t *testing.T) {
 	cert := &models.Cert{
 		Content: base64.StdEncoding.EncodeToString([]byte(caCrt)),
 	}
-	mockPVC.EXPECT().GetCert(parentId).Return(cert, nil).Times(1)
+	mockSto.EXPECT().GetCert(parentId).Return(cert, nil).Times(1)
 	_, err = cli.CreateRootCert(csrInfo, parentId)
 	assert.NoError(t, err)
 
 	// bad case 0
-	mockPVC.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("get cert err")).Times(1)
+	mockSto.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("get cert err")).Times(1)
 	_, err = cli.CreateRootCert(csrInfo, parentId)
 	assert.Error(t, err)
 }
 
 func TestDeleteRootCert(t *testing.T) {
 	mockCtl := gomock.NewController(t)
-	mockPVC := mockPKI.NewMockPVC(mockCtl)
+	mockSto := mockPKI.NewMockStorage(mockCtl)
 
 	parentId := "12345678"
 
 	cli := &defaultPKIClient{
 		rootCaKey: []byte(caKey),
 		rootCaCrt: []byte(caCrt),
-		pvc:       mockPVC,
+		sto:       mockSto,
 	}
 
 	// bad case 0
-	mockPVC.EXPECT().CountCertByParentId(parentId).Return(0, fmt.Errorf("count err")).Times(1)
+	mockSto.EXPECT().CountCertByParentId(parentId).Return(0, fmt.Errorf("count err")).Times(1)
 	err := cli.DeleteRootCert(parentId)
 	assert.Error(t, err)
 
 	// bad case 1
-	mockPVC.EXPECT().CountCertByParentId(parentId).Return(1, nil).Times(1)
+	mockSto.EXPECT().CountCertByParentId(parentId).Return(1, nil).Times(1)
 	err = cli.DeleteRootCert(parentId)
 	assert.Equal(t, err.Error(), fmt.Sprintf("the root certificate(%s) has been used by %d sub-certificate", parentId, 1))
 
 	// good case 0
-	mockPVC.EXPECT().CountCertByParentId(parentId).Return(0, nil).Times(1)
-	mockPVC.EXPECT().DeleteCert(parentId).Return(nil).Times(1)
+	mockSto.EXPECT().CountCertByParentId(parentId).Return(0, nil).Times(1)
+	mockSto.EXPECT().DeleteCert(parentId).Return(nil).Times(1)
 	err = cli.DeleteRootCert(parentId)
 	assert.NoError(t, err)
 }
 
 func TestSubCert(t *testing.T) {
 	mockCtl := gomock.NewController(t)
-	mockPVC := mockPKI.NewMockPVC(mockCtl)
+	mockSto := mockPKI.NewMockStorage(mockCtl)
 
 	parentId := "12345678"
 	base64CSR := "MIIBaDCCAQ8CAQAwgawxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdC" +
@@ -165,79 +165,79 @@ func TestSubCert(t *testing.T) {
 	cli := &defaultPKIClient{
 		rootCaKey: []byte(caKey),
 		rootCaCrt: []byte(caCrt),
-		pvc:       mockPVC,
+		sto:       mockSto,
 	}
 
 	csr, err := base64.StdEncoding.DecodeString(base64CSR)
 	assert.NoError(t, err)
 
 	// bad case 0
-	mockPVC.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("err")).Times(1)
+	mockSto.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("err")).Times(1)
 	_, err = cli.CreateSubCert(csr, parentId)
 	assert.Error(t, err)
 
 	// bad case 1
-	mockPVC.EXPECT().GetCert(parentId).Return(nil, nil).Times(1)
+	mockSto.EXPECT().GetCert(parentId).Return(nil, nil).Times(1)
 	_, err = cli.CreateSubCert(csr, parentId)
 	assert.Equal(t, err.Error(), fmt.Sprintf("the root certificate(%s) not found", parentId))
 
 	// good case
-	mockPVC.EXPECT().GetCert(parentId).Return(cert, nil).Times(1)
-	mockPVC.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(1)
+	mockSto.EXPECT().GetCert(parentId).Return(cert, nil).Times(1)
+	mockSto.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(1)
 	_, err = cli.CreateSubCert(csr, parentId)
 	assert.NoError(t, err)
 }
 
 func TestGetCert(t *testing.T) {
 	mockCtl := gomock.NewController(t)
-	mockPVC := mockPKI.NewMockPVC(mockCtl)
+	mockSto := mockPKI.NewMockStorage(mockCtl)
 
 	parentId := "12345678"
 
 	cli := &defaultPKIClient{
 		rootCaKey: []byte(caKey),
 		rootCaCrt: []byte(caCrt),
-		pvc:       mockPVC,
+		sto:       mockSto,
 	}
 
 	// bad case
-	mockPVC.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("get cert err")).Times(1)
+	mockSto.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("get cert err")).Times(1)
 	_, err := cli.GetCert(parentId)
 	assert.Error(t, err)
 
 	// good case
-	mockPVC.EXPECT().GetCert(parentId).Return(&models.Cert{}, nil).Times(1)
+	mockSto.EXPECT().GetCert(parentId).Return(&models.Cert{}, nil).Times(1)
 	_, err = cli.GetCert(parentId)
 	assert.NoError(t, err)
 }
 
 func TestClose(t *testing.T) {
 	mockCtl := gomock.NewController(t)
-	mockPVC := mockPKI.NewMockPVC(mockCtl)
+	mockSto := mockPKI.NewMockStorage(mockCtl)
 
 	cli := &defaultPKIClient{
 		rootCaKey: []byte(caKey),
 		rootCaCrt: []byte(caCrt),
-		pvc:       mockPVC,
+		sto:       mockSto,
 	}
 
-	mockPVC.EXPECT().Close().Return(nil).Times(1)
+	mockSto.EXPECT().Close().Return(nil).Times(1)
 	err := cli.Close()
 	assert.NoError(t, err)
 }
 
 func TestDeleteSubCert(t *testing.T) {
 	mockCtl := gomock.NewController(t)
-	mockPVC := mockPKI.NewMockPVC(mockCtl)
+	mockSto := mockPKI.NewMockStorage(mockCtl)
 
 	cli := &defaultPKIClient{
 		rootCaKey: []byte(caKey),
 		rootCaCrt: []byte(caCrt),
-		pvc:       mockPVC,
+		sto:       mockSto,
 	}
 
 	certId := "12345678"
-	mockPVC.EXPECT().DeleteCert(certId).Return(nil).Times(2)
+	mockSto.EXPECT().DeleteCert(certId).Return(nil).Times(2)
 	err := cli.DeleteSubCert(certId)
 	assert.NoError(t, err)
 }

@@ -39,10 +39,10 @@ type PKI interface {
 type defaultPKIClient struct {
 	rootCaKey []byte
 	rootCaCrt []byte
-	pvc       PVC
+	sto       Storage
 }
 
-func NewPKIClient(keyFile, crtFile string, pvc PVC) (PKI, error) {
+func NewPKIClient(keyFile, crtFile string, sto Storage) (PKI, error) {
 	key, err := ioutil.ReadFile(keyFile)
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -54,7 +54,7 @@ func NewPKIClient(keyFile, crtFile string, pvc PVC) (PKI, error) {
 	return &defaultPKIClient{
 		rootCaKey: key,
 		rootCaCrt: pem,
-		pvc:       pvc,
+		sto:       sto,
 	}, nil
 }
 
@@ -67,7 +67,7 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, parentI
 		caKeyByte = p.rootCaKey
 		caCrtByte = p.rootCaCrt
 	} else {
-		parentCert, err := p.pvc.GetCert(parentId)
+		parentCert, err := p.sto.GetCert(parentId)
 		if err != nil {
 			return "", errors.Trace(err)
 		}
@@ -140,7 +140,7 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, parentI
 		NotBefore:  certInfo.NotBefore,
 		NotAfter:   certInfo.NotAfter,
 	}
-	err = p.pvc.CreateCert(certView)
+	err = p.sto.CreateCert(certView)
 	if err != nil {
 		return "", errors.Trace(err)
 	}
@@ -149,7 +149,7 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, parentI
 }
 
 func (p *defaultPKIClient) GetCert(certId string) ([]byte, error) {
-	cert, err := p.pvc.GetCert(certId)
+	cert, err := p.sto.GetCert(certId)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -158,7 +158,7 @@ func (p *defaultPKIClient) GetCert(certId string) ([]byte, error) {
 
 func (p *defaultPKIClient) CreateSubCert(csr []byte, rootId string) (string, error) {
 	// get ca cert
-	ca, err := p.pvc.GetCert(rootId)
+	ca, err := p.sto.GetCert(rootId)
 	if err != nil {
 		return "", errors.Trace(err)
 	}
@@ -224,7 +224,7 @@ func (p *defaultPKIClient) CreateSubCert(csr []byte, rootId string) (string, err
 		NotAfter:   certInfo.NotAfter,
 	}
 
-	err = p.pvc.CreateCert(cert)
+	err = p.sto.CreateCert(cert)
 	if err != nil {
 		return "", errors.Trace(err)
 	}
@@ -233,20 +233,20 @@ func (p *defaultPKIClient) CreateSubCert(csr []byte, rootId string) (string, err
 }
 
 func (p *defaultPKIClient) DeleteRootCert(rootId string) error {
-	count, err := p.pvc.CountCertByParentId(rootId)
+	count, err := p.sto.CountCertByParentId(rootId)
 	if err != nil {
 		return errors.Trace(err)
 	}
 	if count > 0 {
 		return errors.Trace(errors.Errorf("the root certificate(%s) has been used by %d sub-certificate", rootId, count))
 	}
-	return p.pvc.DeleteCert(rootId)
+	return p.sto.DeleteCert(rootId)
 }
 
 func (p *defaultPKIClient) DeleteSubCert(certId string) error {
-	return p.pvc.DeleteCert(certId)
+	return p.sto.DeleteCert(certId)
 }
 
 func (p *defaultPKIClient) Close() error {
-	return p.pvc.Close()
+	return p.sto.Close()
 }

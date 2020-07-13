@@ -6,9 +6,9 @@ import (
 	"github.com/baetyl/baetyl-go/pki/models"
 )
 
-//go:generate mockgen -destination=../mock/pki/pvc.go -package=pki github.com/baetyl/baetyl-go/pki PVC
+//go:generate mockgen -destination=../mock/pki/storage.go -package=pki github.com/baetyl/baetyl-go/pki Storage
 
-type PVC interface {
+type Storage interface {
 	CreateCert(cert models.Cert) error
 	DeleteCert(certId string) error
 	UpdateCert(cert models.Cert) error
