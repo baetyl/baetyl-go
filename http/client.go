@@ -9,7 +9,7 @@ import (
 	gohttp "net/http"
 	"strings"
 
-	"github.com/baetyl/baetyl-go/errors"
+	"github.com/baetyl/baetyl-go.v2/errors"
 )
 
 // ContentTypeJSON the json content type of request

@@ -1,6 +1,6 @@
 package v1
 
-import "github.com/baetyl/baetyl-go/utils"
+import "github.com/baetyl/baetyl-go.v2/utils"
 
 // ActiveRequest body of active request
 type ActiveRequest struct {

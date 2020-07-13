@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/baetyl/baetyl-go/errors"
+	"github.com/baetyl/baetyl-go.v2/errors"
 )
 
 // PathExists checks path exists

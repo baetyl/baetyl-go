@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/baetyl/baetyl-go/errors"
-	"github.com/baetyl/baetyl-go/pki/models"
+	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go.v2/pki/models"
 	"github.com/satori/go.uuid"
 )
 
-//go:generate mockgen -destination=../mock/pki/pki.go -package=pki github.com/baetyl/baetyl-go/pki PKI
+//go:generate mockgen -destination=../mock/pki/pki.go -package=pki github.com/baetyl/baetyl-go.v2/pki PKI
 
 const (
 	TypeIssuingCA = "IssuingCA"
