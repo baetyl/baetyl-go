@@ -1,7 +1,7 @@
 package log
 
 import (
-	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go/v2/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

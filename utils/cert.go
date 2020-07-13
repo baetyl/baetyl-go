@@ -3,7 +3,7 @@ package utils
 import (
 	"crypto/tls"
 
-	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/docker/go-connections/tlsconfig"
 )
 

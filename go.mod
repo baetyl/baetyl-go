@@ -1,4 +1,4 @@
-module github.com/baetyl/baetyl-go.v2
+module github.com/baetyl/baetyl-go/v2
 
 go 1.13
 

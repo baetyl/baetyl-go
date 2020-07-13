@@ -3,7 +3,7 @@ package utils
 import (
 	"compress/flate"
 
-	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/mholt/archiver"
 )
 

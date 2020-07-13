@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/baetyl/baetyl-go.v2/mock"
-	"github.com/baetyl/baetyl-go.v2/utils"
+	"github.com/baetyl/baetyl-go/v2/mock"
+	"github.com/baetyl/baetyl-go/v2/utils"
 	"github.com/stretchr/testify/assert"
 )
 
