@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/baetyl/baetyl-go/errors"
-	"github.com/baetyl/baetyl-go/log"
-	"github.com/baetyl/baetyl-go/utils"
+	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go.v2/log"
+	"github.com/baetyl/baetyl-go.v2/utils"
 )
 
 const subscribeId = 1

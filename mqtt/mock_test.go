@@ -9,7 +9,7 @@ import (
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
-	"github.com/baetyl/baetyl-go/mock"
+	"github.com/baetyl/baetyl-go.v2/mock"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"time"
 
-	"github.com/baetyl/baetyl-go/errors"
-	"github.com/baetyl/baetyl-go/utils"
+	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go.v2/utils"
 )
 
 // ClientOptions client options

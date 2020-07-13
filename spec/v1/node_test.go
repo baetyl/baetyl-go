@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/log"
+	"github.com/baetyl/baetyl-go.v2/log"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
 )

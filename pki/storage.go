@@ -3,10 +3,10 @@ package pki
 import (
 	"io"
 
-	"github.com/baetyl/baetyl-go/pki/models"
+	"github.com/baetyl/baetyl-go.v2/pki/models"
 )
 
-//go:generate mockgen -destination=../mock/pki/storage.go -package=pki github.com/baetyl/baetyl-go/pki Storage
+//go:generate mockgen -destination=../mock/pki/storage.go -package=pki github.com/baetyl/baetyl-go.v2/pki Storage
 
 type Storage interface {
 	CreateCert(cert models.Cert) error
