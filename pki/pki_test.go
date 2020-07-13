@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"testing"
 
-	mockPKI "github.com/baetyl/baetyl-go.v2/mock/pki"
-	"github.com/baetyl/baetyl-go.v2/pki/models"
+	mockPKI "github.com/baetyl/baetyl-go/v2/mock/pki"
+	"github.com/baetyl/baetyl-go/v2/pki/models"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )

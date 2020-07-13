@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go.v2/log"
-	"github.com/baetyl/baetyl-go.v2/mock"
-	"github.com/baetyl/baetyl-go.v2/utils"
+	"github.com/baetyl/baetyl-go/v2/log"
+	"github.com/baetyl/baetyl-go/v2/mock"
+	"github.com/baetyl/baetyl-go/v2/utils"
 	"github.com/stretchr/testify/assert"
 )
 

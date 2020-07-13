@@ -3,7 +3,7 @@ package v1
 import (
 	"encoding/json"
 
-	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 // DesireRequest body of request to sync desired data

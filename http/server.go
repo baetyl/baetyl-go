@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/baetyl/baetyl-go.v2/log"
+	"github.com/baetyl/baetyl-go/v2/log"
 	"github.com/valyala/fasthttp"
 )
 

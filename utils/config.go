@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/docker/go-units"
 	"gopkg.in/validator.v2"
 	"gopkg.in/yaml.v2"

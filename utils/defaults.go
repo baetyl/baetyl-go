@@ -3,7 +3,7 @@ package utils
 import (
 	"reflect"
 
-	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/creasty/defaults"
 )
 

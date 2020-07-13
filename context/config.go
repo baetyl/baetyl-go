@@ -1,9 +1,9 @@
 package context
 
 import (
-	"github.com/baetyl/baetyl-go.v2/http"
-	"github.com/baetyl/baetyl-go.v2/log"
-	"github.com/baetyl/baetyl-go.v2/mqtt"
+	"github.com/baetyl/baetyl-go/v2/http"
+	"github.com/baetyl/baetyl-go/v2/log"
+	"github.com/baetyl/baetyl-go/v2/mqtt"
 )
 
 // ServiceConfig base config of service

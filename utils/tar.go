@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/baetyl/baetyl-go.v2/errors"
+	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/mholt/archiver"
 )
 
