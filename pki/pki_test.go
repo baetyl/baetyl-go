@@ -96,7 +96,7 @@ func TestCreateRootCert(t *testing.T) {
 
 	// good case 0
 	mockSto.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(3)
-	_, err := cli.CreateRootCert(csrInfo, "")
+	_, err := cli.CreateRootCert(csrInfo, 10, "")
 	assert.NoError(t, err)
 
 	// good case 1
@@ -104,12 +104,12 @@ func TestCreateRootCert(t *testing.T) {
 		Content: base64.StdEncoding.EncodeToString([]byte(caCrt)),
 	}
 	mockSto.EXPECT().GetCert(parentId).Return(cert, nil).Times(1)
-	_, err = cli.CreateRootCert(csrInfo, parentId)
+	_, err = cli.CreateRootCert(csrInfo, 10, parentId)
 	assert.NoError(t, err)
 
 	// bad case 0
 	mockSto.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("get cert err")).Times(1)
-	_, err = cli.CreateRootCert(csrInfo, parentId)
+	_, err = cli.CreateRootCert(csrInfo, 10, parentId)
 	assert.Error(t, err)
 }
 
@@ -173,18 +173,18 @@ func TestSubCert(t *testing.T) {
 
 	// bad case 0
 	mockSto.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("err")).Times(1)
-	_, err = cli.CreateSubCert(csr, parentId)
+	_, err = cli.CreateSubCert(csr, 10, parentId)
 	assert.Error(t, err)
 
 	// bad case 1
 	mockSto.EXPECT().GetCert(parentId).Return(nil, nil).Times(1)
-	_, err = cli.CreateSubCert(csr, parentId)
+	_, err = cli.CreateSubCert(csr, 10, parentId)
 	assert.Equal(t, err.Error(), fmt.Sprintf("the root certificate(%s) not found", parentId))
 
 	// good case
 	mockSto.EXPECT().GetCert(parentId).Return(cert, nil).Times(1)
 	mockSto.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(1)
-	_, err = cli.CreateSubCert(csr, parentId)
+	_, err = cli.CreateSubCert(csr, 10, parentId)
 	assert.NoError(t, err)
 }
 
@@ -202,12 +202,12 @@ func TestGetCert(t *testing.T) {
 
 	// bad case
 	mockSto.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("get cert err")).Times(1)
-	_, err := cli.GetCert(parentId)
+	_, err := cli.GetSubCert(parentId)
 	assert.Error(t, err)
 
 	// good case
 	mockSto.EXPECT().GetCert(parentId).Return(&models.Cert{}, nil).Times(1)
-	_, err = cli.GetCert(parentId)
+	_, err = cli.GetSubCert(parentId)
 	assert.NoError(t, err)
 }
 
