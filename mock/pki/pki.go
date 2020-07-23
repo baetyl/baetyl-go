@@ -6,6 +6,7 @@ package pki
 
 import (
 	x509 "crypto/x509"
+	models "github.com/baetyl/baetyl-go/v2/pki/models"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -48,33 +49,33 @@ func (mr *MockPKIMockRecorder) Close() *gomock.Call {
 }
 
 // CreateRootCert mocks base method
-func (m *MockPKI) CreateRootCert(arg0 *x509.CertificateRequest, arg1 string) (string, error) {
+func (m *MockPKI) CreateRootCert(arg0 *x509.CertificateRequest, arg1 int, arg2 string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRootCert", arg0, arg1)
+	ret := m.ctrl.Call(m, "CreateRootCert", arg0, arg1, arg2)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateRootCert indicates an expected call of CreateRootCert
-func (mr *MockPKIMockRecorder) CreateRootCert(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockPKIMockRecorder) CreateRootCert(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRootCert", reflect.TypeOf((*MockPKI)(nil).CreateRootCert), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRootCert", reflect.TypeOf((*MockPKI)(nil).CreateRootCert), arg0, arg1, arg2)
 }
 
 // CreateSubCert mocks base method
-func (m *MockPKI) CreateSubCert(arg0 []byte, arg1 string) (string, error) {
+func (m *MockPKI) CreateSubCert(arg0 []byte, arg1 int, arg2 string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSubCert", arg0, arg1)
+	ret := m.ctrl.Call(m, "CreateSubCert", arg0, arg1, arg2)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateSubCert indicates an expected call of CreateSubCert
-func (mr *MockPKIMockRecorder) CreateSubCert(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockPKIMockRecorder) CreateSubCert(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSubCert", reflect.TypeOf((*MockPKI)(nil).CreateSubCert), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSubCert", reflect.TypeOf((*MockPKI)(nil).CreateSubCert), arg0, arg1, arg2)
 }
 
 // DeleteRootCert mocks base method
@@ -105,17 +106,32 @@ func (mr *MockPKIMockRecorder) DeleteSubCert(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSubCert", reflect.TypeOf((*MockPKI)(nil).DeleteSubCert), arg0)
 }
 
-// GetCert mocks base method
-func (m *MockPKI) GetCert(arg0 string) ([]byte, error) {
+// GetRootCert mocks base method
+func (m *MockPKI) GetRootCert(arg0 string) (*models.CertPem, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCert", arg0)
+	ret := m.ctrl.Call(m, "GetRootCert", arg0)
+	ret0, _ := ret[0].(*models.CertPem)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRootCert indicates an expected call of GetRootCert
+func (mr *MockPKIMockRecorder) GetRootCert(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRootCert", reflect.TypeOf((*MockPKI)(nil).GetRootCert), arg0)
+}
+
+// GetSubCert mocks base method
+func (m *MockPKI) GetSubCert(arg0 string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubCert", arg0)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetCert indicates an expected call of GetCert
-func (mr *MockPKIMockRecorder) GetCert(arg0 interface{}) *gomock.Call {
+// GetSubCert indicates an expected call of GetSubCert
+func (mr *MockPKIMockRecorder) GetSubCert(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCert", reflect.TypeOf((*MockPKI)(nil).GetCert), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubCert", reflect.TypeOf((*MockPKI)(nil).GetSubCert), arg0)
 }

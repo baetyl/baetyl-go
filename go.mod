@@ -15,7 +15,9 @@ require (
 	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
 	github.com/golang/mock v1.2.0
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/jmoiron/sqlx v1.2.0
 	github.com/jpillora/backoff v1.0.0
+	github.com/mattn/go-sqlite3 v1.14.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect

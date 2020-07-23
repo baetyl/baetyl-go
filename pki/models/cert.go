@@ -16,3 +16,8 @@ type Cert struct {
 	NotBefore   time.Time `db:"not_before"`
 	NotAfter    time.Time `db:"not_after"`
 }
+
+type CertPem struct {
+	Crt []byte
+	Key []byte
+}

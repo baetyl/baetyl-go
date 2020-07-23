@@ -18,21 +18,27 @@ import (
 //go:generate mockgen -destination=../mock/pki/pki.go -package=pki github.com/baetyl/baetyl-go/v2/pki PKI
 
 const (
+	// TypeIssuingCA is a root certificate that can be used to issue sub-certificates
 	TypeIssuingCA = "IssuingCA"
 	// TypeIssuingSubCert is an issuing sub cert which is signed by issuing ca
 	TypeIssuingSubCert = "IssuingSubCertificate"
-
-	// 证书有效期，以天为单位 [1, 50*365]
-	DefaultCADuration      = 50 * 365
-	DefaultSubCertDuration = 20 * 365
 )
 
 type PKI interface {
-	CreateRootCert(info *x509.CertificateRequest, parentId string) (string, error)
-	GetCert(certId string) ([]byte, error)
-	CreateSubCert(csr []byte, rootId string) (string, error)
+	// GetRootCert certId: certificate ID
+	GetRootCert(certId string) (*models.CertPem, error)
+	// CreateRootCert info: request information for issuing a certificate; durationDay: certificate validity period, in days; parentId: root ca certificate ID
+	CreateRootCert(info *x509.CertificateRequest, durationDay int, parentId string) (string, error)
+	// DeleteRootCert rootId: certificate ID
 	DeleteRootCert(rootId string) error
+
+	// GetSubCert certId: certificate ID
+	GetSubCert(certId string) ([]byte, error)
+	// CreateSubCert csr: standard CSR request data; durationDay: certificate validity period, in days; rootId: root ca certificate ID
+	CreateSubCert(csr []byte, durationDay int, rootId string) (string, error)
+	// DeleteSubCert certId: certificate ID
 	DeleteSubCert(certId string) error
+
 	io.Closer
 }
 
@@ -59,7 +65,7 @@ func NewPKIClient(keyFile, crtFile string, sto Storage) (PKI, error) {
 }
 
 // root cert
-func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, parentId string) (string, error) {
+func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, durationDay int, parentId string) (string, error) {
 	// get parent cert
 	var caKeyByte []byte
 	var caCrtByte []byte
@@ -108,12 +114,13 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, parentI
 
 	keyUsage := x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign
 
+	begin := time.Now()
 	certInfo := &x509.Certificate{
 		IsCA:                  true,
 		Subject:               info.Subject,
 		SerialNumber:          big.NewInt(time.Now().UnixNano()),
-		NotBefore:             time.Now().UTC(),
-		NotAfter:              time.Now().AddDate(0, 0, DefaultCADuration).UTC(),
+		NotBefore:             begin,
+		NotAfter:              begin.AddDate(0, 0, durationDay),
 		EmailAddresses:        info.EmailAddresses,
 		IPAddresses:           info.IPAddresses,
 		URIs:                  info.URIs,
@@ -148,7 +155,26 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, parentI
 	return certView.CertId, nil
 }
 
-func (p *defaultPKIClient) GetCert(certId string) ([]byte, error) {
+func (p *defaultPKIClient) GetRootCert(certId string) (*models.CertPem, error) {
+	cert, err := p.sto.GetCert(certId)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	crt, err := base64.StdEncoding.DecodeString(cert.Content)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	key, err := base64.StdEncoding.DecodeString(cert.PrivateKey)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	return &models.CertPem{
+		Crt: crt,
+		Key: key,
+	}, nil
+}
+
+func (p *defaultPKIClient) GetSubCert(certId string) ([]byte, error) {
 	cert, err := p.sto.GetCert(certId)
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -156,7 +182,7 @@ func (p *defaultPKIClient) GetCert(certId string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(cert.Content)
 }
 
-func (p *defaultPKIClient) CreateSubCert(csr []byte, rootId string) (string, error) {
+func (p *defaultPKIClient) CreateSubCert(csr []byte, durationDay int, rootId string) (string, error) {
 	// get ca cert
 	ca, err := p.sto.GetCert(rootId)
 	if err != nil {
@@ -191,12 +217,13 @@ func (p *defaultPKIClient) CreateSubCert(csr []byte, rootId string) (string, err
 		return "", errors.Trace(err)
 	}
 
+	begin := time.Now()
 	certInfo := &x509.Certificate{
 		IsCA:                  false,
 		SerialNumber:          big.NewInt(time.Now().UnixNano()),
 		Subject:               csrInfo.Subject,
-		NotBefore:             time.Now().UTC(),
-		NotAfter:              caCert[0].NotAfter,
+		NotBefore:             begin,
+		NotAfter:              begin.AddDate(0, 0, durationDay),
 		EmailAddresses:        csrInfo.EmailAddresses,
 		IPAddresses:           csrInfo.IPAddresses,
 		URIs:                  csrInfo.URIs,
