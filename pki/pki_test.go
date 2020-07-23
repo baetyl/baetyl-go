@@ -101,7 +101,8 @@ func TestCreateRootCert(t *testing.T) {
 
 	// good case 1
 	cert := &models.Cert{
-		Content: base64.StdEncoding.EncodeToString([]byte(caCrt)),
+		Content:    base64.StdEncoding.EncodeToString([]byte(caCrt)),
+		PrivateKey: base64.StdEncoding.EncodeToString([]byte(caKey)),
 	}
 	mockSto.EXPECT().GetCert(parentId).Return(cert, nil).Times(1)
 	_, err = cli.CreateRootCert(csrInfo, 10, parentId)

@@ -77,14 +77,11 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, duratio
 		if err != nil {
 			return "", errors.Trace(err)
 		}
-		priv, err := GenCertPrivateKey(DefaultDSA, DefaultRSABits)
+		key, err := base64.StdEncoding.DecodeString(parentCert.PrivateKey)
 		if err != nil {
 			return "", errors.Trace(err)
 		}
-		caKeyByte, err = EncodeCertPrivateKey(priv)
-		if err != nil {
-			return "", errors.Trace(err)
-		}
+		caKeyByte = key
 		content, err := base64.StdEncoding.DecodeString(parentCert.Content)
 		if err != nil {
 			return "", errors.Trace(err)
@@ -93,16 +90,15 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, duratio
 	}
 
 	// generate cert
-	caKey, err := ParseCertPrivateKey(caKeyByte)
+	priv, err := GenCertPrivateKey(DefaultDSA, DefaultRSABits)
 	if err != nil {
 		return "", errors.Trace(err)
 	}
-	caCert, err := ParseCertificates(caCrtByte)
+	privByte, err := EncodeCertPrivateKey(priv)
 	if err != nil {
 		return "", errors.Trace(err)
 	}
-
-	csr, err := x509.CreateCertificateRequest(rand.Reader, info, caKey.Key)
+	csr, err := x509.CreateCertificateRequest(rand.Reader, info, priv.Key)
 	if err != nil {
 		return "", errors.Trace(err)
 	}
@@ -113,6 +109,16 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, duratio
 	}
 
 	keyUsage := x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign
+
+	// caInfo
+	caKey, err := ParseCertPrivateKey(caKeyByte)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+	caCert, err := ParseCertificates(caCrtByte)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
 
 	begin := time.Now()
 	certInfo := &x509.Certificate{
@@ -130,6 +136,9 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, duratio
 		KeyUsage:              keyUsage,
 	}
 
+	// The certificate is signed by parent. If parent is equal to template then the
+	// certificate is self-signed. The parameter pub is the public key of the
+	// signee and priv is the private key of the signer.
 	cert, err := x509.CreateCertificate(rand.Reader, certInfo, caCert[0], csrInfo.PublicKey, caKey.Key)
 	if err != nil {
 		return "", errors.Trace(err)
@@ -143,7 +152,7 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, duratio
 		CommonName: info.Subject.CommonName,
 		Csr:        base64.StdEncoding.EncodeToString([]byte(EncodeByteToPem(csr, CertificateRequestBlockType))),
 		Content:    base64.StdEncoding.EncodeToString([]byte(EncodeByteToPem(cert, CertificateBlockType))),
-		PrivateKey: base64.StdEncoding.EncodeToString(caKeyByte),
+		PrivateKey: base64.StdEncoding.EncodeToString(privByte),
 		NotBefore:  certInfo.NotBefore,
 		NotAfter:   certInfo.NotAfter,
 	}
