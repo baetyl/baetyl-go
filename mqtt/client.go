@@ -60,6 +60,19 @@ func (c *Client) Send(pkt Packet) error {
 	}
 }
 
+// Send sends a generic packet, drop the packet if the channel is full
+func (c *Client) SendOrDrop(pkt Packet) error {
+	select {
+	case c.cache <- pkt:
+		return nil
+	case <-c.tomb.Dying():
+		return errors.Trace(ErrClientAlreadyClosed)
+	default:
+		c.log.Warn("client dropped a packet", log.Any("packet", pkt))
+		return nil
+	}
+}
+
 // Close closes client
 func (c *Client) Close() error {
 	c.log.Info("client is closing")
