@@ -63,6 +63,21 @@ func (mr *MockPKIMockRecorder) CreateRootCert(arg0, arg1, arg2 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRootCert", reflect.TypeOf((*MockPKI)(nil).CreateRootCert), arg0, arg1, arg2)
 }
 
+// CreateSelfSignedRootCert mocks base method
+func (m *MockPKI) CreateSelfSignedRootCert(arg0 *x509.CertificateRequest, arg1 int) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSelfSignedRootCert", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSelfSignedRootCert indicates an expected call of CreateSelfSignedRootCert
+func (mr *MockPKIMockRecorder) CreateSelfSignedRootCert(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSelfSignedRootCert", reflect.TypeOf((*MockPKI)(nil).CreateSelfSignedRootCert), arg0, arg1)
+}
+
 // CreateSubCert mocks base method
 func (m *MockPKI) CreateSubCert(arg0 []byte, arg1 int, arg2 string) (string, error) {
 	m.ctrl.T.Helper()

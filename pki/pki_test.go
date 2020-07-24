@@ -114,6 +114,10 @@ func TestCreateRootCert(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestCreateSelfSignedRootCert(t *testing.T) {
+
+}
+
 func TestDeleteRootCert(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	mockSto := mockPKI.NewMockStorage(mockCtl)
