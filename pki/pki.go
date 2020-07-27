@@ -27,8 +27,12 @@ const (
 type PKI interface {
 	// GetRootCert certId: certificate ID
 	GetRootCert(certId string) (*models.CertPem, error)
-	// CreateRootCert info: request information for issuing a certificate; durationDay: certificate validity period, in days; parentId: root ca certificate ID
+	// CreateRootCert info: request information for issuing a certificate;
+	// durationDay: certificate validity period, in days; parentId: root ca certificate ID, used to issue sub-certificates
 	CreateRootCert(info *x509.CertificateRequest, durationDay int, parentId string) (string, error)
+	// CreateSelfSignedRootCert info: request information for issuing a certificate; durationDay: certificate validity period, in days;
+	// generate a self-signed root certificate
+	CreateSelfSignedRootCert(info *x509.CertificateRequest, durationDay int) (string, error)
 	// DeleteRootCert rootId: certificate ID
 	DeleteRootCert(rootId string) error
 
@@ -148,6 +152,71 @@ func (p *defaultPKIClient) CreateRootCert(info *x509.CertificateRequest, duratio
 	certView := models.Cert{
 		CertId:     strings.ReplaceAll(uuid.NewV4().String(), "-", ""),
 		ParentId:   parentId,
+		Type:       TypeIssuingCA,
+		CommonName: info.Subject.CommonName,
+		Csr:        base64.StdEncoding.EncodeToString([]byte(EncodeByteToPem(csr, CertificateRequestBlockType))),
+		Content:    base64.StdEncoding.EncodeToString([]byte(EncodeByteToPem(cert, CertificateBlockType))),
+		PrivateKey: base64.StdEncoding.EncodeToString(privByte),
+		NotBefore:  certInfo.NotBefore,
+		NotAfter:   certInfo.NotAfter,
+	}
+	err = p.sto.CreateCert(certView)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+
+	return certView.CertId, nil
+}
+
+func (p *defaultPKIClient) CreateSelfSignedRootCert(info *x509.CertificateRequest, durationDay int) (string, error) {
+	// generate cert
+	priv, err := GenCertPrivateKey(DefaultDSA, DefaultRSABits)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+	privByte, err := EncodeCertPrivateKey(priv)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+	csr, err := x509.CreateCertificateRequest(rand.Reader, info, priv.Key)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+
+	csrInfo, err := x509.ParseCertificateRequest(csr)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+
+	keyUsage := x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign
+
+	begin := time.Now()
+	certInfo := &x509.Certificate{
+		IsCA:                  true,
+		Subject:               info.Subject,
+		SerialNumber:          big.NewInt(time.Now().UnixNano()),
+		NotBefore:             begin,
+		NotAfter:              begin.AddDate(0, 0, durationDay),
+		EmailAddresses:        info.EmailAddresses,
+		IPAddresses:           info.IPAddresses,
+		URIs:                  info.URIs,
+		DNSNames:              info.DNSNames,
+		BasicConstraintsValid: true,
+		SignatureAlgorithm:    SigAlgorithmType(priv),
+		KeyUsage:              keyUsage,
+	}
+
+	// The certificate is signed by parent. If parent is equal to template then the
+	// certificate is self-signed. The parameter pub is the public key of the
+	// signee and priv is the private key of the signer.
+	cert, err := x509.CreateCertificate(rand.Reader, certInfo, certInfo, csrInfo.PublicKey, priv.Key)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+
+	// save cert
+	certView := models.Cert{
+		CertId:     strings.ReplaceAll(uuid.NewV4().String(), "-", ""),
 		Type:       TypeIssuingCA,
 		CommonName: info.Subject.CommonName,
 		Csr:        base64.StdEncoding.EncodeToString([]byte(EncodeByteToPem(csr, CertificateRequestBlockType))),

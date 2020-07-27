@@ -11,13 +11,15 @@ import (
 
 // Config for logging
 type Config struct {
-	Level      string `yaml:"level" json:"level" default:"info" validate:"regexp=^(fatal|panic|error|warn|info|debug)$"`
-	Encoding   string `yaml:"encoding" json:"encoding" default:"json" validate:"regexp=^(json|console)$"`
-	Filename   string `yaml:"filename" json:"filename"`
-	Compress   bool   `yaml:"compress" json:"compress"`
-	MaxAge     int    `yaml:"maxAge" json:"maxAge" default:"15" validate:"min=1"`   // days
-	MaxSize    int    `yaml:"maxSize" json:"maxSize" default:"50" validate:"min=1"` // MB
-	MaxBackups int    `yaml:"maxBackups" json:"maxBackups" default:"15" validate:"min=1"`
+	Level       string `yaml:"level" json:"level" default:"info" validate:"regexp=^(fatal|panic|error|warn|info|debug)$"`
+	Encoding    string `yaml:"encoding" json:"encoding" default:"json" validate:"regexp=^(json|console)$"`
+	Filename    string `yaml:"filename" json:"filename"`
+	Compress    bool   `yaml:"compress" json:"compress"`
+	MaxAge      int    `yaml:"maxAge" json:"maxAge" default:"15" validate:"min=1"`   // days
+	MaxSize     int    `yaml:"maxSize" json:"maxSize" default:"50" validate:"min=1"` // MB
+	MaxBackups  int    `yaml:"maxBackups" json:"maxBackups" default:"15" validate:"min=1"`
+	EncodeTime  string `yaml:"encodeTime" json:"encodeTime"`   // time format, like [2006/01/02 15:04:05 UTC]
+	EncodeLevel string `yaml:"encodeLevel" json:"encodeLevel"` // symbols surround level, like [level]
 }
 
 func (c *Config) String() string {

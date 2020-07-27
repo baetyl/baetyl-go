@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"go.uber.org/zap"
@@ -50,6 +51,17 @@ func Init(cfg Config, fields ...Field) (*Logger, error) {
 	if cfg.Encoding == "console" {
 		c.Encoding = "console"
 		c.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	}
+	if cfg.EncodeTime != "" {
+		c.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+			enc.AppendString(t.Format(cfg.EncodeTime))
+		}
+	}
+	if cfg.EncodeLevel != "" {
+		c.EncoderConfig.EncodeLevel = func(lvl zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+			ft := strings.ReplaceAll(cfg.EncodeLevel, "level", "%s")
+			enc.AppendString(fmt.Sprintf(ft, lvl.String()))
+		}
 	}
 	c.Level = zap.NewAtomicLevelAt(parseLevel(cfg.Level))
 	l, err := c.Build(zap.Fields(fields...))

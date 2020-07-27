@@ -114,6 +114,38 @@ func TestCreateRootCert(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestCreateSelfSignedRootCert(t *testing.T) {
+	csrInfo := &x509.CertificateRequest{
+		Subject: pkix.Name{
+			Country:            []string{"CN"},
+			Organization:       []string{"Linux Foundation Edge"},
+			OrganizationalUnit: []string{"BAETYL"},
+			Locality:           []string{"Haidian District"},
+			Province:           []string{"Beijing"},
+			StreetAddress:      []string{"Baidu Campus"},
+			PostalCode:         []string{"100093"},
+			CommonName:         "test",
+		},
+		EmailAddresses: []string{"baetyl@lists.lfedge.org"},
+	}
+
+	durationDay := 365 * 20
+
+	mockCtl := gomock.NewController(t)
+	mockSto := mockPKI.NewMockStorage(mockCtl)
+
+	cli := &defaultPKIClient{
+		rootCaKey: []byte(caKey),
+		rootCaCrt: []byte(caCrt),
+		sto:       mockSto,
+	}
+
+	mockSto.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(1)
+
+	_, err := cli.CreateSelfSignedRootCert(csrInfo, durationDay)
+	assert.NoError(t, err)
+}
+
 func TestDeleteRootCert(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	mockSto := mockPKI.NewMockStorage(mockCtl)

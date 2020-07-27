@@ -90,19 +90,19 @@ func (mr *MockStorageMockRecorder) DeleteCert(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCert", reflect.TypeOf((*MockStorage)(nil).DeleteCert), arg0)
 }
 
-// GetSubCert mocks base method
+// GetCert mocks base method
 func (m *MockStorage) GetCert(arg0 string) (*models.Cert, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSubCert", arg0)
+	ret := m.ctrl.Call(m, "GetCert", arg0)
 	ret0, _ := ret[0].(*models.Cert)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetSubCert indicates an expected call of GetSubCert
+// GetCert indicates an expected call of GetCert
 func (mr *MockStorageMockRecorder) GetCert(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubCert", reflect.TypeOf((*MockStorage)(nil).GetCert), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCert", reflect.TypeOf((*MockStorage)(nil).GetCert), arg0)
 }
 
 // UpdateCert mocks base method

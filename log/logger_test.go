@@ -60,6 +60,32 @@ func TestLoggerError(t *testing.T) {
 	assert.True(t, res)
 }
 
+func TestEncodeConfig(t *testing.T) {
+	dir, err := ioutil.TempDir("", t.Name())
+	assert.NoError(t, err)
+	defer os.RemoveAll(dir)
+
+	f := path.Join(dir, "console.log")
+	cfg := Config{
+		Filename:    f,
+		Level:       "info",
+		Encoding:    "console",
+		MaxAge:      15,
+		MaxSize:     1,
+		MaxBackups:  15,
+		EncodeTime:  "[2006/01/02 15:04:05 UTC]",
+		EncodeLevel: "[level]",
+	}
+	log, err := Init(cfg)
+	assert.NoError(t, err)
+
+	log.Info("baetyl")
+
+	res, err := ioutil.ReadFile(f)
+	assert.NoError(t, err)
+	assert.Regexp(t, `^\[\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}\:\d{1,2}\:\d{1,2} UTC\]\t\[[A-Za-z]+\]\t\S*\tbaetyl`, string(res))
+}
+
 func TestLoggerNormal(t *testing.T) {
 	log := With(Any("height", "122"))
 	log.Info("test")
