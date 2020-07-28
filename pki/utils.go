@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
 	"github.com/baetyl/baetyl-go/v2/errors"
 )
@@ -207,21 +206,4 @@ func EncodeCertificatesRequest(csrs ...*x509.CertificateRequest) ([]byte, error)
 		}
 	}
 	return b.Bytes(), nil
-}
-
-func EncodeByteToPem(data []byte, tp string) string {
-	src := base64.StdEncoding.EncodeToString(data)
-	res := "-----BEGIN " + tp + "-----\n"
-	for i := 0; i < len(src)/64; i++ {
-		max := (i + 1) * 64
-		if len(src) < (i+1)*64 {
-			max = len(src)
-		}
-		res += src[i*64:max] + "\n"
-	}
-	if len(src)%64 != 0 {
-		res += src[64*(len(src)/64):] + "\n"
-	}
-	res += "-----END " + tp + "-----\n"
-	return res
 }

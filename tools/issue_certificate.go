@@ -1,7 +1,7 @@
 package tools
 
 import (
-	"github.com/baetyl/baetyl-go/v2/pki/models"
+	"github.com/baetyl/baetyl-go/v2/pki"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -53,7 +53,7 @@ func newDBStorage() (*dbStorage, error) {
 	}, nil
 }
 
-func (d dbStorage) CreateCert(cert models.Cert) error {
+func (d dbStorage) CreateCert(cert pki.Cert) error {
 	insertSQL := `
 INSERT INTO baetyl_certificate (
 cert_id, parent_id, type, common_name, 
@@ -75,7 +75,7 @@ DELETE FROM baetyl_certificate where cert_id=?
 	return err
 }
 
-func (d dbStorage) UpdateCert(cert models.Cert) error {
+func (d dbStorage) UpdateCert(cert pki.Cert) error {
 	updateSQL := `
 UPDATE baetyl_certificate SET parent_id=?,type=?,
 common_name=?,description=?,csr=?,content=?,private_key=?,
@@ -88,14 +88,14 @@ WHERE cert_id=?
 	return err
 }
 
-func (d dbStorage) GetCert(certId string) (*models.Cert, error) {
+func (d dbStorage) GetCert(certId string) (*pki.Cert, error) {
 	selectSQL := `
 SELECT cert_id, parent_id, type, common_name, 
 description, csr, content, private_key, not_before, not_after
 FROM baetyl_certificate 
 WHERE cert_id=? LIMIT 0,1
 `
-	var cert []models.Cert
+	var cert []pki.Cert
 	if err := d.db.Select(&cert, selectSQL, certId); err != nil {
 		return nil, err
 	}
