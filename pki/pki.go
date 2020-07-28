@@ -9,8 +9,6 @@ import (
 	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
-//go:generate mockgen -destination=../mock/pki/pki.go -package=pki github.com/baetyl/baetyl-go/v2/pki PKI
-
 type CertPem struct {
 	Crt []byte
 	Key []byte
@@ -140,17 +138,6 @@ func (p *defaultPKIClient) createRootCert(isSelfSigned bool, info *x509.Certific
 		return nil, errors.Trace(err)
 	}
 
-	var caKey *PrivateKey
-	if isSelfSigned {
-		caKey = priv
-	} else {
-		// caInfo
-		caKey, err = ParseCertPrivateKey(parent.Key)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-	}
-
 	begin := time.Now()
 	certInfo := &x509.Certificate{
 		IsCA:                  true,
@@ -163,14 +150,23 @@ func (p *defaultPKIClient) createRootCert(isSelfSigned bool, info *x509.Certific
 		URIs:                  info.URIs,
 		DNSNames:              info.DNSNames,
 		BasicConstraintsValid: true,
-		SignatureAlgorithm:    SigAlgorithmType(caKey),
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 	}
 
+	var caKey *PrivateKey
 	var caCert *x509.Certificate
 	if isSelfSigned {
+		caKey = priv
+		certInfo.SignatureAlgorithm = SigAlgorithmType(caKey)
+
 		caCert = certInfo
 	} else {
+		caKey, err = ParseCertPrivateKey(parent.Key)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		certInfo.SignatureAlgorithm = SigAlgorithmType(caKey)
+
 		caCerts, err := ParseCertificates(parent.Crt)
 		if err != nil {
 			return nil, errors.Trace(err)
