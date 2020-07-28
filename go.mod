@@ -13,22 +13,19 @@ require (
 	github.com/go-ozzo/ozzo-routing v2.1.4+incompatible // indirect
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
-	github.com/golang/mock v1.2.0
 	github.com/golang/snappy v0.0.1 // indirect
-	github.com/jmoiron/sqlx v1.2.0
 	github.com/jpillora/backoff v1.0.0
-	github.com/mattn/go-sqlite3 v1.14.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/qiangxue/fasthttp-routing v0.0.0-20160225050629-6ccdc2a18d87
-	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.5.1
 	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/valyala/fasthttp v1.9.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/zap v1.13.0
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	google.golang.org/grpc v1.25.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
