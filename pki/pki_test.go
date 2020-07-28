@@ -4,12 +4,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
-	"fmt"
 	"testing"
 
-	mockPKI "github.com/baetyl/baetyl-go/v2/mock/pki"
-	"github.com/baetyl/baetyl-go/v2/pki/models"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,18 +64,7 @@ w3xQdGBSx9ae6exKX6qVqsjQDv5X443H8yHcU0EQ8DUnth+jwK7H
 `
 )
 
-func TestCreateRootCert(t *testing.T) {
-	mockCtl := gomock.NewController(t)
-	mockSto := mockPKI.NewMockStorage(mockCtl)
-
-	parentId := "12345678"
-
-	cli := &defaultPKIClient{
-		rootCaKey: []byte(caKey),
-		rootCaCrt: []byte(caCrt),
-		sto:       mockSto,
-	}
-
+func TestDefaultPKIClient_CreateRootCert(t *testing.T) {
 	csrInfo := &x509.CertificateRequest{
 		Subject: pkix.Name{
 			Country:            []string{"CN"},
@@ -93,28 +78,17 @@ func TestCreateRootCert(t *testing.T) {
 		},
 		EmailAddresses: []string{"baetyl@lists.lfedge.org"},
 	}
-
-	// good case 0
-	mockSto.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(3)
-	_, err := cli.CreateRootCert(csrInfo, 10, "")
+	cli, err := NewPKIClient()
 	assert.NoError(t, err)
-
-	// good case 1
-	cert := &models.Cert{
-		Content:    base64.StdEncoding.EncodeToString([]byte(caCrt)),
-		PrivateKey: base64.StdEncoding.EncodeToString([]byte(caKey)),
-	}
-	mockSto.EXPECT().GetCert(parentId).Return(cert, nil).Times(1)
-	_, err = cli.CreateRootCert(csrInfo, 10, parentId)
+	res, err := cli.CreateRootCert(csrInfo, 50*365, &CertPem{
+		Crt: []byte(caCrt),
+		Key: []byte(caKey),
+	})
 	assert.NoError(t, err)
-
-	// bad case 0
-	mockSto.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("get cert err")).Times(1)
-	_, err = cli.CreateRootCert(csrInfo, 10, parentId)
-	assert.Error(t, err)
+	assert.NotNil(t, res)
 }
 
-func TestCreateSelfSignedRootCert(t *testing.T) {
+func TestDefaultPKIClient_CreateSelfSignedRootCert(t *testing.T) {
 	csrInfo := &x509.CertificateRequest{
 		Subject: pkix.Name{
 			Country:            []string{"CN"},
@@ -128,58 +102,14 @@ func TestCreateSelfSignedRootCert(t *testing.T) {
 		},
 		EmailAddresses: []string{"baetyl@lists.lfedge.org"},
 	}
-
-	durationDay := 365 * 20
-
-	mockCtl := gomock.NewController(t)
-	mockSto := mockPKI.NewMockStorage(mockCtl)
-
-	cli := &defaultPKIClient{
-		rootCaKey: []byte(caKey),
-		rootCaCrt: []byte(caCrt),
-		sto:       mockSto,
-	}
-
-	mockSto.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(1)
-
-	_, err := cli.CreateSelfSignedRootCert(csrInfo, durationDay)
+	cli, err := NewPKIClient()
 	assert.NoError(t, err)
+	res, err := cli.CreateSelfSignedRootCert(csrInfo, 50*365)
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
 }
 
-func TestDeleteRootCert(t *testing.T) {
-	mockCtl := gomock.NewController(t)
-	mockSto := mockPKI.NewMockStorage(mockCtl)
-
-	parentId := "12345678"
-
-	cli := &defaultPKIClient{
-		rootCaKey: []byte(caKey),
-		rootCaCrt: []byte(caCrt),
-		sto:       mockSto,
-	}
-
-	// bad case 0
-	mockSto.EXPECT().CountCertByParentId(parentId).Return(0, fmt.Errorf("count err")).Times(1)
-	err := cli.DeleteRootCert(parentId)
-	assert.Error(t, err)
-
-	// bad case 1
-	mockSto.EXPECT().CountCertByParentId(parentId).Return(1, nil).Times(1)
-	err = cli.DeleteRootCert(parentId)
-	assert.Equal(t, err.Error(), fmt.Sprintf("the root certificate(%s) has been used by %d sub-certificate", parentId, 1))
-
-	// good case 0
-	mockSto.EXPECT().CountCertByParentId(parentId).Return(0, nil).Times(1)
-	mockSto.EXPECT().DeleteCert(parentId).Return(nil).Times(1)
-	err = cli.DeleteRootCert(parentId)
-	assert.NoError(t, err)
-}
-
-func TestSubCert(t *testing.T) {
-	mockCtl := gomock.NewController(t)
-	mockSto := mockPKI.NewMockStorage(mockCtl)
-
-	parentId := "12345678"
+func TestDefaultPKIClient_CreateSubCert(t *testing.T) {
 	base64CSR := "MIIBaDCCAQ8CAQAwgawxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdC" +
 		"ZWlqaW5nMRkwFwYDVQQHExBIYWlkaWFuIERpc3RyaWN0MRUwEwYDVQQJEwxCY" +
 		"WlkdSBDYW1wdXMxDzANBgNVBBETBjEwMDA5MzEeMBwGA1UEChMVTGludXggRm" +
@@ -189,88 +119,63 @@ func TestSubCert(t *testing.T) {
 		"gR1N3bt1wvU4KAAMAoGCCqGSM49BAMCA0cAMEQCIHsF8ac5nEEd4b3eDUs2d1" +
 		"jvEcq5O01SZIbgK8hKj6C0AiAe/V6Ya7pnWtnlslb0qrMiDQlh9ltZ4hJLWbG" +
 		"8ZNE45g=="
-
-	cert := &models.Cert{
-		PrivateKey: base64.StdEncoding.EncodeToString([]byte(caKey)),
-		Content:    base64.StdEncoding.EncodeToString([]byte(caCrt)),
-	}
-
-	cli := &defaultPKIClient{
-		rootCaKey: []byte(caKey),
-		rootCaCrt: []byte(caCrt),
-		sto:       mockSto,
-	}
-
 	csr, err := base64.StdEncoding.DecodeString(base64CSR)
 	assert.NoError(t, err)
 
+	cli, err := NewPKIClient()
+	assert.NoError(t, err)
+
+	// good case
+	res, err := cli.CreateSubCert(csr, 20*365, &CertPem{
+		Crt: []byte(caCrt),
+		Key: []byte(caKey),
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+
 	// bad case 0
-	mockSto.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("err")).Times(1)
-	_, err = cli.CreateSubCert(csr, 10, parentId)
+	res, err = cli.CreateSubCert(csr, 20*365, &CertPem{
+		Crt: []byte(caCrt),
+	})
 	assert.Error(t, err)
+	assert.Nil(t, res)
 
 	// bad case 1
-	mockSto.EXPECT().GetCert(parentId).Return(nil, nil).Times(1)
-	_, err = cli.CreateSubCert(csr, 10, parentId)
-	assert.Equal(t, err.Error(), fmt.Sprintf("the root certificate(%s) not found", parentId))
-
-	// good case
-	mockSto.EXPECT().GetCert(parentId).Return(cert, nil).Times(1)
-	mockSto.EXPECT().CreateCert(gomock.Any()).Return(nil).Times(1)
-	_, err = cli.CreateSubCert(csr, 10, parentId)
-	assert.NoError(t, err)
-}
-
-func TestGetCert(t *testing.T) {
-	mockCtl := gomock.NewController(t)
-	mockSto := mockPKI.NewMockStorage(mockCtl)
-
-	parentId := "12345678"
-
-	cli := &defaultPKIClient{
-		rootCaKey: []byte(caKey),
-		rootCaCrt: []byte(caCrt),
-		sto:       mockSto,
-	}
-
-	// bad case
-	mockSto.EXPECT().GetCert(parentId).Return(nil, fmt.Errorf("get cert err")).Times(1)
-	_, err := cli.GetSubCert(parentId)
+	res, err = cli.CreateSubCert(csr, 20*365, &CertPem{
+		Key: []byte(caKey),
+	})
 	assert.Error(t, err)
+	assert.Nil(t, res)
 
-	// good case
-	mockSto.EXPECT().GetCert(parentId).Return(&models.Cert{}, nil).Times(1)
-	_, err = cli.GetSubCert(parentId)
-	assert.NoError(t, err)
+	// bad case 2
+	res, err = cli.CreateSubCert([]byte("error csr"), 20*365, &CertPem{
+		Crt: []byte(caCrt),
+		Key: []byte(caKey),
+	})
+	assert.Error(t, err)
+	assert.Nil(t, res)
 }
 
-func TestClose(t *testing.T) {
-	mockCtl := gomock.NewController(t)
-	mockSto := mockPKI.NewMockStorage(mockCtl)
-
-	cli := &defaultPKIClient{
-		rootCaKey: []byte(caKey),
-		rootCaCrt: []byte(caCrt),
-		sto:       mockSto,
+func TestDefaultPKIClient_CreateSubCertWithKey(t *testing.T) {
+	csrInfo := &x509.CertificateRequest{
+		Subject: pkix.Name{
+			Country:            []string{"CN"},
+			Organization:       []string{"Linux Foundation Edge"},
+			OrganizationalUnit: []string{"BAETYL"},
+			Locality:           []string{"Haidian District"},
+			Province:           []string{"Beijing"},
+			StreetAddress:      []string{"Baidu Campus"},
+			PostalCode:         []string{"100093"},
+			CommonName:         "test",
+		},
+		EmailAddresses: []string{"baetyl@lists.lfedge.org"},
 	}
-
-	mockSto.EXPECT().Close().Return(nil).Times(1)
-	err := cli.Close()
+	cli, err := NewPKIClient()
 	assert.NoError(t, err)
-}
-
-func TestDeleteSubCert(t *testing.T) {
-	mockCtl := gomock.NewController(t)
-	mockSto := mockPKI.NewMockStorage(mockCtl)
-
-	cli := &defaultPKIClient{
-		rootCaKey: []byte(caKey),
-		rootCaCrt: []byte(caCrt),
-		sto:       mockSto,
-	}
-
-	certId := "12345678"
-	mockSto.EXPECT().DeleteCert(certId).Return(nil).Times(2)
-	err := cli.DeleteSubCert(certId)
+	res, err := cli.CreateSubCertWithKey(csrInfo, 50*365, &CertPem{
+		Crt: []byte(caCrt),
+		Key: []byte(caKey),
+	})
 	assert.NoError(t, err)
+	assert.NotNil(t, res)
 }
