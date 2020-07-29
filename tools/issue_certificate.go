@@ -71,7 +71,7 @@ func (h *helper) createRoot() (*pki.CertPem, error) {
 func (h *helper) createSub(cn string, alt AltNames, parent *pki.CertPem) (*pki.CertPem, error) {
 	cert, err := h.cli.CreateSubCertWithKey(genCsr(cn, alt), 20*365, parent)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	fmt.Println("sub.crt")
 	fmt.Println(string(cert.Crt))
@@ -83,7 +83,7 @@ func (h *helper) createSub(cn string, alt AltNames, parent *pki.CertPem) (*pki.C
 func (h *helper) issueCert() error {
 	ca, err := h.createRoot()
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	err = ioutil.WriteFile("output/ca.crt", ca.Crt, 0666)
 	if err != nil {
@@ -107,7 +107,7 @@ func (h *helper) issueCert() error {
 		},
 	}, ca)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	err = ioutil.WriteFile("output/client.crt", client.Crt, 0666)
 	if err != nil {
@@ -131,7 +131,7 @@ func (h *helper) issueCert() error {
 		},
 	}, ca)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	err = ioutil.WriteFile("output/server.crt", server.Crt, 0666)
 	if err != nil {
