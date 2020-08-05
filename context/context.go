@@ -28,7 +28,7 @@ const (
 	SystemCertKey = "key.pem"
 	SystemCertOU  = "BAETYL"
 
-	SystemModelInit = "baetyl-init"
+	SystemAppInit = "baetyl-init"
 )
 
 var (
@@ -127,7 +127,7 @@ func NewContext(confFile string) (Context, error) {
 	}
 	c.log = _log
 
-	if c.serviceName != SystemModelInit {
+	if c.serviceName != SystemAppInit {
 		err = c.checkAndSetCert()
 		if err != nil {
 			c.Log().Error("service has stopped with error", log.Error(err))

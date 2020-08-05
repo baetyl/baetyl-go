@@ -71,7 +71,7 @@ func TestContext(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, ctx)
 
-	os.Setenv(EnvKeyServiceName, "baetyl-init")
+	os.Setenv(EnvKeyServiceName, SystemAppInit)
 	ctx, err = NewContext("")
 	assert.NoError(t, err)
 	assert.NotNil(t, ctx)
