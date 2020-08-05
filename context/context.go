@@ -1,13 +1,16 @@
 package context
 
 import (
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
 	"sync"
 	"syscall"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
+	"github.com/baetyl/baetyl-go/v2/pki"
 	"github.com/baetyl/baetyl-go/v2/utils"
 )
 
@@ -18,6 +21,18 @@ const (
 	EnvKeyAppName     = "BAETYL_APP_NAME"
 	EnvKeyServiceName = "BAETYL_SERVICE_NAME"
 	EnvKeyCodePath    = "BAETYL_CODE_PATH"
+	EnvKeyCertPath    = "BAETYL_CERT_PATH"
+
+	SystemCertCA  = "ca.pem"
+	SystemCertCrt = "crt.pem"
+	SystemCertKey = "key.pem"
+	SystemCertOU  = "BAETYL"
+
+	SystemAppInit = "baetyl-init"
+)
+
+var (
+	ErrSystemCertInvalid = errors.New("failed to verify system certificate")
 )
 
 // Context of service
@@ -45,6 +60,9 @@ type Context interface {
 	// Delete deletes the value for a key.
 	Delete(key interface{})
 
+	// Get get system resource object
+	GetSystemResource() *SystemResource
+
 	// LoadCustomConfig loads custom config, if path is empty, will load config from default path.
 	LoadCustomConfig(cfg interface{}, files ...string) error
 	// Log returns logger interface.
@@ -67,11 +85,12 @@ type ctx struct {
 	confFile    string
 	httpAddress string
 	mqttAddress string
-	linkAddress string
+	certPath    string
+	res         *SystemResource
 }
 
 // NewContext creates a new context
-func NewContext(confFile string) Context {
+func NewContext(confFile string) (Context, error) {
 	if confFile == "" {
 		confFile = os.Getenv(EnvKeyConfFile)
 	}
@@ -80,6 +99,8 @@ func NewContext(confFile string) Context {
 		nodeName:    os.Getenv(EnvKeyNodeName),
 		appName:     os.Getenv(EnvKeyAppName),
 		serviceName: os.Getenv(EnvKeyServiceName),
+		certPath:    os.Getenv(EnvKeyCertPath),
+		res:         &SystemResource{},
 	}
 
 	var fs []log.Field
@@ -106,6 +127,14 @@ func NewContext(confFile string) Context {
 	}
 	c.log = _log
 
+	if c.serviceName != SystemAppInit {
+		err = c.checkAndSetCert()
+		if err != nil {
+			c.Log().Error("service has stopped with error", log.Error(err))
+			return nil, errors.Trace(err)
+		}
+	}
+
 	if c.cfg.HTTP.Address == "" {
 		if c.cfg.HTTP.Key == "" {
 			c.cfg.HTTP.Address = "http://baetyl-function:80"
@@ -122,7 +151,11 @@ func NewContext(confFile string) Context {
 		}
 	}
 	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", c.cfg))
-	return c
+	return c, nil
+}
+
+func (c *ctx) GetSystemResource() *SystemResource {
+	return c.res
 }
 
 func (c *ctx) NodeName() string {
@@ -169,4 +202,34 @@ func (c *ctx) WaitChan() <-chan os.Signal {
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 	signal.Ignore(syscall.SIGPIPE)
 	return sig
+}
+
+func (c *ctx) checkAndSetCert() error {
+	// get and check ca
+	ca, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertCA))
+	if err != nil {
+		return errors.Trace(err)
+	}
+	// get crt and key
+	crt, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertCrt))
+	if err != nil {
+		return errors.Trace(err)
+	}
+	info, err := pki.ParseCertificates(crt)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	if len(info) != 1 || len(info[0].Subject.OrganizationalUnit) != 1 ||
+		info[0].Subject.OrganizationalUnit[0] != SystemCertOU {
+		return errors.Trace(ErrSystemCertInvalid)
+	}
+	key, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertKey))
+	if err != nil {
+		return errors.Trace(err)
+	}
+	// set
+	c.res.ca = ca
+	c.res.crt = crt
+	c.res.key = key
+	return nil
 }
