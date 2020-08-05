@@ -23,7 +23,10 @@ func Run(handle func(Context) error) {
 		return
 	}
 
-	ctx := NewContext(c)
+	ctx, err := NewContext(c)
+	if err != nil {
+		return
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			ctx.Log().Error("service is stopped with panic", log.Any("panic", string(debug.Stack())))
@@ -32,7 +35,7 @@ func Run(handle func(Context) error) {
 
 	pwd, _ := os.Getwd()
 	ctx.Log().Info("service starting", log.Any("args", os.Args), log.Any("pwd", pwd))
-	err := handle(ctx)
+	err = handle(ctx)
 	if err != nil {
 		ctx.Log().Error("service has stopped with error", log.Error(err))
 	} else {

@@ -1,12 +1,16 @@
 package context
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRun(t *testing.T) {
+	dir := initCert(t)
+	defer os.RemoveAll(dir)
+
 	Run(func(ctx Context) error {
 		assert.Equal(t, "etc/baetyl/service.yml", ctx.ConfFile())
 

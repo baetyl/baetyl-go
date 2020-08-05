@@ -1,8 +1,11 @@
 package context
 
 import (
+	"github.com/baetyl/baetyl-go/v2/pki"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
 	"sync"
 	"syscall"
 
@@ -18,6 +21,17 @@ const (
 	EnvKeyAppName     = "BAETYL_APP_NAME"
 	EnvKeyServiceName = "BAETYL_SERVICE_NAME"
 	EnvKeyCodePath    = "BAETYL_CODE_PATH"
+
+	SystemCertCA  = "ca.pem"
+	SystemCertCrt = "crt.pem"
+	SystemCertKey = "key.pem"
+	SystemCertOU  = "BAETYL"
+)
+
+var (
+	SystemCertPath = "/var/lib/baetyl/system/certs"
+
+	ErrSystemCertInvalid = errors.New("failed to verify system certificate")
 )
 
 // Context of service
@@ -45,6 +59,9 @@ type Context interface {
 	// Delete deletes the value for a key.
 	Delete(key interface{})
 
+	// LoadSystemCert load the signed certificate injected by the system, which can be used for TLS connection, etc.
+	LoadSystemCert() (ca, crt, key []byte)
+
 	// LoadCustomConfig loads custom config, if path is empty, will load config from default path.
 	LoadCustomConfig(cfg interface{}, files ...string) error
 	// Log returns logger interface.
@@ -68,10 +85,14 @@ type ctx struct {
 	httpAddress string
 	mqttAddress string
 	linkAddress string
+
+	ca  []byte
+	crt []byte
+	key []byte
 }
 
 // NewContext creates a new context
-func NewContext(confFile string) Context {
+func NewContext(confFile string) (Context, error) {
 	if confFile == "" {
 		confFile = os.Getenv(EnvKeyConfFile)
 	}
@@ -106,6 +127,12 @@ func NewContext(confFile string) Context {
 	}
 	c.log = _log
 
+	err = c.checkAndSetCert()
+	if err != nil {
+		c.Log().Error("service has stopped with error", log.Error(err))
+		return nil, errors.Trace(err)
+	}
+
 	if c.cfg.HTTP.Address == "" {
 		if c.cfg.HTTP.Key == "" {
 			c.cfg.HTTP.Address = "http://baetyl-function:80"
@@ -122,7 +149,11 @@ func NewContext(confFile string) Context {
 		}
 	}
 	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", c.cfg))
-	return c
+	return c, nil
+}
+
+func (c *ctx) LoadSystemCert() (ca, crt, key []byte) {
+	return c.ca, c.crt, c.key
 }
 
 func (c *ctx) NodeName() string {
@@ -169,4 +200,34 @@ func (c *ctx) WaitChan() <-chan os.Signal {
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 	signal.Ignore(syscall.SIGPIPE)
 	return sig
+}
+
+func (c *ctx) checkAndSetCert() error {
+	// get and check ca
+	ca, err := ioutil.ReadFile(path.Join(SystemCertPath, SystemCertCA))
+	if err != nil {
+		return errors.Trace(err)
+	}
+	// get crt and key
+	crt, err := ioutil.ReadFile(path.Join(SystemCertPath, SystemCertCrt))
+	if err != nil {
+		return errors.Trace(err)
+	}
+	info, err := pki.ParseCertificates(crt)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	if len(info) != 1 || len(info[0].Subject.OrganizationalUnit) != 1 ||
+		info[0].Subject.OrganizationalUnit[0] != SystemCertOU {
+		return errors.Trace(ErrSystemCertInvalid)
+	}
+	key, err := ioutil.ReadFile(path.Join(SystemCertPath, SystemCertKey))
+	if err != nil {
+		return errors.Trace(err)
+	}
+	// set
+	c.ca = ca
+	c.crt = crt
+	c.key = key
+	return nil
 }
