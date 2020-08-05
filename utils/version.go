@@ -2,15 +2,18 @@ package utils
 
 import (
 	"fmt"
-	"runtime"
 )
 
 // Compile parameter
 var (
-	VERSION  string
-	REVISION string
+	VERSION  = "unknown"
+	REVISION = "unknown"
 )
 
-func Version() {
-	fmt.Printf("Version:      %s\nGit revision: %s\nGo version:   %s\n", VERSION, REVISION, runtime.Version())
+func Version() string {
+	return fmt.Sprintf(" Version: %s\nRevision: %s", VERSION, REVISION)
+}
+
+func PrintVersion() {
+	fmt.Println(Version())
 }
