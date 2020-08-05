@@ -11,7 +11,7 @@ import (
 
 // Run service
 func Run(handle func(Context) error) {
-	utils.Version()
+	utils.PrintVersion()
 
 	var h bool
 	var c string
