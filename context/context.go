@@ -21,16 +21,17 @@ const (
 	EnvKeyAppName     = "BAETYL_APP_NAME"
 	EnvKeyServiceName = "BAETYL_SERVICE_NAME"
 	EnvKeyCodePath    = "BAETYL_CODE_PATH"
+	EnvKeyCertPath    = "BAETYL_CERT_PATH"
 
 	SystemCertCA  = "ca.pem"
 	SystemCertCrt = "crt.pem"
 	SystemCertKey = "key.pem"
 	SystemCertOU  = "BAETYL"
+
+	SystemModelInit = "baetyl-init"
 )
 
 var (
-	SystemCertPath = "/var/lib/baetyl/system/certs"
-
 	ErrSystemCertInvalid = errors.New("failed to verify system certificate")
 )
 
@@ -59,8 +60,8 @@ type Context interface {
 	// Delete deletes the value for a key.
 	Delete(key interface{})
 
-	// LoadSystemCert load the signed certificate injected by the system, which can be used for TLS connection, etc.
-	LoadSystemCert() (ca, crt, key []byte)
+	// Get get system resource object
+	GetSystemResource() *SystemResource
 
 	// LoadCustomConfig loads custom config, if path is empty, will load config from default path.
 	LoadCustomConfig(cfg interface{}, files ...string) error
@@ -84,11 +85,8 @@ type ctx struct {
 	confFile    string
 	httpAddress string
 	mqttAddress string
-	linkAddress string
-
-	ca  []byte
-	crt []byte
-	key []byte
+	certPath    string
+	res         *SystemResource
 }
 
 // NewContext creates a new context
@@ -101,6 +99,8 @@ func NewContext(confFile string) (Context, error) {
 		nodeName:    os.Getenv(EnvKeyNodeName),
 		appName:     os.Getenv(EnvKeyAppName),
 		serviceName: os.Getenv(EnvKeyServiceName),
+		certPath:    os.Getenv(EnvKeyCertPath),
+		res:         &SystemResource{},
 	}
 
 	var fs []log.Field
@@ -127,10 +127,12 @@ func NewContext(confFile string) (Context, error) {
 	}
 	c.log = _log
 
-	err = c.checkAndSetCert()
-	if err != nil {
-		c.Log().Error("service has stopped with error", log.Error(err))
-		return nil, errors.Trace(err)
+	if c.serviceName != SystemModelInit {
+		err = c.checkAndSetCert()
+		if err != nil {
+			c.Log().Error("service has stopped with error", log.Error(err))
+			return nil, errors.Trace(err)
+		}
 	}
 
 	if c.cfg.HTTP.Address == "" {
@@ -152,8 +154,8 @@ func NewContext(confFile string) (Context, error) {
 	return c, nil
 }
 
-func (c *ctx) LoadSystemCert() (ca, crt, key []byte) {
-	return c.ca, c.crt, c.key
+func (c *ctx) GetSystemResource() *SystemResource {
+	return c.res
 }
 
 func (c *ctx) NodeName() string {
@@ -204,12 +206,12 @@ func (c *ctx) WaitChan() <-chan os.Signal {
 
 func (c *ctx) checkAndSetCert() error {
 	// get and check ca
-	ca, err := ioutil.ReadFile(path.Join(SystemCertPath, SystemCertCA))
+	ca, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertCA))
 	if err != nil {
 		return errors.Trace(err)
 	}
 	// get crt and key
-	crt, err := ioutil.ReadFile(path.Join(SystemCertPath, SystemCertCrt))
+	crt, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertCrt))
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -221,13 +223,13 @@ func (c *ctx) checkAndSetCert() error {
 		info[0].Subject.OrganizationalUnit[0] != SystemCertOU {
 		return errors.Trace(ErrSystemCertInvalid)
 	}
-	key, err := ioutil.ReadFile(path.Join(SystemCertPath, SystemCertKey))
+	key, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertKey))
 	if err != nil {
 		return errors.Trace(err)
 	}
 	// set
-	c.ca = ca
-	c.crt = crt
-	c.key = key
+	c.res.ca = ca
+	c.res.crt = crt
+	c.res.key = key
 	return nil
 }

@@ -55,7 +55,8 @@ IQvJ2Bn2NdpZ8d7p9Jz3ESwJjxOp3irb+A==
 func initCert(t *testing.T) string {
 	dir, err := ioutil.TempDir("", "")
 	assert.NoError(t, err)
-	SystemCertPath = dir
+	err = os.Setenv(EnvKeyCertPath, dir)
+	assert.NoError(t, err)
 	err = ioutil.WriteFile(path.Join(dir, SystemCertCA), []byte(ca), os.ModePerm)
 	assert.NoError(t, err)
 	err = ioutil.WriteFile(path.Join(dir, SystemCertCrt), []byte(crt), os.ModePerm)
@@ -69,6 +70,11 @@ func TestContext(t *testing.T) {
 	ctx, err := NewContext("")
 	assert.Error(t, err)
 	assert.Nil(t, ctx)
+
+	os.Setenv(EnvKeyServiceName, "baetyl-init")
+	ctx, err = NewContext("")
+	assert.NoError(t, err)
+	assert.NotNil(t, ctx)
 
 	dir := initCert(t)
 	defer os.RemoveAll(dir)
@@ -84,7 +90,7 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, "app", ctx.AppName())
 	assert.Equal(t, "service", ctx.ServiceName())
 	assert.Equal(t, "file", ctx.ConfFile())
-	resCa, resCrt, resKey := ctx.LoadSystemCert()
+	resCa, resCrt, resKey := ctx.GetSystemResource().GetSystemCert()
 	assert.Equal(t, ca, string(resCa))
 	assert.Equal(t, crt, string(resCrt))
 	assert.Equal(t, key, string(resKey))
