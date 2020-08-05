@@ -9,7 +9,6 @@ import (
 	gomqtt "github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/client/future"
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/topic"
 	"github.com/256dpi/gomqtt/transport"
 )
@@ -146,14 +145,6 @@ func NewDisconnect() *Disconnect {
 
 // Subscription the topic and qos of subscription
 type Subscription = packet.Subscription
-
-// Counter the packet id counter
-type Counter = session.IDCounter
-
-// NewCounter creates a new counter
-func NewCounter() *Counter {
-	return session.NewIDCounter()
-}
 
 // Trie the trie of topic subscription
 type Trie = topic.Tree
