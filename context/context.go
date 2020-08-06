@@ -28,8 +28,6 @@ const (
 	SystemCertCrt = "crt.pem"
 	SystemCertKey = "key.pem"
 	SystemCertOU  = "BAETYL"
-
-	SystemAppInit = "baetyl-init"
 )
 
 var (
@@ -63,6 +61,9 @@ type Context interface {
 	// Delete deletes the value for a key.
 	Delete(key interface{})
 
+	// CheckEnvAndLoadResource check environment variable and load system resource
+	CheckEnvAndLoadResource() error
+
 	// Get get system resource object
 	GetSystemResource() *SystemResource
 
@@ -94,7 +95,7 @@ type ctx struct {
 }
 
 // NewContext creates a new context
-func NewContext(confFile string) (Context, error) {
+func NewContext(confFile string) Context {
 	if confFile == "" {
 		confFile = os.Getenv(EnvKeyConfFile)
 	}
@@ -132,14 +133,6 @@ func NewContext(confFile string) (Context, error) {
 	}
 	c.log = _log
 
-	if c.serviceName != SystemAppInit {
-		err = c.checkAndSetCert()
-		if err != nil {
-			c.Log().Error("service has stopped with error", log.Error(err))
-			return nil, errors.Trace(err)
-		}
-	}
-
 	if c.cfg.HTTP.Address == "" {
 		if c.cfg.HTTP.Key == "" {
 			c.cfg.HTTP.Address = "http://baetyl-function:80"
@@ -156,7 +149,7 @@ func NewContext(confFile string) (Context, error) {
 		}
 	}
 	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", c.cfg))
-	return c, nil
+	return c
 }
 
 func (c *ctx) GetSystemResource() *SystemResource {
@@ -213,7 +206,7 @@ func (c *ctx) WaitChan() <-chan os.Signal {
 	return sig
 }
 
-func (c *ctx) checkAndSetCert() error {
+func (c *ctx) CheckEnvAndLoadResource() error {
 	// get and check ca
 	ca, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertCA))
 	if err != nil {

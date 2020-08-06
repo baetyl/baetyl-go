@@ -67,35 +67,18 @@ func initCert(t *testing.T) string {
 }
 
 func TestContext(t *testing.T) {
-	ctx, err := NewContext("")
-	assert.Error(t, err)
-	assert.Nil(t, ctx)
-
-	os.Setenv(EnvKeyServiceName, SystemAppInit)
-	ctx, err = NewContext("")
-	assert.NoError(t, err)
-	assert.NotNil(t, ctx)
-
-	dir := initCert(t)
-	defer os.RemoveAll(dir)
-
 	os.Setenv(EnvKeyConfFile, "file")
 	os.Setenv(EnvKeyNodeName, "node")
 	os.Setenv(EnvKeyAppName, "app")
 	os.Setenv(EnvKeyAppVersion, "v1")
 	os.Setenv(EnvKeyServiceName, "service")
 
-	ctx, err = NewContext("")
-	assert.NoError(t, err)
+	ctx := NewContext("")
 	assert.Equal(t, "node", ctx.NodeName())
 	assert.Equal(t, "app", ctx.AppName())
 	assert.Equal(t, "v1", ctx.AppVersion())
 	assert.Equal(t, "service", ctx.ServiceName())
 	assert.Equal(t, "file", ctx.ConfFile())
-	resCa, resCrt, resKey := ctx.GetSystemResource().GetSystemCert()
-	assert.Equal(t, ca, string(resCa))
-	assert.Equal(t, crt, string(resCrt))
-	assert.Equal(t, key, string(resKey))
 	cfg := ctx.ServiceConfig()
 	assert.Equal(t, "http://baetyl-function:80", cfg.HTTP.Address)
 	assert.Equal(t, "tcp://baetyl-broker:1883", cfg.MQTT.Address)
@@ -107,8 +90,7 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, 50, cfg.Logger.MaxSize)
 	assert.Equal(t, 15, cfg.Logger.MaxBackups)
 
-	ctx, err = NewContext("../example/etc/baetyl/service.yml")
-	assert.NoError(t, err)
+	ctx = NewContext("../example/etc/baetyl/service.yml")
 	assert.Equal(t, "node", ctx.NodeName())
 	assert.Equal(t, "app", ctx.AppName())
 	assert.Equal(t, "v1", ctx.AppVersion())
@@ -124,4 +106,17 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, 15, cfg.Logger.MaxAge)
 	assert.Equal(t, 50, cfg.Logger.MaxSize)
 	assert.Equal(t, 15, cfg.Logger.MaxBackups)
+}
+
+func TestCtx_CheckEnvAndLoadResource(t *testing.T) {
+	dir := initCert(t)
+	defer os.RemoveAll(dir)
+	ctx := NewContext("")
+	err := ctx.CheckEnvAndLoadResource()
+	assert.NoError(t, err)
+
+	resCa, resCrt, resKey := ctx.GetSystemResource().GetSystemCert()
+	assert.Equal(t, ca, string(resCa))
+	assert.Equal(t, crt, string(resCrt))
+	assert.Equal(t, key, string(resKey))
 }
