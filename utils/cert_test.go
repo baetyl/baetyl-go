@@ -1,16 +1,17 @@
 package utils
 
 import (
-	tls2 "crypto/tls"
-	"github.com/stretchr/testify/assert"
+	"crypto/tls"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewTLSConfigServer(t *testing.T) {
-	tls, err := NewTLSConfigServer(Certificate{Key: "../example/var/lib/baetyl/testcert/server.key", ClientAuthType: tls2.VerifyClientCertIfGiven})
+	tl, err := NewTLSConfigServer(Certificate{Key: "../example/var/lib/baetyl/testcert/server.key", ClientAuthType: tls.VerifyClientCertIfGiven})
 	assert.Error(t, err)
 
-	tls, err = NewTLSConfigServer(Certificate{Cert: "../example/var/lib/baetyl/testcert/server.pem"})
+	tl, err = NewTLSConfigServer(Certificate{Cert: "../example/var/lib/baetyl/testcert/server.pem"})
 	assert.Error(t, err)
 
 	c := Certificate{
@@ -18,24 +19,24 @@ func TestNewTLSConfigServer(t *testing.T) {
 		Cert: "../example/var/lib/baetyl/testcert/server.pem",
 	}
 
-	tls, err = NewTLSConfigServer(c)
+	tl, err = NewTLSConfigServer(c)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, tls)
+	assert.NotEmpty(t, tl)
 }
 
 func TestNewTLSConfigClient(t *testing.T) {
-	tls, err := NewTLSConfigClient(Certificate{Key: "../example/var/lib/baetyl/testcert/client.key"})
+	tl, err := NewTLSConfigClient(Certificate{Key: "../example/var/lib/baetyl/testcert/client.key"})
 	assert.Error(t, err)
 
-	tls, err = NewTLSConfigClient(Certificate{Cert: "../example/var/lib/baetyl/testcert/client.pem"})
+	tl, err = NewTLSConfigClient(Certificate{Cert: "../example/var/lib/baetyl/testcert/client.pem"})
 	assert.Error(t, err)
-	assert.Empty(t, tls)
+	assert.Empty(t, tl)
 
 	c := Certificate{
 		Key:  "../example/var/lib/baetyl/testcert/client.key",
 		Cert: "../example/var/lib/baetyl/testcert/client.pem",
 	}
-	tls, err = NewTLSConfigClient(c)
+	tl, err = NewTLSConfigClient(c)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, tls)
+	assert.NotEmpty(t, tl)
 }
