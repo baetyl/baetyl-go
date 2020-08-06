@@ -61,11 +61,8 @@ type Context interface {
 	// Delete deletes the value for a key.
 	Delete(key interface{})
 
-	// CheckEnvAndLoadResource check environment variable and load system resource
-	CheckEnvAndLoadResource() error
-
-	// Get get system resource object
-	GetSystemResource() *SystemResource
+	// LoadSystemCert check and load system resource
+	LoadSystemCert() (*SystemCert, error)
 
 	// LoadCustomConfig loads custom config, if path is empty, will load config from default path.
 	LoadCustomConfig(cfg interface{}, files ...string) error
@@ -91,7 +88,7 @@ type ctx struct {
 	httpAddress string
 	mqttAddress string
 	certPath    string
-	res         *SystemResource
+	res         *SystemCert
 }
 
 // NewContext creates a new context
@@ -106,7 +103,6 @@ func NewContext(confFile string) Context {
 		appVersion:  os.Getenv(EnvKeyAppVersion),
 		serviceName: os.Getenv(EnvKeyServiceName),
 		certPath:    os.Getenv(EnvKeyCertPath),
-		res:         &SystemResource{},
 	}
 
 	var fs []log.Field
@@ -150,10 +146,6 @@ func NewContext(confFile string) Context {
 	}
 	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", c.cfg))
 	return c
-}
-
-func (c *ctx) GetSystemResource() *SystemResource {
-	return c.res
 }
 
 func (c *ctx) NodeName() string {
@@ -206,32 +198,34 @@ func (c *ctx) WaitChan() <-chan os.Signal {
 	return sig
 }
 
-func (c *ctx) CheckEnvAndLoadResource() error {
+func (c *ctx) LoadSystemCert() (*SystemCert, error) {
 	// get and check ca
 	ca, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertCA))
 	if err != nil {
-		return errors.Trace(err)
+		return nil, errors.Trace(err)
 	}
 	// get crt and key
 	crt, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertCrt))
 	if err != nil {
-		return errors.Trace(err)
+		return nil, errors.Trace(err)
 	}
 	info, err := pki.ParseCertificates(crt)
 	if err != nil {
-		return errors.Trace(err)
+		return nil, errors.Trace(err)
 	}
 	if len(info) != 1 || len(info[0].Subject.OrganizationalUnit) != 1 ||
 		info[0].Subject.OrganizationalUnit[0] != SystemCertOU {
-		return errors.Trace(ErrSystemCertInvalid)
+		return nil, errors.Trace(ErrSystemCertInvalid)
 	}
 	key, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertKey))
 	if err != nil {
-		return errors.Trace(err)
+		return nil, errors.Trace(err)
 	}
 	// set
-	c.res.ca = ca
-	c.res.crt = crt
-	c.res.key = key
-	return nil
+	c.res = &SystemCert{
+		ca:  ca,
+		crt: crt,
+		key: key,
+	}
+	return c.res, nil
 }

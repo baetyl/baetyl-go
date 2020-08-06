@@ -112,10 +112,11 @@ func TestCtx_CheckEnvAndLoadResource(t *testing.T) {
 	dir := initCert(t)
 	defer os.RemoveAll(dir)
 	ctx := NewContext("")
-	err := ctx.CheckEnvAndLoadResource()
+	sc, err := ctx.LoadSystemCert()
 	assert.NoError(t, err)
+	assert.NotNil(t, sc)
 
-	resCa, resCrt, resKey := ctx.GetSystemResource().GetSystemCert()
+	resCa, resCrt, resKey := sc.GetSystemCert()
 	assert.Equal(t, ca, string(resCa))
 	assert.Equal(t, crt, string(resCrt))
 	assert.Equal(t, key, string(resKey))
