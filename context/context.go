@@ -22,6 +22,7 @@ const (
 	EnvKeyServiceName = "BAETYL_SERVICE_NAME"
 	EnvKeyCodePath    = "BAETYL_CODE_PATH"
 	EnvKeyCertPath    = "BAETYL_CERT_PATH"
+	EnvKeyAppVersion  = "BAETYL_APP_VERSION"
 
 	SystemCertCA  = "ca.pem"
 	SystemCertCrt = "crt.pem"
@@ -41,6 +42,8 @@ type Context interface {
 	NodeName() string
 	// AppName returns app name.
 	AppName() string
+	// AppVersion returns application version.
+	AppVersion() string
 	// ServiceName returns service name.
 	ServiceName() string
 	// ConfFile returns config file.
@@ -81,6 +84,7 @@ type ctx struct {
 
 	nodeName    string
 	appName     string
+	appVersion  string
 	serviceName string
 	confFile    string
 	httpAddress string
@@ -98,6 +102,7 @@ func NewContext(confFile string) (Context, error) {
 		confFile:    confFile,
 		nodeName:    os.Getenv(EnvKeyNodeName),
 		appName:     os.Getenv(EnvKeyAppName),
+		appVersion:  os.Getenv(EnvKeyAppVersion),
 		serviceName: os.Getenv(EnvKeyServiceName),
 		certPath:    os.Getenv(EnvKeyCertPath),
 		res:         &SystemResource{},
@@ -164,6 +169,10 @@ func (c *ctx) NodeName() string {
 
 func (c *ctx) AppName() string {
 	return c.appName
+}
+
+func (c *ctx) AppVersion() string {
+	return c.appVersion
 }
 
 func (c *ctx) ServiceName() string {
