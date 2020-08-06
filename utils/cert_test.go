@@ -1,12 +1,13 @@
 package utils
 
 import (
+	tls2 "crypto/tls"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestNewTLSConfigServer(t *testing.T) {
-	tls, err := NewTLSConfigServer(Certificate{Key: "../example/var/lib/baetyl/testcert/server.key"})
+	tls, err := NewTLSConfigServer(Certificate{Key: "../example/var/lib/baetyl/testcert/server.key", ClientAuthType: tls2.VerifyClientCertIfGiven})
 	assert.Error(t, err)
 
 	tls, err = NewTLSConfigServer(Certificate{Cert: "../example/var/lib/baetyl/testcert/server.pem"})

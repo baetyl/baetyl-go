@@ -17,11 +17,12 @@ type Certificate struct {
 	Cert               string `yaml:"cert" json:"cert"`
 	Name               string `yaml:"name" json:"name"`
 	InsecureSkipVerify bool   `yaml:"insecureSkipVerify" json:"insecureSkipVerify"` // for client, for test purpose
+	tls.ClientAuthType `yaml:"clientAuthType" json:"clientAuthType"`
 }
 
 // NewTLSConfigServer loads tls config for server
 func NewTLSConfigServer(c Certificate) (*tls.Config, error) {
-	cfg, err := tlsconfig.Server(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, ClientAuth: tls.VerifyClientCertIfGiven})
+	cfg, err := tlsconfig.Server(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, ClientAuth: c.ClientAuthType})
 	return cfg, errors.Trace(err)
 }
 
