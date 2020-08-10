@@ -22,3 +22,8 @@ const (
 	// speical secret of the the certificate
 	SecretCertificate = "certificate"
 )
+
+const (
+	ReportKind = "report"
+	DesireKind = "desire"
+)
