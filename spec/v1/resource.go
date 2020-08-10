@@ -3,9 +3,6 @@ package v1
 // Kind app model kind, crd on k8s
 type Kind string
 
-// MessageKind message kind
-type MessageKind string
-
 // All kinds
 const (
 	KindNode          Kind = "node"
@@ -24,9 +21,4 @@ const (
 	SecretConfig = "config"
 	// speical secret of the the certificate
 	SecretCertificate = "certificate"
-)
-
-const (
-	MessageReport MessageKind = "report"
-	MessageDesire MessageKind = "desire"
 )

@@ -6,13 +6,6 @@ import (
 	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
-// Message general structure for http and ws sync
-type Message struct {
-	Kind     string            `yaml:"kind" json:"kind"`
-	Metadata map[string]string `yaml:"meta" json:"meta"`
-	Content  interface{}       `yaml:"content" json:"content"`
-}
-
 // DesireRequest body of request to sync desired data
 type DesireRequest struct {
 	Infos []ResourceInfo `yaml:"infos" json:"infos"`
