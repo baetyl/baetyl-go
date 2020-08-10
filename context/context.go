@@ -16,13 +16,13 @@ import (
 
 // Env keys
 const (
-	EnvKeyConfFile    = "BAETYL_CONF_FILE"
-	EnvKeyNodeName    = "BAETYL_NODE_NAME"
-	EnvKeyAppName     = "BAETYL_APP_NAME"
-	EnvKeyServiceName = "BAETYL_SERVICE_NAME"
-	EnvKeyCodePath    = "BAETYL_CODE_PATH"
-	EnvKeyCertPath    = "BAETYL_CERT_PATH"
-	EnvKeyAppVersion  = "BAETYL_APP_VERSION"
+	EnvKeyConfFile      = "BAETYL_CONF_FILE"
+	EnvKeyNodeName      = "BAETYL_NODE_NAME"
+	EnvKeyAppName       = "BAETYL_APP_NAME"
+	EnvKeyServiceName   = "BAETYL_SERVICE_NAME"
+	EnvKeyCodePath      = "BAETYL_CODE_PATH"
+	EnvKeyCertPath      = "BAETYL_CERT_PATH"
+	EnvKeyAppVersion    = "BAETYL_APP_VERSION"
 
 	SystemCertCA  = "ca.pem"
 	SystemCertCrt = "crt.pem"
