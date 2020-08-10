@@ -3,6 +3,9 @@ package v1
 // Kind app model kind, crd on k8s
 type Kind string
 
+// MessageKind message kind
+type MessageKind string
+
 // All kinds
 const (
 	KindNode          Kind = "node"
@@ -24,6 +27,6 @@ const (
 )
 
 const (
-	ReportKind = "report"
-	DesireKind = "desire"
+	MessageReport MessageKind = "report"
+	MessageDesire MessageKind = "desire"
 )
