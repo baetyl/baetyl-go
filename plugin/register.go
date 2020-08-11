@@ -17,9 +17,6 @@ type Plugin interface {
 type Factory func() (Plugin, error)
 
 // PluginFactory contains all supported plugin factory
-//var pluginFactory = make(map[string]Factory)
-//var plugins = map[string]Plugin{}
-
 var pluginFactory sync.Map
 var plugins sync.Map
 
