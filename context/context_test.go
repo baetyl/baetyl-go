@@ -1,13 +1,152 @@
 package context
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
+	"github.com/baetyl/baetyl-go/v2/http"
+	"github.com/baetyl/baetyl-go/v2/log"
+	"github.com/baetyl/baetyl-go/v2/mqtt"
+	"github.com/baetyl/baetyl-go/v2/utils"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestContext(t *testing.T) {
+	expected := &SystemConfig{
+		Certificate: utils.Certificate{
+			CA:                 "var/lib/baetyl/system/certs/ca.pem",
+			Key:                "var/lib/baetyl/system/certs/key.pem",
+			Cert:               "var/lib/baetyl/system/certs/crt.pem",
+			InsecureSkipVerify: false,
+			ClientAuthType:     0,
+		},
+		Function: http.ClientConfig{
+			Address:               "https://baetyl-function.baetyl-edge-system",
+			Timeout:               30000000000,
+			KeepAlive:             30000000000,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90000000000,
+			TLSHandshakeTimeout:   10000000000,
+			ExpectContinueTimeout: 1000000000,
+			Certificate: utils.Certificate{
+				CA:                 "var/lib/baetyl/system/certs/ca.pem",
+				Key:                "var/lib/baetyl/system/certs/key.pem",
+				Cert:               "var/lib/baetyl/system/certs/crt.pem",
+				InsecureSkipVerify: false,
+				ClientAuthType:     0,
+			},
+		},
+		Broker: mqtt.ClientConfig{
+			Address:              "ssl://baetyl-broker.baetyl-edge-system:8883",
+			Username:             "",
+			Password:             "",
+			ClientID:             "",
+			CleanSession:         false,
+			Timeout:              30000000000,
+			KeepAlive:            30000000000,
+			MaxReconnectInterval: 180000000000,
+			MaxCacheMessages:     10,
+			DisableAutoAck:       false,
+			Subscriptions:        []mqtt.QOSTopic{},
+			Certificate: utils.Certificate{
+				CA:                 "var/lib/baetyl/system/certs/ca.pem",
+				Key:                "var/lib/baetyl/system/certs/key.pem",
+				Cert:               "var/lib/baetyl/system/certs/crt.pem",
+				InsecureSkipVerify: false,
+				ClientAuthType:     0,
+			},
+		},
+		Logger: log.Config{
+			Level:       "info",
+			Encoding:    "json",
+			Filename:    "",
+			Compress:    false,
+			MaxAge:      15,
+			MaxSize:     50,
+			MaxBackups:  15,
+			EncodeTime:  "",
+			EncodeLevel: "",
+		},
+	}
+
+	ctx := NewContext("")
+	assert.Equal(t, "", ctx.NodeName())
+	assert.Equal(t, "", ctx.AppName())
+	assert.Equal(t, "", ctx.AppVersion())
+	assert.Equal(t, "", ctx.ServiceName())
+	assert.Equal(t, "", ctx.ConfFile())
+	assert.Equal(t, expected, ctx.SystemConfig())
+
+	os.Setenv(KeyConfFile, "file")
+	os.Setenv(KeyNodeName, "node")
+	os.Setenv(KeyAppName, "app")
+	os.Setenv(KeyAppVersion, "v1")
+	os.Setenv(KeySvcName, "service")
+	ctx = NewContext("")
+	assert.Equal(t, "node", ctx.NodeName())
+	assert.Equal(t, "app", ctx.AppName())
+	assert.Equal(t, "v1", ctx.AppVersion())
+	assert.Equal(t, "service", ctx.ServiceName())
+	assert.Equal(t, "file", ctx.ConfFile())
+	expected.Broker.ClientID = "baetyl-svc-service"
+	assert.Equal(t, expected, ctx.SystemConfig())
+
+	ctx = NewContext("../example/etc/baetyl/service.yml")
+	assert.Equal(t, "node", ctx.NodeName())
+	assert.Equal(t, "app", ctx.AppName())
+	assert.Equal(t, "v1", ctx.AppVersion())
+	assert.Equal(t, "service", ctx.ServiceName())
+	assert.Equal(t, "../example/etc/baetyl/service.yml", ctx.ConfFile())
+	expected.Certificate.CA = "example/var/lib/baetyl/testcert/ca.pem"
+	expected.Certificate.Key = "example/var/lib/baetyl/testcert/client.key"
+	expected.Certificate.Cert = "example/var/lib/baetyl/testcert/client.pem"
+	expected.Function.Address = "https://baetyl-function:8880"
+	expected.Function.CA = expected.Certificate.CA
+	expected.Function.Key = expected.Certificate.Key
+	expected.Function.Cert = expected.Certificate.Cert
+	expected.Broker.Address = "ssl://baetyl-broker:8883"
+	expected.Broker.CA = expected.Certificate.CA
+	expected.Broker.Key = expected.Certificate.Key
+	expected.Broker.Cert = expected.Certificate.Cert
+	expected.Logger.Filename = "var/log/service.log"
+	expected.Logger.Level = "debug"
+	expected.Logger.Encoding = "console"
+	assert.Equal(t, expected, ctx.SystemConfig())
+}
+
+func TestContext_CheckSystemCert(t *testing.T) {
+	dir := initCert(t)
+	defer os.RemoveAll(dir)
+	ctx := NewContext("")
+	err := ctx.CheckSystemCert()
+	assert.NoError(t, err)
+}
+
+func initCert(t *testing.T) string {
+	dir, err := ioutil.TempDir("", "")
+	assert.NoError(t, err)
+	err = os.Chdir(dir)
+	assert.NoError(t, err)
+
+	var cfg SystemConfig
+	err = utils.UnmarshalYAML(nil, &cfg)
+	assert.NoError(t, err)
+	fmt.Println(cfg)
+
+	err = os.MkdirAll(filepath.Dir(cfg.Certificate.CA), 0755)
+	assert.NoError(t, err)
+
+	err = ioutil.WriteFile(cfg.Certificate.CA, []byte(ca), os.ModePerm)
+	assert.NoError(t, err)
+	err = ioutil.WriteFile(cfg.Certificate.Cert, []byte(crt), os.ModePerm)
+	assert.NoError(t, err)
+	err = ioutil.WriteFile(cfg.Certificate.Key, []byte(key), os.ModePerm)
+	assert.NoError(t, err)
+	return dir
+}
 
 const (
 	ca = `-----BEGIN CERTIFICATE-----
@@ -51,73 +190,3 @@ IQvJ2Bn2NdpZ8d7p9Jz3ESwJjxOp3irb+A==
 -----END EC PRIVATE KEY-----
 `
 )
-
-func initCert(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "")
-	assert.NoError(t, err)
-	err = os.Setenv(EnvKeyCertPath, dir)
-	assert.NoError(t, err)
-	err = ioutil.WriteFile(path.Join(dir, SystemCertCA), []byte(ca), os.ModePerm)
-	assert.NoError(t, err)
-	err = ioutil.WriteFile(path.Join(dir, SystemCertCrt), []byte(crt), os.ModePerm)
-	assert.NoError(t, err)
-	err = ioutil.WriteFile(path.Join(dir, SystemCertKey), []byte(key), os.ModePerm)
-	assert.NoError(t, err)
-	return dir
-}
-
-func TestContext(t *testing.T) {
-	os.Setenv(EnvKeyConfFile, "file")
-	os.Setenv(EnvKeyNodeName, "node")
-	os.Setenv(EnvKeyAppName, "app")
-	os.Setenv(EnvKeyAppVersion, "v1")
-	os.Setenv(EnvKeyServiceName, "service")
-
-	ctx := NewContext("")
-	assert.Equal(t, "node", ctx.NodeName())
-	assert.Equal(t, "app", ctx.AppName())
-	assert.Equal(t, "v1", ctx.AppVersion())
-	assert.Equal(t, "service", ctx.ServiceName())
-	assert.Equal(t, "file", ctx.ConfFile())
-	cfg := ctx.ServiceConfig()
-	assert.Equal(t, "http://baetyl-function:80", cfg.HTTP.Address)
-	assert.Equal(t, "tcp://baetyl-broker:1883", cfg.MQTT.Address)
-	assert.Equal(t, "info", cfg.Logger.Level)
-	assert.Equal(t, "json", cfg.Logger.Encoding)
-	assert.Empty(t, cfg.Logger.Filename)
-	assert.False(t, cfg.Logger.Compress)
-	assert.Equal(t, 15, cfg.Logger.MaxAge)
-	assert.Equal(t, 50, cfg.Logger.MaxSize)
-	assert.Equal(t, 15, cfg.Logger.MaxBackups)
-
-	ctx = NewContext("../example/etc/baetyl/service.yml")
-	assert.Equal(t, "node", ctx.NodeName())
-	assert.Equal(t, "app", ctx.AppName())
-	assert.Equal(t, "v1", ctx.AppVersion())
-	assert.Equal(t, "service", ctx.ServiceName())
-	assert.Equal(t, "../example/etc/baetyl/service.yml", ctx.ConfFile())
-	cfg = ctx.ServiceConfig()
-	assert.Equal(t, "https://baetyl-function:443", cfg.HTTP.Address)
-	assert.Equal(t, "ssl://baetyl-broker:8883", cfg.MQTT.Address)
-	assert.Equal(t, "debug", cfg.Logger.Level)
-	assert.Equal(t, "console", cfg.Logger.Encoding)
-	assert.Empty(t, cfg.Logger.Filename)
-	assert.False(t, cfg.Logger.Compress)
-	assert.Equal(t, 15, cfg.Logger.MaxAge)
-	assert.Equal(t, 50, cfg.Logger.MaxSize)
-	assert.Equal(t, 15, cfg.Logger.MaxBackups)
-}
-
-func TestCtx_CheckEnvAndLoadResource(t *testing.T) {
-	dir := initCert(t)
-	defer os.RemoveAll(dir)
-	ctx := NewContext("")
-	sc, err := ctx.LoadSystemCert()
-	assert.NoError(t, err)
-	assert.NotNil(t, sc)
-
-	resCa, resCrt, resKey := sc.GetSystemCert()
-	assert.Equal(t, ca, string(resCa))
-	assert.Equal(t, crt, string(resCrt))
-	assert.Equal(t, key, string(resKey))
-}
