@@ -1,19 +1,12 @@
-http:
-  # address: https://baetyl-function:8880
-  ca: example/var/lib/baetyl/testcert/ca.pem
-  key: example/var/lib/baetyl/testcert/client.key
-  cert: example/var/lib/baetyl/testcert/client.pem
-mqtt:
-  # address: ssl://baetyl-broker:8883
-  ca: example/var/lib/baetyl/testcert/ca.pem
-  key: example/var/lib/baetyl/testcert/client.key
-  cert: example/var/lib/baetyl/testcert/client.pem
-link:
-  # address: link://baetyl-broker:8886
+function:
+  address: https://baetyl-function:8880
+broker:
+  address: ssl://baetyl-broker:8883
+cert:
   ca: example/var/lib/baetyl/testcert/ca.pem
   key: example/var/lib/baetyl/testcert/client.key
   cert: example/var/lib/baetyl/testcert/client.pem
 logger:
-  path: "var/log/service.log"
+  filename: "var/log/service.log"
   level: "debug"
   encoding: "console"

@@ -4,50 +4,56 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
-	"path"
 	"sync"
 	"syscall"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
+	"github.com/baetyl/baetyl-go/v2/http"
 	"github.com/baetyl/baetyl-go/v2/log"
 	"github.com/baetyl/baetyl-go/v2/pki"
 	"github.com/baetyl/baetyl-go/v2/utils"
 )
 
-// Env keys
+// All keys
 const (
-	EnvKeyConfFile      = "BAETYL_CONF_FILE"
-	EnvKeyNodeName      = "BAETYL_NODE_NAME"
-	EnvKeyAppName       = "BAETYL_APP_NAME"
-	EnvKeyServiceName   = "BAETYL_SERVICE_NAME"
-	EnvKeyCodePath      = "BAETYL_CODE_PATH"
-	EnvKeyCertPath      = "BAETYL_CERT_PATH"
-	EnvKeyAppVersion    = "BAETYL_APP_VERSION"
-
-	SystemCertCA  = "ca.pem"
-	SystemCertCrt = "crt.pem"
-	SystemCertKey = "key.pem"
-	SystemCertOU  = "BAETYL"
+	KeyBaetyl     = "BAETYL"
+	KeyConfFile   = "BAETYL_CONF_FILE"
+	KeyNodeName   = "BAETYL_NODE_NAME"
+	KeyAppName    = "BAETYL_APP_NAME"
+	KeyAppVersion = "BAETYL_APP_VERSION"
+	KeySvcName    = "BAETYL_SERVICE_NAME"
+	KeySysConf    = "BAETYL_SYSTEM_CONF"
+	KeyFuncAddr   = "BAETYL_FUNCTION_ADDRESS"
+	KeyBrokerAddr = "BAETYL_BROKER_ADDRESS"
 )
 
 var (
-	ErrSystemCertInvalid = errors.New("failed to verify system certificate")
+	ErrSystemCertInvalid  = errors.New("system certificate is invalid")
+	ErrSystemCertNotFound = errors.New("system certificate is not found")
 )
 
 // Context of service
 type Context interface {
-	// NodeName returns node name.
+	// NodeName returns node name from data.
 	NodeName() string
-	// AppName returns app name.
+	// AppName returns app name from data.
 	AppName() string
-	// AppVersion returns application version.
+	// AppVersion returns application version from data.
 	AppVersion() string
-	// ServiceName returns service name.
+	// ServiceName returns service name from data.
 	ServiceName() string
-	// ConfFile returns config file.
+	// ConfFile returns config file from data.
 	ConfFile() string
-	// ServiceConfig returns service config.
-	ServiceConfig() ServiceConfig
+	// SystemConfig returns the config of baetyl system from data.
+	SystemConfig() *SystemConfig
+
+	// Log returns logger interface.
+	Log() *log.Logger
+
+	// Wait waits until exit, receiving SIGTERM and SIGINT signals.
+	Wait()
+	// WaitChan returns wait channel.
+	WaitChan() <-chan os.Signal
 
 	// Load returns the value stored in the map for a key, or nil if no value is present.
 	// The ok result indicates whether value was found in the map.
@@ -61,126 +67,150 @@ type Context interface {
 	// Delete deletes the value for a key.
 	Delete(key interface{})
 
-	// LoadSystemCert check and load system resource
-	LoadSystemCert() (*SystemCert, error)
-
-	// LoadCustomConfig loads custom config, if path is empty, will load config from default path.
+	// CheckSystemCert checks system certificate, if certificate is not found or invalid, returns an error.
+	CheckSystemCert() error
+	// LoadCustomConfig loads custom config.
+	// If 'files' is empty, will load config from default path,
+	// else the first file path will be used to load config from.
 	LoadCustomConfig(cfg interface{}, files ...string) error
-	// Log returns logger interface.
-	Log() *log.Logger
-
-	// Wait waits until exit, receiving SIGTERM and SIGINT signals.
-	Wait()
-	// WaitChan returns wait channel.
-	WaitChan() <-chan os.Signal
+	// NewFunctionHttpClient creates a new function http client.
+	NewFunctionHttpClient() (*http.Client, error)
 }
 
 type ctx struct {
-	sync.Map
-	cfg ServiceConfig
-	log *log.Logger
-
-	nodeName    string
-	appName     string
-	appVersion  string
-	serviceName string
-	confFile    string
-	httpAddress string
-	mqttAddress string
-	certPath    string
-	res         *SystemCert
+	sync.Map // global cache
+	log      *log.Logger
 }
 
 // NewContext creates a new context
 func NewContext(confFile string) Context {
 	if confFile == "" {
-		confFile = os.Getenv(EnvKeyConfFile)
-	}
-	c := &ctx{
-		confFile:    confFile,
-		nodeName:    os.Getenv(EnvKeyNodeName),
-		appName:     os.Getenv(EnvKeyAppName),
-		appVersion:  os.Getenv(EnvKeyAppVersion),
-		serviceName: os.Getenv(EnvKeyServiceName),
-		certPath:    os.Getenv(EnvKeyCertPath),
+		confFile = os.Getenv(KeyConfFile)
 	}
 
-	var fs []log.Field
-	if c.nodeName != "" {
-		fs = append(fs, log.Any("node", c.nodeName))
-	}
-	if c.appName != "" {
-		fs = append(fs, log.Any("app", c.appName))
-	}
-	if c.serviceName != "" {
-		fs = append(fs, log.Any("service", c.serviceName))
-	}
-	c.log = log.With(fs...)
+	c := &ctx{}
+	c.Store(KeyConfFile, confFile)
+	c.Store(KeyNodeName, os.Getenv(KeyNodeName))
+	c.Store(KeyAppName, os.Getenv(KeyAppName))
+	c.Store(KeyAppVersion, os.Getenv(KeyAppVersion))
+	c.Store(KeySvcName, os.Getenv(KeySvcName))
 
-	err := c.LoadCustomConfig(&c.cfg)
+	var lfs []log.Field
+	if c.NodeName() != "" {
+		lfs = append(lfs, log.Any("node", c.NodeName()))
+	}
+	if c.AppName() != "" {
+		lfs = append(lfs, log.Any("app", c.AppName()))
+	}
+	if c.ServiceName() != "" {
+		lfs = append(lfs, log.Any("service", c.ServiceName()))
+	}
+	c.log = log.With(lfs...)
+
+	sc := &SystemConfig{}
+	err := c.LoadCustomConfig(sc)
 	if err != nil {
-		c.log.Error("failed to load service config, to use default config", log.Error(err))
-		utils.UnmarshalYAML(nil, &c.cfg)
+		c.log.Error("failed to load system config, to use default config", log.Error(err))
+		utils.UnmarshalYAML(nil, sc)
+	}
+	// populate configuration
+	// if not set in config file, to use value from env.
+	// if not set in env, to use default value.
+	if sc.Function.Address == "" {
+		if ev := os.Getenv(KeyFuncAddr); ev != "" {
+			sc.Function.Address = ev
+		} else {
+			sc.Function.Address = "https://baetyl-function.baetyl-edge-system"
+		}
+	}
+	if sc.Function.CA == "" {
+		sc.Function.CA = sc.Certificate.CA
+	}
+	if sc.Function.Key == "" {
+		sc.Function.Key = sc.Certificate.Key
+	}
+	if sc.Function.Cert == "" {
+		sc.Function.Cert = sc.Certificate.Cert
 	}
 
-	_log, err := log.Init(c.cfg.Logger, fs...)
+	if sc.Broker.Address == "" {
+		if ev := os.Getenv(KeyBrokerAddr); ev != "" {
+			sc.Broker.Address = ev
+		} else {
+			sc.Broker.Address = "ssl://baetyl-broker.baetyl-edge-system:8883"
+		}
+	}
+	if sc.Broker.ClientID == "" {
+		if c.ServiceName() != "" {
+			sc.Broker.ClientID = "baetyl-svc-" + c.ServiceName()
+		}
+	}
+	if sc.Broker.CA == "" {
+		sc.Broker.CA = sc.Certificate.CA
+	}
+	if sc.Broker.Key == "" {
+		sc.Broker.Key = sc.Certificate.Key
+	}
+	if sc.Broker.Cert == "" {
+		sc.Broker.Cert = sc.Certificate.Cert
+	}
+	c.Store(KeySysConf, sc)
+
+	_log, err := log.Init(sc.Logger, lfs...)
 	if err != nil {
 		c.log.Error("failed to init logger", log.Error(err))
 	}
 	c.log = _log
-
-	if c.cfg.HTTP.Address == "" {
-		if c.cfg.HTTP.Key == "" {
-			c.cfg.HTTP.Address = "http://baetyl-function:80"
-		} else {
-			c.cfg.HTTP.Address = "https://baetyl-function:443"
-		}
-	}
-
-	if c.cfg.MQTT.Address == "" {
-		if c.cfg.MQTT.Key == "" {
-			c.cfg.MQTT.Address = "tcp://baetyl-broker:1883"
-		} else {
-			c.cfg.MQTT.Address = "ssl://baetyl-broker:8883"
-		}
-	}
-	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", c.cfg))
+	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", sc))
 	return c
 }
 
 func (c *ctx) NodeName() string {
-	return c.nodeName
+	v, ok := c.Load(KeyNodeName)
+	if !ok {
+		return ""
+	}
+	return v.(string)
 }
 
 func (c *ctx) AppName() string {
-	return c.appName
+	v, ok := c.Load(KeyAppName)
+	if !ok {
+		return ""
+	}
+	return v.(string)
 }
 
 func (c *ctx) AppVersion() string {
-	return c.appVersion
+	v, ok := c.Load(KeyAppVersion)
+	if !ok {
+		return ""
+	}
+	return v.(string)
 }
 
 func (c *ctx) ServiceName() string {
-	return c.serviceName
+	v, ok := c.Load(KeySvcName)
+	if !ok {
+		return ""
+	}
+	return v.(string)
 }
 
 func (c *ctx) ConfFile() string {
-	return c.confFile
+	v, ok := c.Load(KeyConfFile)
+	if !ok {
+		return ""
+	}
+	return v.(string)
 }
 
-func (c *ctx) ServiceConfig() ServiceConfig {
-	return c.cfg
-}
-
-func (c *ctx) LoadCustomConfig(cfg interface{}, files ...string) error {
-	f := c.confFile
-	if len(files) > 0 && len(files[0]) > 0 {
-		f = files[0]
+func (c *ctx) SystemConfig() *SystemConfig {
+	v, ok := c.Load(KeySysConf)
+	if !ok {
+		return nil
 	}
-	if utils.FileExists(f) {
-		return errors.Trace(utils.LoadYAML(f, cfg))
-	}
-	return errors.Trace(utils.UnmarshalYAML(nil, cfg))
+	return v.(*SystemConfig)
 }
 
 func (c *ctx) Log() *log.Logger {
@@ -198,34 +228,41 @@ func (c *ctx) WaitChan() <-chan os.Signal {
 	return sig
 }
 
-func (c *ctx) LoadSystemCert() (*SystemCert, error) {
-	// get and check ca
-	ca, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertCA))
-	if err != nil {
-		return nil, errors.Trace(err)
+func (c *ctx) CheckSystemCert() error {
+	cfg := c.SystemConfig().Certificate
+	if !utils.FileExists(cfg.CA) || !utils.FileExists(cfg.Key) || !utils.FileExists(cfg.Cert) {
+		return errors.Trace(ErrSystemCertNotFound)
 	}
-	// get crt and key
-	crt, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertCrt))
+	crt, err := ioutil.ReadFile(cfg.Cert)
 	if err != nil {
-		return nil, errors.Trace(err)
+		return errors.Trace(err)
 	}
 	info, err := pki.ParseCertificates(crt)
 	if err != nil {
-		return nil, errors.Trace(err)
+		return errors.Trace(err)
 	}
 	if len(info) != 1 || len(info[0].Subject.OrganizationalUnit) != 1 ||
-		info[0].Subject.OrganizationalUnit[0] != SystemCertOU {
-		return nil, errors.Trace(ErrSystemCertInvalid)
+		info[0].Subject.OrganizationalUnit[0] != KeyBaetyl {
+		return errors.Trace(ErrSystemCertInvalid)
 	}
-	key, err := ioutil.ReadFile(path.Join(c.certPath, SystemCertKey))
+	return nil
+}
+
+func (c *ctx) LoadCustomConfig(cfg interface{}, files ...string) error {
+	f := c.ConfFile()
+	if len(files) > 0 && len(files[0]) > 0 {
+		f = files[0]
+	}
+	if utils.FileExists(f) {
+		return errors.Trace(utils.LoadYAML(f, cfg))
+	}
+	return errors.Trace(utils.UnmarshalYAML(nil, cfg))
+}
+
+func (c *ctx) NewFunctionHttpClient() (*http.Client, error) {
+	ops, err := c.SystemConfig().Function.ToClientOptions()
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	// set
-	c.res = &SystemCert{
-		ca:  ca,
-		crt: crt,
-		key: key,
-	}
-	return c.res, nil
+	return http.NewClient(ops), nil
 }

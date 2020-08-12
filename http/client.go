@@ -46,12 +46,9 @@ func NewClient(ops *ClientOptions) *Client {
 	}
 }
 
-// Call calls the function of service via HTTP POST
-func (c *Client) Call(service, function string, payload []byte) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", c.ops.Address, service)
-	if function != "" {
-		url += "/" + function
-	}
+// Call calls the function via HTTP POST
+func (c *Client) Call(function string, payload []byte) ([]byte, error) {
+	url := fmt.Sprintf("%s/%s", c.ops.Address, function)
 	r, err := c.http.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, errors.Trace(err)

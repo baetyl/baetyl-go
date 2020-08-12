@@ -29,7 +29,7 @@ func TestClientRequests(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, ops)
 	c := NewClient(ops)
-	resp, err := c.Call("service", "function", []byte("{}"))
+	resp, err := c.Call("service/function", []byte("{}"))
 	assert.NoError(t, err)
 	assert.Equal(t, "abc", string(resp))
 
@@ -51,7 +51,7 @@ func TestClieneBadRequests(t *testing.T) {
 	ops.Address = ms.URL
 	c := NewClient(ops)
 
-	data, err := c.Call("service", "function", []byte("{}"))
+	data, err := c.Call("service/function", []byte("{}"))
 	assert.EqualError(t, err, "[400] abc")
 	assert.Equal(t, "abc", string(data))
 
