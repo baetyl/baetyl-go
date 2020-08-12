@@ -11,7 +11,7 @@ import (
 
 // Client auto reconnection client
 type Client struct {
-	ops   ClientOptions
+	ops   *ClientOptions
 	ids   *Counter
 	cache chan Packet
 	log   *log.Logger
@@ -19,7 +19,7 @@ type Client struct {
 }
 
 // NewClient creates a new client
-func NewClient(ops ClientOptions) *Client {
+func NewClient(ops *ClientOptions) *Client {
 	c := &Client{
 		ops:   ops,
 		ids:   NewCounter(),

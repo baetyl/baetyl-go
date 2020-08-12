@@ -84,7 +84,7 @@ func safeReceive(ch chan struct{}) {
 	}
 }
 
-func newClientOptions(t *testing.T, port string, Subscriptions []Subscription) ClientOptions {
+func newClientOptions(t *testing.T, port string, Subscriptions []Subscription) *ClientOptions {
 	c := NewClientOptions()
 	c.Address = "tcp://localhost:" + port
 	c.KeepAlive = 0
