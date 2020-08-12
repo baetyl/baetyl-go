@@ -10,6 +10,7 @@ import (
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/http"
 	"github.com/baetyl/baetyl-go/v2/log"
+	"github.com/baetyl/baetyl-go/v2/mqtt"
 	"github.com/baetyl/baetyl-go/v2/pki"
 	"github.com/baetyl/baetyl-go/v2/utils"
 )
@@ -75,6 +76,8 @@ type Context interface {
 	LoadCustomConfig(cfg interface{}, files ...string) error
 	// NewFunctionHttpClient creates a new function http client.
 	NewFunctionHttpClient() (*http.Client, error)
+	// NewBrokerClient creates a new broker client.
+	NewBrokerClient(subscriptions ...mqtt.Subscription) (*mqtt.Client, error)
 }
 
 type ctx struct {
@@ -140,10 +143,15 @@ func NewContext(confFile string) Context {
 			sc.Broker.Address = "ssl://baetyl-broker.baetyl-edge-system:8883"
 		}
 	}
-	if sc.Broker.ClientID == "" {
-		if c.ServiceName() != "" {
-			sc.Broker.ClientID = "baetyl-svc-" + c.ServiceName()
+	// auto subscribe link topic for service if service name not nil.
+	if sc.Broker.Subscriptions == nil {
+		sc.Broker.Subscriptions = []mqtt.QOSTopic{}
+	}
+	if c.ServiceName() != "" {
+		if sc.Broker.ClientID == "" {
+			sc.Broker.ClientID = "baetyl-link-" + c.ServiceName()
 		}
+		sc.Broker.Subscriptions = append(sc.Broker.Subscriptions, mqtt.QOSTopic{QOS: 1, Topic: "$link/" + c.ServiceName()})
 	}
 	if sc.Broker.CA == "" {
 		sc.Broker.CA = sc.Certificate.CA
@@ -260,9 +268,26 @@ func (c *ctx) LoadCustomConfig(cfg interface{}, files ...string) error {
 }
 
 func (c *ctx) NewFunctionHttpClient() (*http.Client, error) {
+	err := c.CheckSystemCert()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	ops, err := c.SystemConfig().Function.ToClientOptions()
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
 	return http.NewClient(ops), nil
+}
+
+func (c *ctx) NewBrokerClient(subscriptions ...mqtt.Subscription) (*mqtt.Client, error) {
+	err := c.CheckSystemCert()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	ops, err := c.SystemConfig().Broker.ToClientOptions()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	ops.Subscriptions = append(ops.Subscriptions, subscriptions...)
+	return mqtt.NewClient(ops), nil
 }

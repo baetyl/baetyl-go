@@ -91,7 +91,8 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, "v1", ctx.AppVersion())
 	assert.Equal(t, "service", ctx.ServiceName())
 	assert.Equal(t, "file", ctx.ConfFile())
-	expected.Broker.ClientID = "baetyl-svc-service"
+	expected.Broker.ClientID = "baetyl-link-service"
+	expected.Broker.Subscriptions = append(expected.Broker.Subscriptions, mqtt.QOSTopic{QOS: 1, Topic: "$link/service"})
 	assert.Equal(t, expected, ctx.SystemConfig())
 
 	ctx = NewContext("../example/etc/baetyl/service.yml")
@@ -115,6 +116,14 @@ func TestContext(t *testing.T) {
 	expected.Logger.Level = "debug"
 	expected.Logger.Encoding = "console"
 	assert.Equal(t, expected, ctx.SystemConfig())
+
+	fc, err := ctx.NewFunctionHttpClient()
+	assert.EqualError(t, err, ErrSystemCertNotFound.Error())
+	assert.Nil(t, fc)
+
+	bc, err := ctx.NewBrokerClient()
+	assert.EqualError(t, err, ErrSystemCertNotFound.Error())
+	assert.Nil(t, bc)
 }
 
 func TestContext_CheckSystemCert(t *testing.T) {
@@ -123,6 +132,14 @@ func TestContext_CheckSystemCert(t *testing.T) {
 	ctx := NewContext("")
 	err := ctx.CheckSystemCert()
 	assert.NoError(t, err)
+
+	fc, err := ctx.NewFunctionHttpClient()
+	assert.NoError(t, err)
+	assert.NotNil(t, fc)
+
+	bc, err := ctx.NewBrokerClient()
+	assert.NoError(t, err)
+	assert.NotNil(t, bc)
 }
 
 func initCert(t *testing.T) string {
