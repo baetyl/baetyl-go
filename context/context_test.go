@@ -24,7 +24,7 @@ func TestContext(t *testing.T) {
 			ClientAuthType:     0,
 		},
 		Function: http.ClientConfig{
-			Address:               "https://baetyl-function.baetyl-edge-system",
+			Address:               "https://baetyl-function.baetyl-edge-system:" + BaetylFunctionSystemHttpPort,
 			Timeout:               30000000000,
 			KeepAlive:             30000000000,
 			MaxIdleConns:          100,
@@ -40,7 +40,7 @@ func TestContext(t *testing.T) {
 			},
 		},
 		Broker: mqtt.ClientConfig{
-			Address:              "ssl://baetyl-broker.baetyl-edge-system:8883",
+			Address:              "ssl://baetyl-broker.baetyl-edge-system:" + BaetylBrokerSystemPort,
 			Username:             "",
 			Password:             "",
 			ClientID:             "",
@@ -121,12 +121,8 @@ func TestContext(t *testing.T) {
 	assert.EqualError(t, err, ErrSystemCertNotFound.Error())
 	assert.Nil(t, fc)
 
-	config, err := ctx.NewSystemBrokerClientConfig()
-	assert.NoError(t, err)
-
-	bc, err := ctx.NewBrokerClient(config)
+	_, err = ctx.NewSystemBrokerClientConfig()
 	assert.EqualError(t, err, ErrSystemCertNotFound.Error())
-	assert.Nil(t, bc)
 }
 
 func TestContext_CheckSystemCert(t *testing.T) {
