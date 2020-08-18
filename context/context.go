@@ -351,7 +351,12 @@ func (c *ctx) NewSystemBrokerClientConfig() (mqtt.ClientConfig, error) {
 	if err != nil {
 		return mqtt.ClientConfig{}, errors.Trace(err)
 	}
-	return c.SystemConfig().Broker, nil
+	config := c.SystemConfig().Broker
+
+	config.Subscriptions = make([]mqtt.QOSTopic, 0)
+	copy(config.Subscriptions, c.SystemConfig().Broker.Subscriptions)
+
+	return config, nil
 }
 
 func (c *ctx) NewBrokerClient(config mqtt.ClientConfig) (*mqtt.Client, error) {
