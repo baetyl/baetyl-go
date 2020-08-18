@@ -121,7 +121,10 @@ func TestContext(t *testing.T) {
 	assert.EqualError(t, err, ErrSystemCertNotFound.Error())
 	assert.Nil(t, fc)
 
-	bc, err := ctx.NewBrokerClient()
+	config, err := ctx.NewSystemBrokerClientConfig()
+	assert.NoError(t, err)
+
+	bc, err := ctx.NewBrokerClient(config)
 	assert.EqualError(t, err, ErrSystemCertNotFound.Error())
 	assert.Nil(t, bc)
 }
@@ -137,7 +140,10 @@ func TestContext_CheckSystemCert(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, fc)
 
-	bc, err := ctx.NewBrokerClient()
+	config, err := ctx.NewSystemBrokerClientConfig()
+	assert.NoError(t, err)
+
+	bc, err := ctx.NewBrokerClient(config)
 	assert.NoError(t, err)
 	assert.NotNil(t, bc)
 }
