@@ -139,6 +139,16 @@ func TestContext_CheckSystemCert(t *testing.T) {
 	config, err := ctx.NewSystemBrokerClientConfig()
 	assert.NoError(t, err)
 
+	config.Subscriptions = append(config.Subscriptions, mqtt.QOSTopic{
+		QOS:   0,
+		Topic: "test",
+	})
+
+	config2, err := ctx.NewSystemBrokerClientConfig()
+	assert.NoError(t, err)
+
+	assert.NotEqual(t, config, config2)
+
 	bc, err := ctx.NewBrokerClient(config)
 	assert.NoError(t, err)
 	assert.NotNil(t, bc)
