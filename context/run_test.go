@@ -14,7 +14,7 @@ import (
 func TestRun(t *testing.T) {
 	os.Setenv(KeySvcName, "service")
 	Run(func(ctx Context) error {
-		assert.Equal(t, "etc/baetyl/service.yml", ctx.ConfFile())
+		assert.Equal(t, "etc/baetyl/conf.yml", ctx.ConfFile())
 		assert.Equal(t, &SystemConfig{
 			Certificate: utils.Certificate{CA: "var/lib/baetyl/system/certs/ca.pem", Key: "var/lib/baetyl/system/certs/key.pem", Cert: "var/lib/baetyl/system/certs/crt.pem", Name: "", InsecureSkipVerify: false, ClientAuthType: 0},
 			Function:    http.ClientConfig{Address: "https://baetyl-function.baetyl-edge-system:" + BaetylFunctionSystemHttpPort, Timeout: 30000000000, KeepAlive: 30000000000, MaxIdleConns: 100, IdleConnTimeout: 90000000000, TLSHandshakeTimeout: 10000000000, ExpectContinueTimeout: 1000000000, Certificate: utils.Certificate{CA: "var/lib/baetyl/system/certs/ca.pem", Key: "var/lib/baetyl/system/certs/key.pem", Cert: "var/lib/baetyl/system/certs/crt.pem", Name: "", InsecureSkipVerify: false, ClientAuthType: 0}},
