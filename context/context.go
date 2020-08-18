@@ -1,6 +1,7 @@
 package context
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -17,15 +18,21 @@ import (
 
 // All keys
 const (
-	KeyBaetyl     = "BAETYL"
-	KeyConfFile   = "BAETYL_CONF_FILE"
-	KeyNodeName   = "BAETYL_NODE_NAME"
-	KeyAppName    = "BAETYL_APP_NAME"
-	KeyAppVersion = "BAETYL_APP_VERSION"
-	KeySvcName    = "BAETYL_SERVICE_NAME"
-	KeySysConf    = "BAETYL_SYSTEM_CONF"
-	KeyFuncAddr   = "BAETYL_FUNCTION_ADDRESS"
-	KeyBrokerAddr = "BAETYL_BROKER_ADDRESS"
+	KeyBaetyl       = "BAETYL"
+	KeyConfFile     = "BAETYL_CONF_FILE"
+	KeyNodeName     = "BAETYL_NODE_NAME"
+	KeyAppName      = "BAETYL_APP_NAME"
+	KeyAppVersion   = "BAETYL_APP_VERSION"
+	KeySvcName      = "BAETYL_SERVICE_NAME"
+	KeySysConf      = "BAETYL_SYSTEM_CONF"
+	KeyBrokerHost   = "BAETYL_BROKER_HOST"
+	KeyBrokerPort   = "BAETYL_BROKER_PORT"
+	KeyFunctionHost = "BAETYL_FUNCTION_HOST"
+	KeyFunctionPort = "BAETYL_FUNCTION_PORT"
+
+	EdgeNamespace       = "baetyl-edge"
+	EdgeSystemNamespace = "baetyl-edge-system"
+	DefaultPORT         = "50050"
 )
 
 var (
@@ -45,6 +52,14 @@ type Context interface {
 	ServiceName() string
 	// ConfFile returns config file from data.
 	ConfFile() string
+	// BrokerHost return broker host.
+	BrokerHost() string
+	// BrokerPort return broker port.
+	BrokerPort() string
+	// FunctionHost return function host.
+	FunctionHost() string
+	// FunctionPort return function port.
+	FunctionPort() string
 	// SystemConfig returns the config of baetyl system from data.
 	SystemConfig() *SystemConfig
 
@@ -77,7 +92,7 @@ type Context interface {
 	// NewFunctionHttpClient creates a new function http client.
 	NewFunctionHttpClient() (*http.Client, error)
 	// NewBrokerClient creates a new broker client.
-	NewBrokerClient(subscriptions ...mqtt.Subscription) (*mqtt.Client, error)
+	NewBrokerClient(exts ...mqtt.ClientConfig) (*mqtt.Client, error)
 }
 
 type ctx struct {
@@ -97,6 +112,10 @@ func NewContext(confFile string) Context {
 	c.Store(KeyAppName, os.Getenv(KeyAppName))
 	c.Store(KeyAppVersion, os.Getenv(KeyAppVersion))
 	c.Store(KeySvcName, os.Getenv(KeySvcName))
+	c.Store(KeyBrokerHost, os.Getenv(KeyBrokerHost))
+	c.Store(KeyBrokerPort, os.Getenv(KeyBrokerPort))
+	c.Store(KeyFunctionHost, os.Getenv(KeyFunctionHost))
+	c.Store(KeyFunctionPort, os.Getenv(KeyFunctionPort))
 
 	var lfs []log.Field
 	if c.NodeName() != "" {
@@ -120,11 +139,7 @@ func NewContext(confFile string) Context {
 	// if not set in config file, to use value from env.
 	// if not set in env, to use default value.
 	if sc.Function.Address == "" {
-		if ev := os.Getenv(KeyFuncAddr); ev != "" {
-			sc.Function.Address = ev
-		} else {
-			sc.Function.Address = "https://baetyl-function.baetyl-edge-system"
-		}
+		sc.Function.Address = c.getFunctionAddress()
 	}
 	if sc.Function.CA == "" {
 		sc.Function.CA = sc.Certificate.CA
@@ -137,11 +152,7 @@ func NewContext(confFile string) Context {
 	}
 
 	if sc.Broker.Address == "" {
-		if ev := os.Getenv(KeyBrokerAddr); ev != "" {
-			sc.Broker.Address = ev
-		} else {
-			sc.Broker.Address = "ssl://baetyl-broker.baetyl-edge-system:8883"
-		}
+		sc.Broker.Address = c.getBrokerAddress()
 	}
 	// auto subscribe link topic for service if service name not nil.
 	if sc.Broker.Subscriptions == nil {
@@ -213,6 +224,42 @@ func (c *ctx) ConfFile() string {
 	return v.(string)
 }
 
+// BrokerHost return broker host.
+func (c *ctx) BrokerHost() string {
+	v, ok := c.Load(KeyBrokerHost)
+	if !ok {
+		return fmt.Sprintf("%s.%s", "baetyl-broker", EdgeSystemNamespace)
+	}
+	return v.(string)
+}
+
+// BrokerPort return broker port.
+func (c *ctx) BrokerPort() string {
+	v, ok := c.Load(KeyBrokerPort)
+	if !ok {
+		return DefaultPORT
+	}
+	return v.(string)
+}
+
+// FunctionHost return function host.
+func (c *ctx) FunctionHost() string {
+	v, ok := c.Load(KeyFunctionHost)
+	if !ok {
+		return fmt.Sprintf("%s.%s", "baetyl-function", EdgeSystemNamespace)
+	}
+	return v.(string)
+}
+
+// FunctionPort return function port.
+func (c *ctx) FunctionPort() string {
+	v, ok := c.Load(KeyFunctionPort)
+	if !ok {
+		return DefaultPORT
+	}
+	return v.(string)
+}
+
 func (c *ctx) SystemConfig() *SystemConfig {
 	v, ok := c.Load(KeySysConf)
 	if !ok {
@@ -279,15 +326,37 @@ func (c *ctx) NewFunctionHttpClient() (*http.Client, error) {
 	return http.NewClient(ops), nil
 }
 
-func (c *ctx) NewBrokerClient(subscriptions ...mqtt.Subscription) (*mqtt.Client, error) {
+func (c *ctx) NewBrokerClient(exts ...mqtt.ClientConfig) (*mqtt.Client, error) {
 	err := c.CheckSystemCert()
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	ops, err := c.SystemConfig().Broker.ToClientOptions()
+
+	config := c.SystemConfig().Broker
+	if len(exts) > 0 {
+		ext := exts[0]
+		if ext.ClientID != "" {
+			config.ClientID = ext.ClientID
+		}
+		config.CleanSession = ext.CleanSession
+		config.Timeout = ext.Timeout
+		config.KeepAlive = ext.KeepAlive
+		config.MaxCacheMessages = ext.MaxCacheMessages
+		config.DisableAutoAck = ext.DisableAutoAck
+		config.Subscriptions = ext.Subscriptions
+	}
+
+	ops, err := config.ToClientOptions()
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	ops.Subscriptions = append(ops.Subscriptions, subscriptions...)
 	return mqtt.NewClient(ops), nil
+}
+
+func (c *ctx) getBrokerAddress() string {
+	return fmt.Sprintf("%s://%s:%s", "ssl", c.BrokerHost(), c.BrokerPort())
+}
+
+func (c *ctx) getFunctionAddress() string {
+	return fmt.Sprintf("%s://%s:%s", "https", c.FunctionHost(), c.FunctionPort())
 }
