@@ -18,18 +18,20 @@ import (
 
 // All keys
 const (
-	KeyBaetyl           = "BAETYL"
-	KeyConfFile         = "BAETYL_CONF_FILE"
-	KeyNodeName         = "BAETYL_NODE_NAME"
-	KeyAppName          = "BAETYL_APP_NAME"
-	KeyAppVersion       = "BAETYL_APP_VERSION"
-	KeySvcName          = "BAETYL_SERVICE_NAME"
-	KeySysConf          = "BAETYL_SYSTEM_CONF"
-	KeyRunMode          = "BAETYL_RUN_MODE"
-	KeyBrokerHost       = "BAETYL_BROKER_HOST"
-	KeyBrokerPort       = "BAETYL_BROKER_PORT"
-	KeyFunctionHost     = "BAETYL_FUNCTION_HOST"
-	KeyFunctionHttpPort = "BAETYL_FUNCTION_HTTP_PORT"
+	KeyBaetyl              = "BAETYL"
+	KeyConfFile            = "BAETYL_CONF_FILE"
+	KeyNodeName            = "BAETYL_NODE_NAME"
+	KeyAppName             = "BAETYL_APP_NAME"
+	KeyAppVersion          = "BAETYL_APP_VERSION"
+	KeySvcName             = "BAETYL_SERVICE_NAME"
+	KeySysConf             = "BAETYL_SYSTEM_CONF"
+	KeyRunMode             = "BAETYL_RUN_MODE"
+	KeyBrokerHost          = "BAETYL_BROKER_HOST"
+	KeyBrokerPort          = "BAETYL_BROKER_PORT"
+	KeyFunctionHost        = "BAETYL_FUNCTION_HOST"
+	KeyFunctionHttpPort    = "BAETYL_FUNCTION_HTTP_PORT"
+	KeyEdgeNamespace       = "BAETYL_EDGE_NAMESPACE"
+	KeyEdgeSystemNamespace = "BAETYL_EDGE_SYSTEM_NAMESPACE"
 
 	BaetylEdgeNamespace          = "baetyl-edge"
 	BaetylEdgeSystemNamespace    = "baetyl-edge-system"
@@ -68,6 +70,10 @@ type Context interface {
 	FunctionHost() string
 	// FunctionHttpPort return http port of function.
 	FunctionHttpPort() string
+	// EdgeNamespace return namespace of edge.
+	EdgeNamespace() string
+	// EdgeSystemNamespace return system namespace of edge.
+	EdgeSystemNamespace() string
 	// SystemConfig returns the config of baetyl system from data.
 	SystemConfig() *SystemConfig
 
@@ -278,6 +284,22 @@ func (c *ctx) FunctionHttpPort() string {
 		return port
 	}
 	return BaetylFunctionSystemHttpPort
+}
+
+// EdgeNamespace return namespace of edge.
+func (c *ctx) EdgeNamespace() string {
+	if port := os.Getenv(KeyEdgeNamespace); port != "" {
+		return port
+	}
+	return KeyEdgeNamespace
+}
+
+// EdgeSystemNamespace return system namespace of edge.
+func (c *ctx) EdgeSystemNamespace() string {
+	if port := os.Getenv(KeyEdgeSystemNamespace); port != "" {
+		return port
+	}
+	return BaetylEdgeSystemNamespace
 }
 
 func (c *ctx) SystemConfig() *SystemConfig {
