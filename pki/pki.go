@@ -79,7 +79,7 @@ func (p *defaultPKIClient) CreateSubCert(csr []byte, durationDay int, parent *Ce
 		BasicConstraintsValid: true,
 		SignatureAlgorithm:    SigAlgorithmType(caKey),
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 	}
 
 	cert, err := x509.CreateCertificate(rand.Reader, certInfo, caCert[0], csrInfo.PublicKey, caKey.Key)
