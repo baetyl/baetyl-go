@@ -50,12 +50,6 @@ func (h *helper) createRoot() (*pki.CertPem, error) {
 			net.IPv4(0, 0, 0, 0),
 			net.IPv4(127, 0, 0, 1),
 		},
-		URIs: []*url.URL{
-			{
-				Scheme: "https",
-				Host:   "localhost",
-			},
-		},
 	})
 	cert, err := h.cli.CreateSelfSignedRootCert(csrInfo, 50*365)
 	if err != nil {
@@ -99,12 +93,6 @@ func (h *helper) issueCert() error {
 			net.IPv4(0, 0, 0, 0),
 			net.IPv4(127, 0, 0, 1),
 		},
-		URIs: []*url.URL{
-			{
-				Scheme: "https",
-				Host:   "localhost",
-			},
-		},
 	}, ca)
 	if err != nil {
 		return errors.Trace(err)
@@ -123,11 +111,8 @@ func (h *helper) issueCert() error {
 			net.IPv4(0, 0, 0, 0),
 			net.IPv4(127, 0, 0, 1),
 		},
-		URIs: []*url.URL{
-			{
-				Scheme: "https",
-				Host:   "localhost",
-			},
+		DNSNames: []string{
+			"localhost",
 		},
 	}, ca)
 	if err != nil {
