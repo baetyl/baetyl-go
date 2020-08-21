@@ -291,7 +291,7 @@ func (c *ctx) EdgeNamespace() string {
 	if port := os.Getenv(KeyEdgeNamespace); port != "" {
 		return port
 	}
-	return KeyEdgeNamespace
+	return BaetylEdgeNamespace
 }
 
 // EdgeSystemNamespace return system namespace of edge.
