@@ -141,6 +141,7 @@ func NewContext(confFile string) Context {
 		lfs = append(lfs, log.Any("service", c.ServiceName()))
 	}
 	c.log = log.With(lfs...)
+	c.log.Info("to load config file", log.Any("file", c.ConfFile()))
 
 	sc := &SystemConfig{}
 	err := c.LoadCustomConfig(sc)
