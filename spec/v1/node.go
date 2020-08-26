@@ -24,39 +24,39 @@ var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max lim
 
 // Node the spec of node
 type Node struct {
-	Namespace         string            `json:"namespace,omitempty"`
-	Name              string            `json:"name,omitempty" validate:"omitempty,resourceName"`
-	Version           string            `json:"version,omitempty"`
-	CreationTimestamp time.Time         `json:"createTime,omitempty"`
-	Labels            map[string]string `json:"labels,omitempty" validate:"omitempty,validLabels"`
-	Annotations       map[string]string `json:"annotations,omitempty"`
-	Report            Report            `json:"report,omitempty"`
-	Desire            Desire            `json:"desire,omitempty"`
-	Description       string            `json:"description,omitempty"`
+	Namespace         string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"omitempty,resourceName"`
+	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
+	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" validate:"omitempty,validLabels"`
+	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
+	Report            Report            `json:"report,omitempty" yaml:"report,omitempty"`
+	Desire            Desire            `json:"desire,omitempty" yaml:"desire,omitempty"`
+	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 type NodeView struct {
-	Namespace         string            `json:"namespace,omitempty"`
-	Name              string            `json:"name,omitempty"`
-	Version           string            `json:"version,omitempty"`
-	CreationTimestamp time.Time         `json:"createTime,omitempty"`
-	Labels            map[string]string `json:"labels,omitempty"`
-	Annotations       map[string]string `json:"annotations,omitempty"`
-	Report            *ReportView       `json:"report,omitempty"`
-	Desire            Desire            `json:"desire,omitempty"`
-	Description       string            `json:"description,omitempty"`
+	Namespace         string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Name              string            `json:"name,omitempty" yaml:"name,omitempty"`
+	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
+	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
+	Report            *ReportView       `json:"report,omitempty" yaml:"report,omitempty"`
+	Desire            Desire            `json:"desire,omitempty" yaml:"desire,omitempty"`
+	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	Ready             bool              `json:"ready"`
 }
 
 type ReportView struct {
-	Time        *time.Time `json:"time,omitempty"`
-	Apps        []AppInfo  `json:"apps,omitempty"`
-	SysApps     []AppInfo  `json:"sysapps,omitempty"`
-	Core        *CoreInfo  `json:"core,omitempty"`
-	AppStats    []AppStats `json:"appstats,omitempty"`
-	SysAppStats []AppStats `json:"sysappstats,omitempty"`
-	Node        *NodeInfo  `json:"node,omitempty"`
-	NodeStats   *NodeStats `json:"nodestats,omitempty"`
+	Time        *time.Time `json:"time,omitempty" yaml:"time,omitempty"`
+	Apps        []AppInfo  `json:"apps,omitempty" yaml:"apps,omitempty"`
+	SysApps     []AppInfo  `json:"sysapps,omitempty" yaml:"sysapps,omitempty"`
+	Core        *CoreInfo  `json:"core,omitempty" yaml:"core,omitempty"`
+	AppStats    []AppStats `json:"appstats,omitempty" yaml:"appstats,omitempty"`
+	SysAppStats []AppStats `json:"sysappstats,omitempty" yaml:"sysappstats,omitempty"`
+	Node        *NodeInfo  `json:"node,omitempty" yaml:"node,omitempty"`
+	NodeStats   *NodeStats `json:"nodestats,omitempty" yaml:"nodestats,omitempty"`
 }
 
 // Report report data
