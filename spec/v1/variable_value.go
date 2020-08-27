@@ -20,3 +20,8 @@ func (v *VariableValue) UnmarshalJSON(b []byte) error {
 func (v VariableValue) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.Value)
 }
+
+// Unmarshal unmarshal from json data to obj
+func (v VariableValue) Unmarshal(obj interface{}) error {
+	return json.Unmarshal(v.data, obj)
+}

@@ -37,11 +37,10 @@ func TestVar(t *testing.T) {
 	expContentData := "{\"infos\":[{\"kind\":\"config\",\"name\":\"c082001\",\"version\":\"599944\"}]}"
 	assert.Equal(t, expContentData, string(msg.Content.data))
 
-	if msg.Content.Value == nil {
-		msg.Content.Value = &DesireRequest{}
-		if err := json.Unmarshal(msg.Content.data, msg.Content.Value); err != nil {
-			assert.NoError(t, err)
-		}
+	assert.Nil(t, msg.Content.Value)
+	msg.Content.Value = &DesireRequest{}
+	if err := msg.Content.Unmarshal(msg.Content.Value); err != nil {
+		assert.NoError(t, err)
 	}
 	assert.EqualValues(t, dr, msg.Content.Value.(*DesireRequest))
 }
