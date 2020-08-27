@@ -40,7 +40,7 @@ func TestContext(t *testing.T) {
 			},
 		},
 		Broker: mqtt.ClientConfig{
-			Address:              "ssl://baetyl-broker.baetyl-edge-system:" + BaetylBrokerSystemPort,
+			Address:              "ssl://baetyl-broker.baetyl-edge:" + BaetylBrokerSystemPort,
 			Username:             "",
 			Password:             "",
 			ClientID:             "",

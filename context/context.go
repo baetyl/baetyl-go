@@ -256,7 +256,7 @@ func (c *ctx) BrokerHost() string {
 	if c.RunMode() == RunModeNative {
 		return "127.0.0.1"
 	}
-	return fmt.Sprintf("%s.%s", "baetyl-broker", BaetylEdgeSystemNamespace)
+	return fmt.Sprintf("%s.%s", "baetyl-broker", BaetylEdgeNamespace)
 }
 
 // BrokerPort return broker port.
