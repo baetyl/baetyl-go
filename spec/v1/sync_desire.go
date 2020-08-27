@@ -2,8 +2,6 @@ package v1
 
 import (
 	"encoding/json"
-
-	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 // DesireRequest body of request to sync desired data
@@ -63,25 +61,4 @@ func (v *ResourceValue) Secret() *Secret {
 		return v.Value.Value.(*Secret)
 	}
 	return nil
-}
-
-// VariableValue variable value which can be app, config or secret
-type VariableValue struct {
-	Data  []byte
-	Value interface{}
-}
-
-// UnmarshalJSON unmarshal from json data
-func (v *VariableValue) UnmarshalJSON(b []byte) error {
-	v.Data = b
-	return nil
-}
-
-// MarshalJSON marshal to json data
-func (v *VariableValue) MarshalJSON() ([]byte, error) {
-	var err error
-	if v.Data == nil && v.Value != nil {
-		v.Data, err = json.Marshal(v.Value)
-	}
-	return v.Data, errors.Trace(err)
 }
