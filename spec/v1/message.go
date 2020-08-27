@@ -8,7 +8,7 @@ const (
 	MessageReport MessageKind = "report"
 	// MessageDesire desire message kind
 	MessageDesire MessageKind = "desire"
-	// MessageKeep desire message kind
+	// MessageKeep keep alive message kind
 	MessageKeep MessageKind = "keepalive"
 )
 
