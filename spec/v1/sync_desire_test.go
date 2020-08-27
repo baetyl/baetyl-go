@@ -16,18 +16,15 @@ func TestCRDData(t *testing.T) {
 		desireddata.Version = "123"
 		desireddata.Kind = KindApplication
 		desireddata.Value.Value = &Application{Name: "c"}
-		expected := "{\"name\":\"c\",\"createTime\":\"0001-01-01T00:00:00Z\"}"
 
 		appdata, err := json.Marshal(desireddata)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, string(desireddata.Value.Data))
 		fmt.Printf(string(appdata))
 
 		desireddata2 := &ResourceValue{}
 		err = json.Unmarshal(appdata, desireddata2)
 		assert.NoError(t, err)
 		assert.Nil(t, desireddata2.Value.Value)
-		assert.Equal(t, expected, string(desireddata.Value.Data))
 
 		// success
 		app := desireddata2.App()
@@ -56,18 +53,15 @@ func TestCRDData(t *testing.T) {
 		desireddata.Version = "123"
 		desireddata.Kind = KindConfiguration
 		desireddata.Value.Value = &Configuration{Name: "c"}
-		expected := "{\"name\":\"c\",\"createTime\":\"0001-01-01T00:00:00Z\",\"updateTime\":\"0001-01-01T00:00:00Z\"}"
 
 		appdata, err := json.Marshal(desireddata)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, string(desireddata.Value.Data))
 		fmt.Printf(string(appdata))
 
 		desireddata2 := &ResourceValue{}
 		err = json.Unmarshal(appdata, desireddata2)
 		assert.NoError(t, err)
 		assert.Nil(t, desireddata2.Value.Value)
-		assert.Equal(t, expected, string(desireddata.Value.Data))
 
 		// failure
 		app := desireddata2.App()
@@ -96,18 +90,15 @@ func TestCRDData(t *testing.T) {
 		desireddata.Version = "123"
 		desireddata.Kind = KindSecret
 		desireddata.Value.Value = &Secret{Name: "c"}
-		expected := "{\"name\":\"c\",\"createTime\":\"0001-01-01T00:00:00Z\",\"updateTime\":\"0001-01-01T00:00:00Z\"}"
 
 		appdata, err := json.Marshal(desireddata)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, string(desireddata.Value.Data))
 		fmt.Printf(string(appdata))
 
 		desireddata2 := &ResourceValue{}
 		err = json.Unmarshal(appdata, desireddata2)
 		assert.NoError(t, err)
 		assert.Nil(t, desireddata2.Value.Value)
-		assert.Equal(t, expected, string(desireddata.Value.Data))
 
 		// failure
 		app := desireddata2.App()

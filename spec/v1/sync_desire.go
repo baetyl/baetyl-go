@@ -2,8 +2,6 @@ package v1
 
 import (
 	"encoding/json"
-
-	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 // DesireRequest body of request to sync desired data
@@ -34,7 +32,7 @@ func (v *ResourceValue) App() *Application {
 	if v.Kind == KindApplication || v.Kind == KindApp {
 		if v.Value.Value == nil {
 			v.Value.Value = &Application{}
-			json.Unmarshal(v.Value.Data, v.Value.Value)
+			json.Unmarshal(v.Value.data, v.Value.Value)
 		}
 		return v.Value.Value.(*Application)
 	}
@@ -46,7 +44,7 @@ func (v *ResourceValue) Config() *Configuration {
 	if v.Kind == KindConfiguration || v.Kind == KindConfig {
 		if v.Value.Value == nil {
 			v.Value.Value = &Configuration{}
-			json.Unmarshal(v.Value.Data, v.Value.Value)
+			json.Unmarshal(v.Value.data, v.Value.Value)
 		}
 		return v.Value.Value.(*Configuration)
 	}
@@ -58,30 +56,9 @@ func (v *ResourceValue) Secret() *Secret {
 	if v.Kind == KindSecret {
 		if v.Value.Value == nil {
 			v.Value.Value = &Secret{}
-			json.Unmarshal(v.Value.Data, v.Value.Value)
+			json.Unmarshal(v.Value.data, v.Value.Value)
 		}
 		return v.Value.Value.(*Secret)
 	}
 	return nil
-}
-
-// VariableValue variable value which can be app, config or secret
-type VariableValue struct {
-	Data  []byte
-	Value interface{}
-}
-
-// UnmarshalJSON unmarshal from json data
-func (v *VariableValue) UnmarshalJSON(b []byte) error {
-	v.Data = b
-	return nil
-}
-
-// MarshalJSON marshal to json data
-func (v *VariableValue) MarshalJSON() ([]byte, error) {
-	var err error
-	if v.Data == nil && v.Value != nil {
-		v.Data, err = json.Marshal(v.Value)
-	}
-	return v.Data, errors.Trace(err)
 }
