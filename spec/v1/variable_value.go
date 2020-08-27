@@ -6,13 +6,13 @@ import (
 
 // VariableValue variable value which can be app, config or secret
 type VariableValue struct {
-	Data  []byte
+	data  []byte
 	Value interface{}
 }
 
 // UnmarshalJSON unmarshal from json data
 func (v *VariableValue) UnmarshalJSON(b []byte) error {
-	v.Data = b
+	v.data = b
 	return nil
 }
 
