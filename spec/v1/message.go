@@ -8,11 +8,13 @@ const (
 	MessageReport MessageKind = "report"
 	// MessageDesire desire message kind
 	MessageDesire MessageKind = "desire"
+	// MessageKeep desire message kind
+	MessageKeep MessageKind = "keepalive"
 )
 
 // Message general structure for http and ws sync
 type Message struct {
 	Kind     MessageKind       `yaml:"kind" json:"kind"`
 	Metadata map[string]string `yaml:"meta" json:"meta"`
-	Content  interface{}       `yaml:"content" json:"content"`
+	Content  VariableValue     `yaml:"content" json:"content"`
 }
