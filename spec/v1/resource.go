@@ -21,4 +21,6 @@ const (
 	SecretConfig = "config"
 	// speical secret of the the certificate
 	SecretCertificate = "certificate"
+	// speical custom secret of the the certificate
+	SecretCustomCertificate = "custom-certificate"
 )
