@@ -9,8 +9,9 @@ import (
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
-	"github.com/baetyl/baetyl-go/v2/mock"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/baetyl/baetyl-go/v2/mock"
 )
 
 type mockObserver struct {

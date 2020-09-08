@@ -2,10 +2,11 @@ package plugin
 
 import (
 	"fmt"
-	"github.com/baetyl/baetyl-go/v2/log"
 	"io"
 	"strings"
 	"sync"
+
+	"github.com/baetyl/baetyl-go/v2/log"
 )
 
 // Plugin interfaces

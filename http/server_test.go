@@ -8,10 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/utils"
 	routing "github.com/qiangxue/fasthttp-routing"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
+
+	"github.com/baetyl/baetyl-go/v2/utils"
 )
 
 func TestServerHttp(t *testing.T) {

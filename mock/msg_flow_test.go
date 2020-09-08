@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/mqtt"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/baetyl/baetyl-go/v2/mqtt"
 )
 
 func TestFlow(t *testing.T) {

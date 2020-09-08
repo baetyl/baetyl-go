@@ -7,10 +7,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/evanphx/json-patch"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 // maxJSONLevel the max level of json

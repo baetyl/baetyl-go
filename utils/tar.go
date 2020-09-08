@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/mholt/archiver"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 var defaultTar = &archiver.Tar{

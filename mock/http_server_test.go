@@ -8,8 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/utils"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/baetyl/baetyl-go/v2/utils"
 )
 
 func TestHttpServer(t *testing.T) {

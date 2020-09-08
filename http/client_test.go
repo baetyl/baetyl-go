@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/baetyl/baetyl-go/v2/mock"
 	"github.com/baetyl/baetyl-go/v2/utils"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestClientRequests(t *testing.T) {

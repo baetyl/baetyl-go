@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/log"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
+
+	"github.com/baetyl/baetyl-go/v2/log"
 )
 
 func TestShadowDiff(t *testing.T) {

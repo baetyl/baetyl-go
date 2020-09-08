@@ -1,8 +1,9 @@
 package http
 
 import (
-	"github.com/baetyl/baetyl-go/v2/log"
 	"github.com/valyala/fasthttp"
+
+	"github.com/baetyl/baetyl-go/v2/log"
 )
 
 type Server struct {

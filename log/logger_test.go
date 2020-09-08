@@ -2,7 +2,6 @@ package log
 
 import (
 	goerrors "errors"
-	"github.com/baetyl/baetyl-go/v2/errors"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
 
 	"github.com/stretchr/testify/assert"
 )

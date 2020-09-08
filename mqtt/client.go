@@ -3,10 +3,11 @@ package mqtt
 import (
 	"time"
 
+	"github.com/jpillora/backoff"
+
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
 	"github.com/baetyl/baetyl-go/v2/utils"
-	"github.com/jpillora/backoff"
 )
 
 // Client auto reconnection client

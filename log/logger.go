@@ -8,10 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 func init() {

@@ -2,8 +2,9 @@ package http
 
 import (
 	"encoding/json"
-	routing "github.com/qiangxue/fasthttp-routing"
 	"io"
+
+	routing "github.com/qiangxue/fasthttp-routing"
 )
 
 const (
