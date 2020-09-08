@@ -15,6 +15,7 @@ import (
 )
 
 func TestContext(t *testing.T) {
+	os.Setenv(KeyRunMode, "")
 	expected := &SystemConfig{
 		Certificate: utils.Certificate{
 			CA:                 "var/lib/baetyl/system/certs/ca.pem",

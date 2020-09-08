@@ -10,10 +10,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/docker/go-units"
 	"gopkg.in/validator.v2"
 	"gopkg.in/yaml.v2"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 // LoadYAML config into out interface, with defaults and validates
@@ -30,7 +31,7 @@ func LoadYAML(path string, out interface{}) error {
 	return UnmarshalYAML(res, out)
 }
 
-// ParseEnv pasre env
+// ParseEnv parses env
 func ParseEnv(data []byte) ([]byte, error) {
 	text := string(data)
 	envs := os.Environ()

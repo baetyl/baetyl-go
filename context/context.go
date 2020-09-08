@@ -60,8 +60,6 @@ type Context interface {
 	ServiceName() string
 	// ConfFile returns config file from data.
 	ConfFile() string
-	// RunMode return run mode.
-	RunMode() string
 	// BrokerHost return broker host.
 	BrokerHost() string
 	// BrokerPort return broker port.
@@ -128,7 +126,6 @@ func NewContext(confFile string) Context {
 	c.Store(KeyAppName, os.Getenv(KeyAppName))
 	c.Store(KeyAppVersion, os.Getenv(KeyAppVersion))
 	c.Store(KeySvcName, os.Getenv(KeySvcName))
-	c.Store(KeyRunMode, os.Getenv(KeyRunMode))
 
 	var lfs []log.Field
 	if c.NodeName() != "" {
@@ -238,22 +235,13 @@ func (c *ctx) ConfFile() string {
 	return v.(string)
 }
 
-// RunMode return run mode.
-func (c *ctx) RunMode() string {
-	v, ok := c.Load(KeyRunMode)
-	if !ok {
-		return RunModeKube
-	}
-	return v.(string)
-}
-
 // BrokerHost return broker host.
 func (c *ctx) BrokerHost() string {
 	if host := os.Getenv(KeyBrokerHost); host != "" {
 		return host
 	}
 
-	if c.RunMode() == RunModeNative {
+	if RunMode() == RunModeNative {
 		return "127.0.0.1"
 	}
 	return fmt.Sprintf("%s.%s", "baetyl-broker", BaetylEdgeNamespace)
@@ -273,7 +261,7 @@ func (c *ctx) FunctionHost() string {
 		return host
 	}
 
-	if c.RunMode() == RunModeNative {
+	if RunMode() == RunModeNative {
 		return "127.0.0.1"
 	}
 	return fmt.Sprintf("%s.%s", "baetyl-function", BaetylEdgeSystemNamespace)
