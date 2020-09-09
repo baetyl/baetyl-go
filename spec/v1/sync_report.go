@@ -23,7 +23,7 @@ type NodeInfo struct {
 	BootID           string `yaml:"bootID,omitempty" json:"bootID"`
 	SystemUUID       string `yaml:"systemUUID,omitempty" json:"systemUUID"`
 	OSImage          string `yaml:"osImage,omitempty" json:"osImage"`
-	Platform         string `yaml:"platform,omitempty" json:"platform,omitempty"`
+	Variant          string `yaml:"variant,omitempty" json:"variant,omitempty"`
 	HostID           string `yaml:"hostID,omitempty" json:"hostID,omitempty"`
 }
 
