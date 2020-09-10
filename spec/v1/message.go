@@ -10,9 +10,9 @@ const (
 	MessageDesire MessageKind = "desire"
 	// MessageKeep keep alive message kind
 	MessageKeep MessageKind = "keepalive"
-	// MessageCMD remote debug command message kind
+	// MessageCMD command message kind
 	MessageCMD MessageKind = "cmd"
-	// MessageData remote debug data message kind
+	// MessageData data message kind
 	MessageData MessageKind = "data"
 )
 
