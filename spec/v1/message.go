@@ -10,6 +10,10 @@ const (
 	MessageDesire MessageKind = "desire"
 	// MessageKeep keep alive message kind
 	MessageKeep MessageKind = "keepalive"
+	// MessageCMD command message kind
+	MessageCMD MessageKind = "cmd"
+	// MessageData data message kind
+	MessageData MessageKind = "data"
 )
 
 // Message general structure for http and ws sync
