@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"strings"
 	"time"
 )
 
@@ -28,4 +29,8 @@ type ConfigurationObject struct {
 	Token    string            `json:"token,omitempty" yaml:"token,omitempty"`
 	Unpack   string            `json:"unpack,omitempty" yaml:"unpack,omitempty"`
 	Metadata map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+func IsConfigObject(key string) bool {
+	return strings.HasPrefix(key, PrefixConfigObject)
 }
