@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+const PrefixConfigObject = "_object_"
+
 // Configuration config info
 type Configuration struct {
 	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName,nonBaetyl"`
