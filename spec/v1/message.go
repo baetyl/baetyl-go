@@ -10,8 +10,10 @@ const (
 	MessageDesire MessageKind = "desire"
 	// MessageKeep keep alive message kind
 	MessageKeep MessageKind = "keepalive"
-	// MessageDebug remote debug message kind
-	MessageDebug MessageKind = "debug"
+	// MessageCMD remote debug command message kind
+	MessageCMD MessageKind = "cmd"
+	// MessageData remote debug data message kind
+	MessageData MessageKind = "data"
 )
 
 // Message general structure for http and ws sync
