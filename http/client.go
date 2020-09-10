@@ -12,8 +12,7 @@ import (
 	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
-// ContentTypeJSON the json content type of request
-const ContentTypeJSON = "application/json"
+var jsonHeaders = map[string]string{"Content-Type": "application/json"}
 
 // Client client of http server
 type Client struct {
@@ -48,8 +47,7 @@ func NewClient(ops *ClientOptions) *Client {
 
 // Call calls the function via HTTP POST
 func (c *Client) Call(function string, payload []byte) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", c.ops.Address, function)
-	r, err := c.http.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
+	r, err := c.PostURL(function, bytes.NewBuffer(payload), jsonHeaders)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -57,9 +55,9 @@ func (c *Client) Call(function string, payload []byte) ([]byte, error) {
 }
 
 // PostJSON post data with json content type
-func (c *Client) PostJSON(url string, payload []byte) ([]byte, error) {
-	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
-	r, err := c.http.Post(url, ContentTypeJSON, bytes.NewBuffer(payload))
+func (c *Client) PostJSON(url string, payload []byte, headers ...map[string]string) ([]byte, error) {
+	headers = append(headers, jsonHeaders)
+	r, err := c.PostURL(url, bytes.NewBuffer(payload), headers...)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -67,9 +65,9 @@ func (c *Client) PostJSON(url string, payload []byte) ([]byte, error) {
 }
 
 // GetJSON get data with json content type
-func (c *Client) GetJSON(url string) ([]byte, error) {
-	url = fmt.Sprintf("%s/%s", c.ops.Address, url)
-	r, err := c.http.Get(url)
+func (c *Client) GetJSON(url string, headers ...map[string]string) ([]byte, error) {
+	headers = append(headers, jsonHeaders)
+	r, err := c.GetURL(url, headers...)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -85,6 +83,9 @@ func (c *Client) PostURL(url string, body io.Reader, header ...map[string]string
 }
 
 func (c *Client) SendUrl(method, url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
+	if !strings.HasPrefix(url, "http") {
+		url = fmt.Sprintf("%s/%s", c.ops.Address, url)
+	}
 	req, err := gohttp.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
