@@ -7,6 +7,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type handler struct {
+	h  func(interface{}) error
+	th func() error
+}
+
+func (h *handler) Handler(msg interface{}) error {
+	return h.h(msg)
+}
+
+func (h *handler) Timeout() error {
+	return h.th()
+}
+
 func TestNewMQ(t *testing.T) {
 	mq, err := NewMQ(1, time.Second*100)
 	assert.NoError(t, err)
@@ -15,14 +28,17 @@ func TestNewMQ(t *testing.T) {
 	topic := "test"
 	msgSend := "send"
 
-	mq.AddHandler(topic, func(msg interface{}) error {
-		assert.Equal(t, msgSend, msg.(string))
-		return nil
-	}, func() error {
-		return nil
-	})
+	handler := &handler{
+		h: func(msg interface{}) error {
+			assert.Equal(t, msgSend, msg.(string))
+			return nil
+		},
+		th: func() error {
+			return nil
+		},
+	}
 
-	mq.Subscribe(topic)
+	mq.Subscribe(topic, handler)
 
 	err = mq.Publish(topic, msgSend)
 	assert.NoError(t, err)
@@ -44,15 +60,18 @@ func TestTimeout(t *testing.T) {
 	msg := "test"
 	msgCh := make(chan string, 1)
 
-	mq.AddHandler(topic, func(msg interface{}) error {
-		assert.Equal(t, msgSend, msg.(string))
-		return nil
-	}, func() error {
-		msgCh <- msg
-		return nil
-	})
+	handler := &handler{
+		h: func(msg interface{}) error {
+			assert.Equal(t, msgSend, msg.(string))
+			return nil
+		},
+		th: func() error {
+			msgCh <- msg
+			return nil
+		},
+	}
 
-	mq.Subscribe(topic)
+	mq.Subscribe(topic, handler)
 
 	time.Sleep(time.Millisecond * 2)
 
