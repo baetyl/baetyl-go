@@ -43,7 +43,7 @@ func TestClientRequests(t *testing.T) {
 	assert.Equal(t, "abc", string(data))
 }
 
-func TestClieneBadRequests(t *testing.T) {
+func TestClientBadRequests(t *testing.T) {
 	response := mock.NewResponse(400, []byte("abc"))
 	ms := mock.NewServer(nil, response, response, response)
 	defer ms.Close()

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -32,7 +33,7 @@ func TestServerHttp(t *testing.T) {
 			serverConf: ServerConfig{
 				Address: "127.0.0.1:50060",
 				Certificate: utils.Certificate{
-					Cert: "../example/var/lib/baetyl/testcert/server.pem",
+					Cert: "../example/var/lib/baetyl/testcert/server.crt",
 					Key:  "../example/var/lib/baetyl/testcert/server.key",
 				},
 			},
@@ -40,7 +41,24 @@ func TestServerHttp(t *testing.T) {
 				Address: "https://127.0.0.1:50060",
 				Certificate: utils.Certificate{
 					Key:                "../example/var/lib/baetyl/testcert/client.key",
-					Cert:               "../example/var/lib/baetyl/testcert/client.pem",
+					Cert:               "../example/var/lib/baetyl/testcert/client.crt",
+					InsecureSkipVerify: true,
+				},
+			},
+		},
+		{
+			serverConf: ServerConfig{
+				Address: "127.0.0.1:50070",
+				Certificate: utils.Certificate{
+					Cert:           "../example/var/lib/baetyl/testcert/server.crt",
+					Key:            "../example/var/lib/baetyl/testcert/server.key",
+					ClientAuthType: tls.VerifyClientCertIfGiven,
+				},
+			},
+			cliConf: mockClientConf{
+				Address: "https://127.0.0.1:50070",
+				Certificate: utils.Certificate{
+					CA:                 "../example/var/lib/baetyl/testcert/ca.crt",
 					InsecureSkipVerify: true,
 				},
 			},
@@ -126,17 +144,14 @@ type mockClientConf struct {
 }
 
 func newMockClient(conf mockClientConf) (*fasthttp.Client, error) {
-	if conf.Cert != "" || conf.Key != "" {
-		_tls, err := utils.NewTLSConfigClient(conf.Certificate)
-		if err != nil {
-			return nil, err
-		}
-		client := &fasthttp.Client{
-			TLSConfig: _tls,
-		}
-		return client, nil
+	_tls, err := utils.NewTLSConfigClient(conf.Certificate)
+	if err != nil {
+		return nil, err
 	}
-	return &fasthttp.Client{}, nil
+	client := &fasthttp.Client{
+		TLSConfig: _tls,
+	}
+	return client, nil
 }
 
 func mockRoute() fasthttp.RequestHandler {

@@ -59,21 +59,18 @@ type ClientConfig struct {
 
 // ToClientOptions converts client config to client options
 func (cc ClientConfig) ToClientOptions() (*ClientOptions, error) {
-	ops := &ClientOptions{
+	tlsConfig, err := utils.NewTLSConfigClient(cc.Certificate)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	return &ClientOptions{
 		Address:               cc.Address,
 		Timeout:               cc.Timeout,
+		TLSConfig:             tlsConfig,
 		KeepAlive:             cc.KeepAlive,
 		MaxIdleConns:          cc.MaxIdleConns,
 		IdleConnTimeout:       cc.IdleConnTimeout,
 		TLSHandshakeTimeout:   cc.TLSHandshakeTimeout,
 		ExpectContinueTimeout: cc.ExpectContinueTimeout,
-	}
-	if cc.Certificate.Key != "" || cc.Certificate.Cert != "" {
-		tlsconfig, err := utils.NewTLSConfigClient(cc.Certificate)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-		ops.TLSConfig = tlsconfig
-	}
-	return ops, nil
+	}, nil
 }
