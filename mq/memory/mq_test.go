@@ -12,11 +12,11 @@ type handler struct {
 	th func() error
 }
 
-func (h *handler) Handler(msg interface{}) error {
+func (h *handler) OnMessage(msg interface{}) error {
 	return h.h(msg)
 }
 
-func (h *handler) Timeout() error {
+func (h *handler) OnTimeout() error {
 	return h.th()
 }
 
@@ -55,14 +55,13 @@ func TestTimeout(t *testing.T) {
 	assert.NotNil(t, mq)
 
 	topic := "test"
-	msgSend := "send"
 
 	msg := "test"
 	msgCh := make(chan string, 1)
 
 	handler := &handler{
 		h: func(msg interface{}) error {
-			assert.Equal(t, msgSend, msg.(string))
+			assert.Fail(t, "should not be executed because of timeout")
 			return nil
 		},
 		th: func() error {
@@ -73,10 +72,7 @@ func TestTimeout(t *testing.T) {
 
 	mq.Subscribe(topic, handler)
 
-	time.Sleep(time.Millisecond * 2)
-
-	err = mq.Publish(topic, msgSend)
-	assert.NoError(t, err)
+	time.Sleep(time.Millisecond * 3)
 
 	res := <-msgCh
 	assert.Equal(t, msg, res)
