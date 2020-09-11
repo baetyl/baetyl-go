@@ -26,7 +26,7 @@ func Run(handle func(Context) error) {
 	ctx := NewContext(c)
 	defer func() {
 		if r := recover(); r != nil {
-			ctx.Log().Error("service is stopped with panic", log.Any("panic", string(debug.Stack())))
+			ctx.Log().Error("service is stopped with panic", log.Any("panic", r), log.Any("stack", string(debug.Stack())))
 		}
 	}()
 

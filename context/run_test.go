@@ -12,8 +12,9 @@ import (
 	"github.com/baetyl/baetyl-go/v2/utils"
 )
 
-func TestRun(t *testing.T) {
+func TestContext_Run(t *testing.T) {
 	os.Setenv(KeySvcName, "service")
+	os.Setenv(KeyRunMode, "kube")
 	Run(func(ctx Context) error {
 		assert.Equal(t, "etc/baetyl/conf.yml", ctx.ConfFile())
 		assert.Equal(t, &SystemConfig{
@@ -22,6 +23,7 @@ func TestRun(t *testing.T) {
 			Broker:      mqtt.ClientConfig{Address: "ssl://baetyl-broker.baetyl-edge:" + BaetylBrokerSystemPort, Username: "", Password: "", ClientID: "baetyl-link-service", CleanSession: false, Timeout: 30000000000, KeepAlive: 30000000000, MaxReconnectInterval: 180000000000, MaxCacheMessages: 10, DisableAutoAck: false, Subscriptions: []mqtt.QOSTopic{{1, "$link/service"}}, Certificate: utils.Certificate{CA: "var/lib/baetyl/system/certs/ca.pem", Key: "var/lib/baetyl/system/certs/key.pem", Cert: "var/lib/baetyl/system/certs/crt.pem", Name: "", InsecureSkipVerify: false, ClientAuthType: 0}},
 			Logger:      log.Config{Level: "info", Encoding: "json", Filename: "", Compress: false, MaxAge: 15, MaxSize: 50, MaxBackups: 15, EncodeTime: "", EncodeLevel: ""},
 		}, ctx.SystemConfig())
+		panic("it is a panic")
 		return nil
 	})
 }
