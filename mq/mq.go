@@ -5,8 +5,8 @@ import (
 )
 
 type MQHandler interface {
-	Handler(interface{}) error
-	Timeout() error
+	OnMessage(interface{}) error
+	OnTimeout() error
 }
 
 type MessageQueue interface {
