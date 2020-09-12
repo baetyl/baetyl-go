@@ -24,6 +24,7 @@ func TestServerHttp(t *testing.T) {
 		{
 			serverConf: ServerConfig{
 				Address: "127.0.0.1:50050",
+				ReadTimeout: time.Second,
 			},
 			cliConf: mockClientConf{
 				Address: "http://127.0.0.1:50050",
@@ -32,6 +33,7 @@ func TestServerHttp(t *testing.T) {
 		{
 			serverConf: ServerConfig{
 				Address: "127.0.0.1:50060",
+				ReadTimeout: time.Second,
 				Certificate: utils.Certificate{
 					Cert: "../example/var/lib/baetyl/testcert/server.crt",
 					Key:  "../example/var/lib/baetyl/testcert/server.key",
@@ -49,6 +51,7 @@ func TestServerHttp(t *testing.T) {
 		{
 			serverConf: ServerConfig{
 				Address: "127.0.0.1:50070",
+				ReadTimeout: time.Second,
 				Certificate: utils.Certificate{
 					Cert:           "../example/var/lib/baetyl/testcert/server.crt",
 					Key:            "../example/var/lib/baetyl/testcert/server.key",
