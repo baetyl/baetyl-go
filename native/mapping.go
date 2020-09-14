@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sync"
 
 	"gopkg.in/yaml.v2"
 
@@ -17,6 +18,7 @@ const (
 
 type ServiceMapping struct {
 	Services map[string]ServiceMappingInfo `yaml:"services,omitempty"`
+	sync.RWMutex
 }
 
 type ServiceMappingInfo struct {
@@ -34,9 +36,7 @@ func (i *PortsInfo) Next() (int, error) {
 	}
 	port := i.Items[i.offset]
 	i.offset++
-	if i.offset == len(i.Items) {
-		i.offset = 0
-	}
+	i.offset = i.offset % len(i.Items)
 	return port, nil
 }
 
@@ -48,6 +48,9 @@ func NewServiceMapping() (*ServiceMapping, error) {
 }
 
 func (s *ServiceMapping) Load() error {
+	s.Lock()
+	defer s.Unlock()
+
 	if !utils.FileExists(serviceMappingFile) {
 		return errors.Errorf("services mapping file (%s) doesn't exist", serviceMappingFile)
 	}
@@ -63,6 +66,9 @@ func (s *ServiceMapping) Load() error {
 }
 
 func (s *ServiceMapping) Save() error {
+	s.Lock()
+	defer s.Unlock()
+
 	data, err := yaml.Marshal(s)
 	if err != nil {
 		return errors.Trace(err)
