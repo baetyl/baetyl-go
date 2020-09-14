@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	serviceMappingFile = "var/lib/baetyl/run/services.yml"
+	ServiceMappingFile = "var/lib/baetyl/run/services.yml"
 )
 
 type ServiceMapping struct {
@@ -51,10 +51,10 @@ func (s *ServiceMapping) Load() error {
 	s.Lock()
 	defer s.Unlock()
 
-	if !utils.FileExists(serviceMappingFile) {
-		return errors.Errorf("services mapping file (%s) doesn't exist", serviceMappingFile)
+	if !utils.FileExists(ServiceMappingFile) {
+		return errors.Errorf("services mapping file (%s) doesn't exist", ServiceMappingFile)
 	}
-	data, err := ioutil.ReadFile(serviceMappingFile)
+	data, err := ioutil.ReadFile(ServiceMappingFile)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -73,11 +73,11 @@ func (s *ServiceMapping) Save() error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if !utils.PathExists(path.Dir(serviceMappingFile)) {
-		err = os.MkdirAll(path.Dir(serviceMappingFile), 0755)
+	if !utils.PathExists(path.Dir(ServiceMappingFile)) {
+		err = os.MkdirAll(path.Dir(ServiceMappingFile), 0755)
 		if err != nil {
 			return errors.Trace(err)
 		}
 	}
-	return ioutil.WriteFile(serviceMappingFile, data, 0755)
+	return ioutil.WriteFile(ServiceMappingFile, data, 0755)
 }
