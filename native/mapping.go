@@ -40,11 +40,10 @@ func (i *PortsInfo) Next() (int, error) {
 	return port, nil
 }
 
-func NewServiceMapping() (*ServiceMapping, error) {
-	m := &ServiceMapping{
+func NewServiceMapping() *ServiceMapping {
+	return &ServiceMapping{
 		Services: make(map[string]ServiceMappingInfo),
 	}
-	return m, nil
 }
 
 func (s *ServiceMapping) Load() error {
