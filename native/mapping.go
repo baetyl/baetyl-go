@@ -19,20 +19,22 @@ const (
 )
 
 type ServiceMapping struct {
-	Services map[string]ServiceMappingInfo `yaml:"services,omitempty"`
+	services map[string]serviceMappingInfo
+	watcher  *fsnotify.Watcher
+	error    error
 	sync.RWMutex
 }
 
-type ServiceMappingInfo struct {
-	Ports PortsInfo `yaml:"ports,omitempty"`
+type serviceMappingInfo struct {
+	Ports portsInfo `yaml:"ports,omitempty"`
 }
 
-type PortsInfo struct {
+type portsInfo struct {
 	Items  []int `yaml:"items,omitempty"`
 	offset int
 }
 
-func (i *PortsInfo) Next() (int, error) {
+func (i *portsInfo) Next() (int, error) {
 	if len(i.Items) == 0 {
 		return 0, errors.New("ports of service are empty in services mapping file")
 	}
@@ -44,7 +46,7 @@ func (i *PortsInfo) Next() (int, error) {
 
 func NewServiceMapping() *ServiceMapping {
 	return &ServiceMapping{
-		Services: make(map[string]ServiceMappingInfo),
+		services: make(map[string]serviceMappingInfo),
 	}
 }
 
@@ -56,7 +58,7 @@ func (s *ServiceMapping) load() error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	err = yaml.Unmarshal(data, s)
+	err = yaml.Unmarshal(data, &s.services)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -64,7 +66,7 @@ func (s *ServiceMapping) load() error {
 }
 
 func (s *ServiceMapping) save() error {
-	data, err := yaml.Marshal(s)
+	data, err := yaml.Marshal(&s.services)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -81,8 +83,8 @@ func (s *ServiceMapping) AddServicePorts(serviceName string, ports []int) error 
 	s.Lock()
 	defer s.Unlock()
 
-	s.Services[serviceName] = ServiceMappingInfo{
-		Ports: PortsInfo{
+	s.services[serviceName] = serviceMappingInfo{
+		Ports: portsInfo{
 			Items: ports,
 		},
 	}
@@ -93,18 +95,31 @@ func (s *ServiceMapping) AddServicePorts(serviceName string, ports []int) error 
 	return nil
 }
 
-func (s *ServiceMapping) DeleteServicePorts(serviceName string) {
+func (s *ServiceMapping) DeleteServicePorts(serviceName string) error {
 	s.Lock()
 	defer s.Unlock()
 
-	delete(s.Services, serviceName)
+	if _, ok := s.services[serviceName]; !ok {
+		return nil
+	}
+
+	delete(s.services, serviceName)
+	err := s.save()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	return nil
 }
 
 func (s *ServiceMapping) GetServiceNextPort(serviceName string) (int, error) {
 	s.Lock()
 	defer s.Unlock()
 
-	serviceInfo, ok := s.Services[serviceName]
+	if s.error != nil {
+		return 0, s.error
+	}
+
+	serviceInfo, ok := s.services[serviceName]
 	if !ok {
 		return 0, errors.New("no such service in services mapping file")
 	}
@@ -120,19 +135,20 @@ func (s *ServiceMapping) GetServiceNextPort(serviceName string) (int, error) {
 	return port, nil
 }
 
-func (s *ServiceMapping) WatchFile(errChan chan<- error, logger *log.Logger) error {
+func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	go func() {
-		defer watcher.Close()
+		defer logger.Info("stop to watch services mapping file", log.Any("file", ServiceMappingFile))
+		logger.Info("start to watch services mapping file", log.Any("file", ServiceMappingFile))
+
 		for {
 			select {
 			case event, ok := <-watcher.Events:
 				if !ok {
-					errChan <- errors.New("error when wait on the events channel")
 					return
 				}
 				logger.Debug("received a file event", log.Any("eventName", event.Name), log.Any("eventOp", event.Op))
@@ -148,10 +164,11 @@ func (s *ServiceMapping) WatchFile(errChan chan<- error, logger *log.Logger) err
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
-					errChan <- errors.New("error when wait on the events channel")
 					return
 				}
-				errChan <- errors.Trace(err)
+				// TODO: check return or continue under this case
+				logger.Warn(err.Error())
+				s.error = err
 				return
 			}
 		}
@@ -166,6 +183,11 @@ func (s *ServiceMapping) WatchFile(errChan chan<- error, logger *log.Logger) err
 	if err != nil {
 		return errors.Trace(err)
 	}
-
 	return nil
+}
+
+func (s *ServiceMapping) Close() {
+	if s.watcher != nil {
+		s.watcher.Close()
+	}
 }
