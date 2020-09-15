@@ -19,34 +19,34 @@ const (
 )
 
 type ServiceMapping struct {
-	services map[string]serviceMappingInfo
+	services map[string]*serviceMappingInfo
 	watcher  *fsnotify.Watcher
 	error    error
 	sync.RWMutex
 }
 
 type serviceMappingInfo struct {
-	Ports portsInfo `yaml:"ports,omitempty"`
+	PortInfo portsInfo `yaml:",inline"`
 }
 
 type portsInfo struct {
-	Items  []int `yaml:"items,omitempty"`
+	Ports  []int `yaml:"ports,omitempty"`
 	offset int
 }
 
 func (i *portsInfo) Next() (int, error) {
-	if len(i.Items) == 0 {
+	if len(i.Ports) == 0 {
 		return 0, errors.New("ports of service are empty in services mapping file")
 	}
-	port := i.Items[i.offset]
+	port := i.Ports[i.offset]
 	i.offset++
-	i.offset = i.offset % len(i.Items)
+	i.offset = i.offset % len(i.Ports)
 	return port, nil
 }
 
 func NewServiceMapping() *ServiceMapping {
 	return &ServiceMapping{
-		services: make(map[string]serviceMappingInfo),
+		services: make(map[string]*serviceMappingInfo),
 	}
 }
 
@@ -79,13 +79,13 @@ func (s *ServiceMapping) save() error {
 	return ioutil.WriteFile(ServiceMappingFile, data, 0755)
 }
 
-func (s *ServiceMapping) AddServicePorts(serviceName string, ports []int) error {
+func (s *ServiceMapping) SetServicePorts(serviceName string, ports []int) error {
 	s.Lock()
 	defer s.Unlock()
 
-	s.services[serviceName] = serviceMappingInfo{
-		Ports: portsInfo{
-			Items: ports,
+	s.services[serviceName] = &serviceMappingInfo{
+		PortInfo: portsInfo{
+			Ports: ports,
 		},
 	}
 	err := s.save()
@@ -124,11 +124,11 @@ func (s *ServiceMapping) GetServiceNextPort(serviceName string) (int, error) {
 		return 0, errors.New("no such service in services mapping file")
 	}
 
-	if len(serviceInfo.Ports.Items) == 0 {
+	if len(serviceInfo.PortInfo.Ports) == 0 {
 		return 0, errors.New("no ports info in services mapping file")
 	}
 
-	port, err := serviceInfo.Ports.Next()
+	port, err := s.services[serviceName].PortInfo.Next()
 	if err != nil {
 		return 0, err
 	}
@@ -157,8 +157,10 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 					continue
 				}
 
-				logger.Debug("load services mapping file again", log.Error(err))
+				logger.Debug("load services mapping file again")
+				s.Lock()
 				err := s.load()
+				s.Unlock()
 				if err != nil {
 					logger.Warn("load services mapping file failed", log.Error(err))
 				}
@@ -179,7 +181,9 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 		return errors.Trace(err)
 	}
 
+	s.Lock()
 	err = s.load()
+	s.Unlock()
 	if err != nil {
 		return errors.Trace(err)
 	}
