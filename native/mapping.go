@@ -183,6 +183,7 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
+	s.watcher = watcher
 	return nil
 }
 
