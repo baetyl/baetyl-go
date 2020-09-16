@@ -32,6 +32,7 @@ const (
 	KeyFunctionHttpPort    = "BAETYL_MODULE_FUNCTION_HTTP_PORT"
 	KeyEdgeNamespace       = "BAETYL_EDGE_NAMESPACE"
 	KeyEdgeSystemNamespace = "BAETYL_EDGE_SYSTEM_NAMESPACE"
+	KeyServiceDynamicPort  = "BAETYL_SERVICE_DYNAMIC_PORT"
 
 	BaetylEdgeNamespace          = "baetyl-edge"
 	BaetylEdgeSystemNamespace    = "baetyl-edge-system"

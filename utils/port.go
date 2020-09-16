@@ -1,6 +1,9 @@
 package utils
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 // GetAvailablePort finds an available port
 func GetAvailablePort(host string) (int, error) {
@@ -15,4 +18,13 @@ func GetAvailablePort(host string) (int, error) {
 	}
 	defer listener.Close()
 	return listener.Addr().(*net.TCPAddr).Port, nil
+}
+
+func CheckPortAvailable(ip string, port int) bool {
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
+	if err != nil {
+		return false
+	}
+	l.Close()
+	return true
 }

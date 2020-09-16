@@ -11,6 +11,7 @@ require (
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/evanphx/json-patch v4.5.0+incompatible
 	github.com/frankban/quicktest v1.10.0 // indirect
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-ozzo/ozzo-routing v2.1.4+incompatible // indirect
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
