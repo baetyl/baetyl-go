@@ -163,10 +163,11 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 				logger.Debug("load services mapping file again")
 				s.Lock()
 				err := s.load()
-				s.Unlock()
 				if err != nil {
+					s.error = err
 					logger.Warn("load services mapping file failed", log.Error(err))
 				}
+				s.Unlock()
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return nil
