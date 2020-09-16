@@ -173,7 +173,9 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 				}
 				// TODO: check return or continue under this case
 				logger.Warn(err.Error())
+				s.Lock()
 				s.error = err
+				s.Unlock()
 				return nil
 			case <-s.tomb.Dying():
 				return nil
