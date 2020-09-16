@@ -20,7 +20,7 @@ const (
 
 type ServiceMapping struct {
 	services map[string]*serviceMappingInfo
-	watcher  *fsnotify.Watcher
+	tomb     utils.Tomb
 	error    error
 	sync.RWMutex
 }
@@ -141,15 +141,18 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 		return errors.Trace(err)
 	}
 
-	go func() {
-		defer logger.Info("stop to watch services mapping file", log.Any("file", ServiceMappingFile))
+	s.tomb.Go(func() error {
+		defer func() {
+			watcher.Close()
+			logger.Info("stop to watch services mapping file", log.Any("file", ServiceMappingFile))
+		}()
 		logger.Info("start to watch services mapping file", log.Any("file", ServiceMappingFile))
 
 		for {
 			select {
 			case event, ok := <-watcher.Events:
 				if !ok {
-					return
+					return nil
 				}
 				logger.Debug("received a file event", log.Any("eventName", event.Name), log.Any("eventOp", event.Op))
 
@@ -166,15 +169,17 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
-					return
+					return nil
 				}
 				// TODO: check return or continue under this case
 				logger.Warn(err.Error())
 				s.error = err
-				return
+				return nil
+			case <-s.tomb.Dying():
+				return nil
 			}
 		}
-	}()
+	})
 
 	err = watcher.Add(ServiceMappingFile)
 	if err != nil {
@@ -187,12 +192,10 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	s.watcher = watcher
 	return nil
 }
 
 func (s *ServiceMapping) Close() {
-	if s.watcher != nil {
-		s.watcher.Close()
-	}
+	s.tomb.Kill(nil)
+	s.tomb.Wait()
 }

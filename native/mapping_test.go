@@ -95,7 +95,6 @@ serviceB:
 	logger := log.L()
 	err = mapping.WatchFile(logger)
 	assert.NoError(t, err)
-	assert.NotNil(t, mapping.watcher)
 
 	port, err := mapping.GetServiceNextPort("serviceA")
 	assert.NoError(t, err)
