@@ -30,7 +30,7 @@ func (p *PortAllocator) Allocate() (int, error) {
 		port := p.base + p.offset
 		p.offset++
 		p.offset = p.offset % p.size
-		if utils.CheckPortAvailable(port) {
+		if utils.CheckPortAvailable("127.0.0.1", port) {
 			return port, nil
 		}
 		times++

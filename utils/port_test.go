@@ -26,14 +26,14 @@ func TestCheckPortAvailable(t *testing.T) {
 	got, err := GetAvailablePort("127.0.0.1")
 	assert.NoError(t, err)
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", got))
+	listener1, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", got))
 	assert.NoError(t, err)
 
-	res := CheckPortAvailable(got)
+	res := CheckPortAvailable("127.0.0.1", got)
 	assert.False(t, res)
 
-	listener.Close()
+	listener1.Close()
 
-	res = CheckPortAvailable(got)
+	res = CheckPortAvailable("127.0.0.1", got)
 	assert.True(t, res)
 }

@@ -25,10 +25,10 @@ func TestNewPortAllocator(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, port2, 50011)
 
-	listener1, err := net.Listen("tcp", fmt.Sprintf(":%d", port1))
+	listener1, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port1))
 	assert.NoError(t, err)
 
-	listener2, err := net.Listen("tcp", fmt.Sprintf(":%d", port2))
+	listener2, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port2))
 	assert.NoError(t, err)
 
 	_, err = alloc.Allocate()
