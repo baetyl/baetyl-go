@@ -13,7 +13,7 @@ type PortAllocator struct {
 
 func NewPortAllocator(start, end int) (*PortAllocator, error) {
 	if start < 1024 || end > 65535 || start >= end {
-		return nil, errors.New("port range is not valid")
+		return nil, errors.Errorf("port range (%d) - (%d) is not valid", start, end)
 	}
 	return &PortAllocator{
 		base: start,
