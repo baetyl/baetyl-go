@@ -38,7 +38,7 @@ const (
 	BaetylBrokerSystemPort       = "50010"
 	BaetylFunctionSystemHttpPort = "50011"
 	BaetylFunctionSystemGrpcPort = "50012"
-	keyBaetylHostPathLib         = "BAETYL_HOST_PATH_LIB"
+	KeyBaetylHostPathLib         = "BAETYL_HOST_PATH_LIB"
 
 	RunModeKube   = "kube"
 	RunModeNative = "native"
