@@ -12,12 +12,13 @@ import (
 )
 
 func TestServiceMapping_SetServicePorts(t *testing.T) {
-	mapping := NewServiceMapping()
+	mapping, err := NewServiceMapping()
+	assert.NoError(t, err)
 	assert.NotNil(t, mapping)
 
 	defer os.RemoveAll("var")
 
-	err := mapping.SetServicePorts("serviceA", []int{50010, 50011, 50012})
+	err = mapping.SetServicePorts("serviceA", []int{50010, 50011, 50012})
 	assert.NoError(t, err)
 
 	data, err := ioutil.ReadFile(ServiceMappingFile)
@@ -71,12 +72,13 @@ serviceB:
 }
 
 func TestServiceMapping_WatchFile(t *testing.T) {
-	mapping := NewServiceMapping()
+	mapping, err := NewServiceMapping()
+	assert.NoError(t, err)
 	assert.NotNil(t, mapping)
 
 	defer os.RemoveAll("var")
 
-	err := mapping.SetServicePorts("serviceA", []int{50010, 50011, 50012})
+	err = mapping.SetServicePorts("serviceA", []int{50010, 50011, 50012})
 	assert.NoError(t, err)
 
 	config := `serviceA:
