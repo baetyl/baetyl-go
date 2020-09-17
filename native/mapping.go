@@ -44,10 +44,17 @@ func (i *portsInfo) Next() (int, error) {
 	return port, nil
 }
 
-func NewServiceMapping() *ServiceMapping {
-	return &ServiceMapping{
+func NewServiceMapping() (*ServiceMapping, error) {
+	m := &ServiceMapping{
 		services: make(map[string]*serviceMappingInfo),
 	}
+	if !utils.FileExists(ServiceMappingFile) {
+		err := m.save()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return m, nil
 }
 
 func (s *ServiceMapping) load() error {
