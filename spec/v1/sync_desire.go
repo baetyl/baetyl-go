@@ -20,22 +20,15 @@ type ResourceInfo struct {
 // ResourceValue desired value
 type ResourceValue struct {
 	ResourceInfo `yaml:",inline" json:",inline"`
-	Value        VariableValue `yaml:"value,omitempty" json:"value,omitempty"`
+	Value        LazyValue `yaml:"value,omitempty" json:"value,omitempty"`
 }
 
 // App return app data if its kind is app
 func (v *ResourceValue) App() *Application {
 	if v.Kind == KindApplication || v.Kind == KindApp {
-		switch v.Value.Value.(type) {
-		case []byte:
-			var app Application
-			v.Value.Unmarshal(&app)
-			return &app
-		default:
-			if app, ok := v.Value.Value.(*Application); ok {
-				return app
-			}
-		}
+		var app Application
+		v.Value.Unmarshal(&app)
+		return &app
 	}
 	return nil
 }
@@ -43,16 +36,9 @@ func (v *ResourceValue) App() *Application {
 // Config return config data if its kind is config
 func (v *ResourceValue) Config() *Configuration {
 	if v.Kind == KindConfiguration || v.Kind == KindConfig {
-		switch v.Value.Value.(type) {
-		case []byte:
-			var cfg Configuration
-			v.Value.Unmarshal(&cfg)
-			return &cfg
-		default:
-			if cfg, ok := v.Value.Value.(*Configuration); ok {
-				return cfg
-			}
-		}
+		var cfg Configuration
+		v.Value.Unmarshal(&cfg)
+		return &cfg
 	}
 	return nil
 }
@@ -60,16 +46,9 @@ func (v *ResourceValue) Config() *Configuration {
 // Secret return secret data if its kind is secret
 func (v *ResourceValue) Secret() *Secret {
 	if v.Kind == KindSecret {
-		switch v.Value.Value.(type) {
-		case []byte:
-			var sec Secret
-			v.Value.Unmarshal(&sec)
-			return &sec
-		default:
-			if sec, ok := v.Value.Value.(*Secret); ok {
-				return sec
-			}
-		}
+		var sec Secret
+		v.Value.Unmarshal(&sec)
+		return &sec
 	}
 	return nil
 }

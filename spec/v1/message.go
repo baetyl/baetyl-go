@@ -20,5 +20,5 @@ const (
 type Message struct {
 	Kind     MessageKind       `yaml:"kind" json:"kind"`
 	Metadata map[string]string `yaml:"meta" json:"meta"`
-	Content  VariableValue     `yaml:"content" json:"content"`
+	Content  LazyValue         `yaml:"content" json:"content"`
 }

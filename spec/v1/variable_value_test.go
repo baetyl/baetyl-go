@@ -20,7 +20,7 @@ func TestVar(t *testing.T) {
 	v := &Message{
 		Kind:     MessageReport,
 		Metadata: map[string]string{"1": "2"},
-		Content: VariableValue{
+		Content: LazyValue{
 			Value: dr,
 		},
 	}
@@ -42,5 +42,5 @@ func TestVar(t *testing.T) {
 	if err := msg.Content.Unmarshal(desire); err != nil {
 		assert.NoError(t, err)
 	}
-	assert.EqualValues(t, dr, msg.Content.Value.(*DesireRequest))
+	assert.EqualValues(t, dr, desire)
 }

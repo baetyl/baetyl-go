@@ -29,22 +29,18 @@ func TestCRDData(t *testing.T) {
 		// success
 		app := desireddata2.App()
 		assert.Equal(t, desireddata.Value.Value, app)
-		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
 		desireddata.Kind = KindApp
 		app = desireddata2.App()
 		assert.Equal(t, desireddata.Value.Value, app)
-		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
 		// failure
 		cfg := desireddata2.Config()
 		assert.Nil(t, cfg)
-		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
 		// failure
 		scr := desireddata2.Secret()
 		assert.Nil(t, scr)
-		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 	}
 	{
 		// --- config
@@ -71,17 +67,14 @@ func TestCRDData(t *testing.T) {
 		// sucees
 		cfg := desireddata2.Config()
 		assert.Equal(t, desireddata.Value.Value, cfg)
-		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
 		desireddata.Kind = KindConfig
 		cfg = desireddata2.Config()
 		assert.Equal(t, desireddata.Value.Value, cfg)
-		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 
 		// failure
 		scr := desireddata2.Secret()
 		assert.Nil(t, scr)
-		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 	}
 	{
 		// --- secret
@@ -113,6 +106,5 @@ func TestCRDData(t *testing.T) {
 		// failure
 		scr := desireddata2.Secret()
 		assert.Equal(t, desireddata.Value.Value, scr)
-		assert.Equal(t, desireddata.Value.Value, desireddata2.Value.Value)
 	}
 }
