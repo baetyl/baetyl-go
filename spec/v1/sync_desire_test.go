@@ -24,7 +24,7 @@ func TestCRDData(t *testing.T) {
 		desireddata2 := &ResourceValue{}
 		err = json.Unmarshal(appdata, desireddata2)
 		assert.NoError(t, err)
-		assert.Nil(t, desireddata2.Value.Value)
+		assert.NotNil(t, desireddata2.Value.Value)
 
 		// success
 		app := desireddata2.App()
@@ -61,12 +61,12 @@ func TestCRDData(t *testing.T) {
 		desireddata2 := &ResourceValue{}
 		err = json.Unmarshal(appdata, desireddata2)
 		assert.NoError(t, err)
-		assert.Nil(t, desireddata2.Value.Value)
+		assert.NotNil(t, desireddata2.Value.Value)
 
 		// failure
 		app := desireddata2.App()
 		assert.Nil(t, app)
-		assert.Nil(t, desireddata2.Value.Value)
+		assert.NotNil(t, desireddata2.Value.Value)
 
 		// sucees
 		cfg := desireddata2.Config()
@@ -98,17 +98,17 @@ func TestCRDData(t *testing.T) {
 		desireddata2 := &ResourceValue{}
 		err = json.Unmarshal(appdata, desireddata2)
 		assert.NoError(t, err)
-		assert.Nil(t, desireddata2.Value.Value)
+		assert.NotNil(t, desireddata2.Value.Value)
 
 		// failure
 		app := desireddata2.App()
 		assert.Nil(t, app)
-		assert.Nil(t, desireddata2.Value.Value)
+		assert.NotNil(t, desireddata2.Value.Value)
 
 		// failure
 		cfg := desireddata2.Config()
 		assert.Nil(t, cfg)
-		assert.Nil(t, desireddata2.Value.Value)
+		assert.NotNil(t, desireddata2.Value.Value)
 
 		// failure
 		scr := desireddata2.Secret()
