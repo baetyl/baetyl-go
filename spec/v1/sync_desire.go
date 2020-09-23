@@ -1,9 +1,5 @@
 package v1
 
-import (
-	"encoding/json"
-)
-
 // DesireRequest body of request to sync desired data
 type DesireRequest struct {
 	Infos []ResourceInfo `yaml:"infos" json:"infos"`
@@ -24,17 +20,15 @@ type ResourceInfo struct {
 // ResourceValue desired value
 type ResourceValue struct {
 	ResourceInfo `yaml:",inline" json:",inline"`
-	Value        VariableValue `yaml:"value,omitempty" json:"value,omitempty"`
+	Value        LazyValue `yaml:"value,omitempty" json:"value,omitempty"`
 }
 
 // App return app data if its kind is app
 func (v *ResourceValue) App() *Application {
 	if v.Kind == KindApplication || v.Kind == KindApp {
-		if v.Value.Value == nil {
-			v.Value.Value = &Application{}
-			json.Unmarshal(v.Value.data, v.Value.Value)
-		}
-		return v.Value.Value.(*Application)
+		var app Application
+		v.Value.Unmarshal(&app)
+		return &app
 	}
 	return nil
 }
@@ -42,11 +36,9 @@ func (v *ResourceValue) App() *Application {
 // Config return config data if its kind is config
 func (v *ResourceValue) Config() *Configuration {
 	if v.Kind == KindConfiguration || v.Kind == KindConfig {
-		if v.Value.Value == nil {
-			v.Value.Value = &Configuration{}
-			json.Unmarshal(v.Value.data, v.Value.Value)
-		}
-		return v.Value.Value.(*Configuration)
+		var cfg Configuration
+		v.Value.Unmarshal(&cfg)
+		return &cfg
 	}
 	return nil
 }
@@ -54,11 +46,9 @@ func (v *ResourceValue) Config() *Configuration {
 // Secret return secret data if its kind is secret
 func (v *ResourceValue) Secret() *Secret {
 	if v.Kind == KindSecret {
-		if v.Value.Value == nil {
-			v.Value.Value = &Secret{}
-			json.Unmarshal(v.Value.data, v.Value.Value)
-		}
-		return v.Value.Value.(*Secret)
+		var sec Secret
+		v.Value.Unmarshal(&sec)
+		return &sec
 	}
 	return nil
 }

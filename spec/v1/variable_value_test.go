@@ -20,7 +20,7 @@ func TestVar(t *testing.T) {
 	v := &Message{
 		Kind:     MessageReport,
 		Metadata: map[string]string{"1": "2"},
-		Content: VariableValue{
+		Content: LazyValue{
 			Value: dr,
 		},
 	}
@@ -34,13 +34,13 @@ func TestVar(t *testing.T) {
 	err = json.Unmarshal(data, msg)
 	assert.NoError(t, err)
 
+	assert.NotNil(t, msg.Content.Value)
 	expContentData := "{\"infos\":[{\"kind\":\"config\",\"name\":\"c082001\",\"version\":\"599944\"}]}"
-	assert.Equal(t, expContentData, string(msg.Content.data))
+	assert.Equal(t, expContentData, string(msg.Content.Value.([]byte)))
 
-	assert.Nil(t, msg.Content.Value)
-	msg.Content.Value = &DesireRequest{}
-	if err := msg.Content.Unmarshal(msg.Content.Value); err != nil {
+	desire := &DesireRequest{}
+	if err := msg.Content.Unmarshal(desire); err != nil {
 		assert.NoError(t, err)
 	}
-	assert.EqualValues(t, dr, msg.Content.Value.(*DesireRequest))
+	assert.EqualValues(t, dr, desire)
 }
