@@ -34,9 +34,9 @@ func TestVar(t *testing.T) {
 	err = json.Unmarshal(data, msg)
 	assert.NoError(t, err)
 
-	assert.NotNil(t, msg.Content.Value)
+	assert.Nil(t, msg.Content.Value)
 	expContentData := "{\"infos\":[{\"kind\":\"config\",\"name\":\"c082001\",\"version\":\"599944\"}]}"
-	assert.Equal(t, expContentData, string(msg.Content.Value.([]byte)))
+	assert.Equal(t, expContentData, string(msg.Content.doc))
 
 	desire := &DesireRequest{}
 	if err := msg.Content.Unmarshal(desire); err != nil {
