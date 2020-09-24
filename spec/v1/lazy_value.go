@@ -16,7 +16,8 @@ func (v *LazyValue) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (v *LazyValue) SetJSONDoc(doc []byte) {
+// SetJSON set the json doc
+func (v *LazyValue) SetJSON(doc []byte) {
 	v.doc = doc
 }
 
@@ -25,11 +26,7 @@ func (v LazyValue) MarshalJSON() ([]byte, error) {
 	if v.doc != nil {
 		return v.doc, nil
 	}
-	bs, err := json.Marshal(v.Value)
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
+	return json.Marshal(v.Value)
 }
 
 // Unmarshal unmarshal from json data to obj
@@ -42,7 +39,7 @@ func (v *LazyValue) Unmarshal(obj interface{}) error {
 		if err != nil {
 			return err
 		}
-		return json.Unmarshal(bs, &v.Value)
+		return json.Unmarshal(bs, obj)
 	}
 	return nil
 }
