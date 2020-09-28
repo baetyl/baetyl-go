@@ -21,6 +21,10 @@ func (v *LazyValue) SetJSON(doc []byte) {
 	v.doc = doc
 }
 
+func (v *LazyValue) getJSON() []byte {
+	return v.doc
+}
+
 // MarshalJSON marshal to json data
 func (v LazyValue) MarshalJSON() ([]byte, error) {
 	if v.doc != nil {
