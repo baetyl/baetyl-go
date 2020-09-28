@@ -40,6 +40,7 @@ const (
 	BaetylFunctionSystemHttpPort = "50011"
 	BaetylFunctionSystemGrpcPort = "50012"
 	KeyBaetylHostPathLib         = "BAETYL_HOST_PATH_LIB"
+	DefaultHostPathLib           = "/var/lib/baetyl"
 
 	RunModeKube   = "kube"
 	RunModeNative = "native"
