@@ -6,7 +6,7 @@ import (
 	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
-func GetHostPathLib() (string, error) {
+func HostPathLib() (string, error) {
 	var hostPathLib string
 	if val := os.Getenv(KeyBaetylHostPathLib); val == "" {
 		err := os.Setenv(KeyBaetylHostPathLib, DefaultHostPathLib)

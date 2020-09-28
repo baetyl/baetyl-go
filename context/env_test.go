@@ -8,12 +8,11 @@ import (
 )
 
 func TestGetHostPathLib(t *testing.T) {
-	hostPathLib, err := GetHostPathLib()
+	hostPathLib, err := HostPathLib()
 	assert.NoError(t, err)
 	assert.Equal(t, DefaultHostPathLib, hostPathLib)
 	os.Setenv(KeyBaetylHostPathLib, "/var/data")
-	hostPathLib, err = GetHostPathLib()
+	hostPathLib, err = HostPathLib()
 	assert.NoError(t, err)
 	assert.Equal(t, "/var/data", hostPathLib)
 }
-
