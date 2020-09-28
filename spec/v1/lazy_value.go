@@ -21,7 +21,8 @@ func (v *LazyValue) SetJSON(doc []byte) {
 	v.doc = doc
 }
 
-func (v *LazyValue) getJSON() []byte {
+// GetJSON get the json doc
+func (v *LazyValue) GetJSON() []byte {
 	return v.doc
 }
 
