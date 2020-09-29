@@ -1,9 +1,38 @@
 package context
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
+)
+
+// All keys
+const (
+	KeyBaetyl             = "BAETYL"
+	KeyConfFile           = "BAETYL_CONF_FILE"
+	KeyNodeName           = "BAETYL_NODE_NAME"
+	KeyAppName            = "BAETYL_APP_NAME"
+	KeyAppVersion         = "BAETYL_APP_VERSION"
+	KeySvcName            = "BAETYL_SERVICE_NAME"
+	KeySysConf            = "BAETYL_SYSTEM_CONF"
+	KeyRunMode            = "BAETYL_RUN_MODE"
+	KeyServiceDynamicPort = "BAETYL_SERVICE_DYNAMIC_PORT"
+	KeyBaetylHostPathLib  = "BAETYL_HOST_PATH_LIB"
+)
+
+const (
+	RunModeKube   = "kube"
+	RunModeNative = "native"
+)
+
+const (
+	baetylEdgeNamespace          = "baetyl-edge"
+	baetylEdgeSystemNamespace    = "baetyl-edge-system"
+	baetylBrokerSystemPort       = "50010"
+	baetylFunctionSystemHttpPort = "50011"
+	baetylFunctionSystemGrpcPort = "50012"
+	defaultHostPathLib           = "/var/lib/baetyl"
 )
 
 // HostPathLib return HostPathLib
@@ -28,4 +57,48 @@ func RunMode() string {
 		mode = RunModeKube
 	}
 	return mode
+}
+
+// EdgeNamespace return namespace of edge.
+func EdgeNamespace() string {
+	return baetylEdgeNamespace
+}
+
+// EdgeSystemNamespace return system namespace of edge.
+func EdgeSystemNamespace() string {
+	return baetylEdgeSystemNamespace
+}
+
+// BrokerPort return broker port.
+func BrokerPort() string {
+	return baetylBrokerSystemPort
+}
+
+// FunctionPort return http port of function.
+func FunctionHttpPort() string {
+	return baetylFunctionSystemHttpPort
+}
+
+// BrokerHost return broker host.
+func BrokerHost() string {
+	if RunMode() == RunModeNative {
+		return "127.0.0.1"
+	}
+	return fmt.Sprintf("%s.%s", "baetyl-broker", baetylEdgeNamespace)
+}
+
+// FunctionHost return function host.
+func FunctionHost() string {
+	if RunMode() == RunModeNative {
+		return "127.0.0.1"
+	}
+	return fmt.Sprintf("%s.%s", "baetyl-function", baetylEdgeSystemNamespace)
+}
+
+func getBrokerAddress() string {
+	return fmt.Sprintf("%s://%s:%s", "ssl", BrokerHost(), BrokerPort())
+}
+
+func getFunctionAddress() string {
+	return fmt.Sprintf("%s://%s:%s", "https", FunctionHost(), FunctionHttpPort())
 }
