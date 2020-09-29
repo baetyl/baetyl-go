@@ -1,7 +1,6 @@
 package context
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -14,30 +13,6 @@ import (
 	"github.com/baetyl/baetyl-go/v2/mqtt"
 	"github.com/baetyl/baetyl-go/v2/pki"
 	"github.com/baetyl/baetyl-go/v2/utils"
-)
-
-// All keys
-const (
-	KeyBaetyl              = "BAETYL"
-	KeyConfFile            = "BAETYL_CONF_FILE"
-	KeyNodeName            = "BAETYL_NODE_NAME"
-	KeyAppName             = "BAETYL_APP_NAME"
-	KeyAppVersion          = "BAETYL_APP_VERSION"
-	KeySvcName             = "BAETYL_SERVICE_NAME"
-	KeySysConf             = "BAETYL_SYSTEM_CONF"
-	KeyRunMode             = "BAETYL_RUN_MODE"
-	KeyServiceDynamicPort  = "BAETYL_SERVICE_DYNAMIC_PORT"
-	KeyBaetylHostPathLib   = "BAETYL_HOST_PATH_LIB"
-
-	baetylEdgeNamespace          = "baetyl-edge"
-	baetylEdgeSystemNamespace    = "baetyl-edge-system"
-	baetylBrokerSystemPort       = "50010"
-	baetylFunctionSystemHttpPort = "50011"
-	baetylFunctionSystemGrpcPort = "50012"
-	defaultHostPathLib           = "/var/lib/baetyl"
-
-	RunModeKube   = "kube"
-	RunModeNative = "native"
 )
 
 var (
@@ -136,7 +111,7 @@ func NewContext(confFile string) Context {
 	// if not set in config file, to use value from env.
 	// if not set in env, to use default value.
 	if sc.Function.Address == "" {
-		sc.Function.Address = c.getFunctionAddress()
+		sc.Function.Address = getFunctionAddress()
 	}
 	if sc.Function.CA == "" {
 		sc.Function.CA = sc.Certificate.CA
@@ -149,7 +124,7 @@ func NewContext(confFile string) Context {
 	}
 
 	if sc.Broker.Address == "" {
-		sc.Broker.Address = c.getBrokerAddress()
+		sc.Broker.Address = getBrokerAddress()
 	}
 	// auto subscribe link topic for service if service name not nil.
 	if sc.Broker.Subscriptions == nil {
@@ -306,12 +281,4 @@ func (c *ctx) NewBrokerClient(config mqtt.ClientConfig) (*mqtt.Client, error) {
 		return nil, errors.Trace(err)
 	}
 	return mqtt.NewClient(ops), nil
-}
-
-func (c *ctx) getBrokerAddress() string {
-	return fmt.Sprintf("%s://%s:%s", "ssl", BrokerHost(), BrokerPort())
-}
-
-func (c *ctx) getFunctionAddress() string {
-	return fmt.Sprintf("%s://%s:%s", "https", FunctionHost(), FunctionHttpPort())
 }

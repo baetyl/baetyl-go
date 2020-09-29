@@ -1,6 +1,7 @@
 package context
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -22,4 +23,13 @@ func TestDetectRunMode(t *testing.T) {
 	assert.Equal(t, "native", RunMode())
 	os.Setenv(KeyRunMode, "xxx")
 	assert.Equal(t, "kube", RunMode())
+}
+
+func TestConst(t *testing.T) {
+	assert.Equal(t, baetylEdgeNamespace, EdgeNamespace())
+	assert.Equal(t, baetylEdgeSystemNamespace, EdgeSystemNamespace())
+	assert.Equal(t, baetylBrokerSystemPort, BrokerPort())
+	assert.Equal(t, baetylFunctionSystemHttpPort, FunctionHttpPort())
+	assert.Equal(t, fmt.Sprintf("%s.%s", "baetyl-broker", baetylEdgeNamespace), BrokerHost())
+	assert.Equal(t, fmt.Sprintf("%s.%s", "baetyl-function", baetylEdgeSystemNamespace), FunctionHost())
 }
