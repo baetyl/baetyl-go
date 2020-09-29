@@ -26,21 +26,15 @@ const (
 	KeySvcName             = "BAETYL_SERVICE_NAME"
 	KeySysConf             = "BAETYL_SYSTEM_CONF"
 	KeyRunMode             = "BAETYL_RUN_MODE"
-	KeyBrokerHost          = "BAETYL_MODULE_BROKER_HOST"
-	KeyBrokerPort          = "BAETYL_MODULE_BROKER_PORT"
-	KeyFunctionHost        = "BAETYL_MODULE_FUNCTION_HOST"
-	KeyFunctionHttpPort    = "BAETYL_MODULE_FUNCTION_HTTP_PORT"
-	KeyEdgeNamespace       = "BAETYL_EDGE_NAMESPACE"
-	KeyEdgeSystemNamespace = "BAETYL_EDGE_SYSTEM_NAMESPACE"
 	KeyServiceDynamicPort  = "BAETYL_SERVICE_DYNAMIC_PORT"
+	KeyBaetylHostPathLib   = "BAETYL_HOST_PATH_LIB"
 
-	BaetylEdgeNamespace          = "baetyl-edge"
-	BaetylEdgeSystemNamespace    = "baetyl-edge-system"
-	BaetylBrokerSystemPort       = "50010"
-	BaetylFunctionSystemHttpPort = "50011"
-	BaetylFunctionSystemGrpcPort = "50012"
-	KeyBaetylHostPathLib         = "BAETYL_HOST_PATH_LIB"
-	DefaultHostPathLib           = "/var/lib/baetyl"
+	baetylEdgeNamespace          = "baetyl-edge"
+	baetylEdgeSystemNamespace    = "baetyl-edge-system"
+	baetylBrokerSystemPort       = "50010"
+	baetylFunctionSystemHttpPort = "50011"
+	baetylFunctionSystemGrpcPort = "50012"
+	defaultHostPathLib           = "/var/lib/baetyl"
 
 	RunModeKube   = "kube"
 	RunModeNative = "native"
@@ -63,18 +57,7 @@ type Context interface {
 	ServiceName() string
 	// ConfFile returns config file from data.
 	ConfFile() string
-	// BrokerHost return broker host.
-	BrokerHost() string
-	// BrokerPort return broker port.
-	BrokerPort() string
-	// FunctionHost return function host.
-	FunctionHost() string
-	// FunctionHttpPort return http port of function.
-	FunctionHttpPort() string
-	// EdgeNamespace return namespace of edge.
-	EdgeNamespace() string
-	// EdgeSystemNamespace return system namespace of edge.
-	EdgeSystemNamespace() string
+
 	// SystemConfig returns the config of baetyl system from data.
 	SystemConfig() *SystemConfig
 
@@ -238,62 +221,6 @@ func (c *ctx) ConfFile() string {
 	return v.(string)
 }
 
-// BrokerHost return broker host.
-func (c *ctx) BrokerHost() string {
-	if host := os.Getenv(KeyBrokerHost); host != "" {
-		return host
-	}
-
-	if RunMode() == RunModeNative {
-		return "127.0.0.1"
-	}
-	return fmt.Sprintf("%s.%s", "baetyl-broker", BaetylEdgeNamespace)
-}
-
-// BrokerPort return broker port.
-func (c *ctx) BrokerPort() string {
-	if port := os.Getenv(KeyBrokerPort); port != "" {
-		return port
-	}
-	return BaetylBrokerSystemPort
-}
-
-// FunctionHost return function host.
-func (c *ctx) FunctionHost() string {
-	if host := os.Getenv(KeyFunctionHost); host != "" {
-		return host
-	}
-
-	if RunMode() == RunModeNative {
-		return "127.0.0.1"
-	}
-	return fmt.Sprintf("%s.%s", "baetyl-function", BaetylEdgeSystemNamespace)
-}
-
-// FunctionPort return http port of function.
-func (c *ctx) FunctionHttpPort() string {
-	if port := os.Getenv(KeyFunctionHttpPort); port != "" {
-		return port
-	}
-	return BaetylFunctionSystemHttpPort
-}
-
-// EdgeNamespace return namespace of edge.
-func (c *ctx) EdgeNamespace() string {
-	if port := os.Getenv(KeyEdgeNamespace); port != "" {
-		return port
-	}
-	return BaetylEdgeNamespace
-}
-
-// EdgeSystemNamespace return system namespace of edge.
-func (c *ctx) EdgeSystemNamespace() string {
-	if port := os.Getenv(KeyEdgeSystemNamespace); port != "" {
-		return port
-	}
-	return BaetylEdgeSystemNamespace
-}
-
 func (c *ctx) SystemConfig() *SystemConfig {
 	v, ok := c.Load(KeySysConf)
 	if !ok {
@@ -382,9 +309,9 @@ func (c *ctx) NewBrokerClient(config mqtt.ClientConfig) (*mqtt.Client, error) {
 }
 
 func (c *ctx) getBrokerAddress() string {
-	return fmt.Sprintf("%s://%s:%s", "ssl", c.BrokerHost(), c.BrokerPort())
+	return fmt.Sprintf("%s://%s:%s", "ssl", BrokerHost(), BrokerPort())
 }
 
 func (c *ctx) getFunctionAddress() string {
-	return fmt.Sprintf("%s://%s:%s", "https", c.FunctionHost(), c.FunctionHttpPort())
+	return fmt.Sprintf("%s://%s:%s", "https", FunctionHost(), FunctionHttpPort())
 }
