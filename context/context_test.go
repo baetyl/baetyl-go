@@ -26,7 +26,7 @@ func TestContext(t *testing.T) {
 			ClientAuthType:     0,
 		},
 		Function: http.ClientConfig{
-			Address:               "https://baetyl-function.baetyl-edge-system:" + BaetylFunctionSystemHttpPort,
+			Address:               "https://baetyl-function.baetyl-edge-system:" + baetylFunctionSystemHttpPort,
 			Timeout:               30000000000,
 			KeepAlive:             30000000000,
 			MaxIdleConns:          100,
@@ -42,7 +42,7 @@ func TestContext(t *testing.T) {
 			},
 		},
 		Broker: mqtt.ClientConfig{
-			Address:              "ssl://baetyl-broker.baetyl-edge:" + BaetylBrokerSystemPort,
+			Address:              "ssl://baetyl-broker.baetyl-edge:" + baetylBrokerSystemPort,
 			Username:             "",
 			Password:             "",
 			ClientID:             "",
