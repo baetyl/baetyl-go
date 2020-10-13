@@ -13,9 +13,9 @@ const (
 )
 
 type Pubsub interface {
-	Publish(topic string, msg interface{})
-	Subscribe(topic string) chan interface{}
-	Unsubscribe(topic string, ch chan interface{})
+	Publish(topic string, msg interface{}) error
+	Subscribe(topic string) (chan interface{}, error)
+	Unsubscribe(topic string, ch chan interface{}) error
 	io.Closer
 }
 
@@ -34,15 +34,16 @@ func NewPubsub(size int) (Pubsub, error) {
 	}, nil
 }
 
-func (m *pubsub) Publish(topic string, msg interface{}) {
+func (m *pubsub) Publish(topic string, msg interface{}) error {
 	if chs := m.getChannel(topic); chs != nil {
 		for ch, _ := range chs {
 			m.publish(ch, msg)
 		}
 	}
+	return nil
 }
 
-func (m *pubsub) Subscribe(topic string) chan interface{} {
+func (m *pubsub) Subscribe(topic string) (chan interface{}, error) {
 	m.chanLock.Lock()
 	defer m.chanLock.Unlock()
 
@@ -53,10 +54,10 @@ func (m *pubsub) Subscribe(topic string) chan interface{} {
 	}
 	ch := make(chan interface{}, m.size)
 	chs[ch] = struct{}{}
-	return ch
+	return ch, nil
 }
 
-func (m *pubsub) Unsubscribe(topic string, ch chan interface{}) {
+func (m *pubsub) Unsubscribe(topic string, ch chan interface{}) error {
 	m.chanLock.Lock()
 	defer m.chanLock.Unlock()
 	if chs, ok := m.channels[topic]; ok {
@@ -64,6 +65,7 @@ func (m *pubsub) Unsubscribe(topic string, ch chan interface{}) {
 			delete(chs, ch)
 		}
 	}
+	return nil
 }
 
 func (m *pubsub) Close() error {
@@ -72,7 +74,6 @@ func (m *pubsub) Close() error {
 	for topic, chs := range m.channels {
 		for k, _ := range chs {
 			delete(chs, k)
-			close(k)
 		}
 		delete(m.channels, topic)
 	}
