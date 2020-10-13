@@ -17,20 +17,23 @@ var (
 	syncWG = sync.WaitGroup{}
 )
 
-func TestNewPubsubHelper(t *testing.T) {
+func TestNewProcessor(t *testing.T) {
 	pb, err := NewPubsub(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, pb)
 
-	chDown := pb.Subscribe(topicDown)
-	hpDown := NewPubsubProcessor(chDown, time.Second*2, &hdDown{pb: pb, t: t})
+	chDown, err := pb.Subscribe(topicDown)
+	assert.NoError(t, err)
+	hpDown := NewProcessor(chDown, time.Second*2, &hdDown{pb: pb, t: t})
 	hpDown.Start()
 
-	chUp := pb.Subscribe(topicUp)
-	hphUp := NewPubsubProcessor(chUp, time.Second*2, &hdUp{pb: pb, t: t})
+	chUp, err := pb.Subscribe(topicUp)
+	assert.NoError(t, err)
+	hphUp := NewProcessor(chUp, time.Second*2, &hdUp{pb: pb, t: t})
 	hphUp.Start()
 
-	pb.Publish(topicDown, "down")
+	err = pb.Publish(topicDown, "down")
+	assert.NoError(t, err)
 	syncWG.Add(1)
 	syncWG.Wait()
 	hpDown.Close()
@@ -46,13 +49,11 @@ func (h *hdDown) OnMessage(msg interface{}) error {
 	m, ok := msg.(string)
 	assert.True(h.t, ok)
 	assert.Equal(h.t, "down", m)
-	h.pb.Publish(topicUp, "up")
-	return nil
+	return h.pb.Publish(topicUp, "up")
 }
 
 func (h *hdDown) OnTimeout() error {
-	h.pb.Publish(topicUp, "timeout")
-	return nil
+	return h.pb.Publish(topicUp, "timeout")
 }
 
 type hdUp struct {
