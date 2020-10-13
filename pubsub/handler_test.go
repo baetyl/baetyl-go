@@ -23,11 +23,11 @@ func TestNewPubsubHelper(t *testing.T) {
 	assert.NotNil(t, pb)
 
 	chDown := pb.Subscribe(topicDown)
-	hpDown := NewPubsubHelper(chDown, time.Second*2, &hdDown{pb: pb, t: t})
+	hpDown := NewPubsubProcessor(chDown, time.Second*2, &hdDown{pb: pb, t: t})
 	hpDown.Start()
 
 	chUp := pb.Subscribe(topicUp)
-	hphUp := NewPubsubHelper(chUp, time.Second*2, &hdUp{pb: pb, t: t})
+	hphUp := NewPubsubProcessor(chUp, time.Second*2, &hdUp{pb: pb, t: t})
 	hphUp.Start()
 
 	pb.Publish(topicDown, "down")

@@ -22,7 +22,7 @@ type Pubsub interface {
 type pubsub struct {
 	size     int
 	channels map[string]map[chan interface{}]struct{}
-	chanLock sync.Mutex
+	chanLock sync.RWMutex
 	log      *log.Logger
 }
 
@@ -35,16 +35,10 @@ func NewPubsub(size int) (Pubsub, error) {
 }
 
 func (m *pubsub) Publish(topic string, msg interface{}) {
-	m.chanLock.Lock()
-	chs, ok := m.channels[topic]
-	if !ok {
-		chs = map[chan interface{}]struct{}{}
-		m.channels[topic] = chs
-	}
-	m.chanLock.Unlock()
-
-	for ch, _ := range chs {
-		m.publish(ch, msg)
+	if chs := m.getChannel(topic); chs != nil {
+		for ch, _ := range chs {
+			m.publish(ch, msg)
+		}
 	}
 }
 
@@ -89,10 +83,17 @@ func (m *pubsub) publish(ch chan interface{}, msg interface{}) {
 	timer := time.NewTimer(pubTimeout)
 	select {
 	case ch <- msg:
-		if !timer.Stop() {
-			<-timer.C
-		}
 	case <-timer.C:
 		m.log.Warn("publish message timeout")
 	}
+	timer.Stop()
+}
+
+func (m *pubsub) getChannel(topic string) map[chan interface{}]struct{} {
+	m.chanLock.RLock()
+	defer m.chanLock.RUnlock()
+	if chs, ok := m.channels[topic]; ok {
+		return chs
+	}
+	return nil
 }
