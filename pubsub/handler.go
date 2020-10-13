@@ -3,8 +3,13 @@ package pubsub
 import (
 	"time"
 
+	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
 	"github.com/baetyl/baetyl-go/v2/utils"
+)
+
+var (
+	ErrPubsubTimeout = errors.New("failed to send message because of timeout")
 )
 
 type Handler interface {
@@ -12,12 +17,12 @@ type Handler interface {
 	OnTimeout() error
 }
 
-type PubsubHelper interface {
+type Processor interface {
 	Start()
 	Close()
 }
 
-type helper struct {
+type processor struct {
 	channel chan interface{}
 	timeout time.Duration
 	handler Handler
@@ -25,46 +30,46 @@ type helper struct {
 	log     *log.Logger
 }
 
-func NewPubsubHelper(ch chan interface{}, timeout time.Duration, handler Handler) PubsubHelper {
-	return &helper{
+func NewPubsubProcessor(ch chan interface{}, timeout time.Duration, handler Handler) Processor {
+	return &processor{
 		channel: ch,
 		timeout: timeout,
 		handler: handler,
 		tomb:    utils.Tomb{},
-		log:     log.L().With(log.Any("pubsub", "helper")),
+		log:     log.L().With(log.Any("pubsub", "processor")),
 	}
 }
 
-func (h *helper) Start() {
-	h.tomb.Go(h.processing)
+func (p *processor) Start() {
+	p.tomb.Go(p.processing)
 }
 
-func (h *helper) Close() {
-	h.tomb.Kill(nil)
-	h.tomb.Wait()
+func (p *processor) Close() {
+	p.tomb.Kill(nil)
+	p.tomb.Wait()
 }
 
-func (h *helper) processing() error {
-	timer := time.NewTimer(h.timeout)
+func (p *processor) processing() error {
+	timer := time.NewTimer(p.timeout)
 	defer timer.Stop()
 	for {
 		select {
-		case msg := <-h.channel:
-			if h.handler != nil {
-				if err := h.handler.OnMessage(msg); err != nil {
-					h.log.Error("failed to handle msg", log.Error(err))
+		case msg := <-p.channel:
+			if p.handler != nil {
+				if err := p.handler.OnMessage(msg); err != nil {
+					p.log.Error("failed to handle message", log.Error(err))
 				}
 			}
-			timer.Reset(h.timeout)
+			timer.Reset(p.timeout)
 		case <-timer.C:
-			h.log.Warn("pubsub queue timeout")
-			if h.handler != nil {
-				if err := h.handler.OnTimeout(); err != nil {
-					h.log.Error("failed to execute timeout helper", log.Error(err))
+			p.log.Warn("pubsub timeout")
+			if p.handler != nil {
+				if err := p.handler.OnTimeout(); err != nil {
+					p.log.Error("failed to handle message because of timeout", log.Error(err))
 				}
 			}
-			h.tomb.Kill(nil)
-		case <-h.tomb.Dying():
+			p.tomb.Kill(ErrPubsubTimeout)
+		case <-p.tomb.Dying():
 			return nil
 		}
 	}
