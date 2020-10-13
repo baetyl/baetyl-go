@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrPubsubTimeout = errors.New("failed to send message because of timeout")
+	ErrProcessorTimeout = errors.New("failed to send message because of timeout")
 )
 
 type Processor interface {
@@ -63,7 +63,7 @@ func (p *processor) processing() error {
 					p.log.Error("failed to handle message because of timeout", log.Error(err))
 				}
 			}
-			p.tomb.Kill(ErrPubsubTimeout)
+			p.tomb.Kill(ErrProcessorTimeout)
 		case <-p.tomb.Dying():
 			return nil
 		}

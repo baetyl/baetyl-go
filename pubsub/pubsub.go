@@ -2,14 +2,20 @@ package pubsub
 
 import (
 	"io"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
 )
 
 const (
 	pubTimeout = time.Millisecond * 10
+)
+
+var (
+	ErrPubsubTimeout = errors.New("failed to send message to topic because of timeout")
 )
 
 type Pubsub interface {
@@ -35,10 +41,17 @@ func NewPubsub(size int) (Pubsub, error) {
 }
 
 func (m *pubsub) Publish(topic string, msg interface{}) error {
+	var errs []string
 	if chs := m.getChannel(topic); chs != nil {
 		for ch, _ := range chs {
-			m.publish(ch, msg)
+			err := m.publish(ch, msg)
+			if err != nil {
+				errs = append(errs, err.Error())
+			}
 		}
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
 }
@@ -80,14 +93,17 @@ func (m *pubsub) Close() error {
 	return nil
 }
 
-func (m *pubsub) publish(ch chan interface{}, msg interface{}) {
+func (m *pubsub) publish(ch chan interface{}, msg interface{}) error {
 	timer := time.NewTimer(pubTimeout)
+	defer timer.Stop()
+
 	select {
 	case ch <- msg:
 	case <-timer.C:
 		m.log.Warn("publish message timeout")
+		return ErrPubsubTimeout
 	}
-	timer.Stop()
+	return nil
 }
 
 func (m *pubsub) getChannel(topic string) map[chan interface{}]struct{} {
