@@ -36,7 +36,11 @@ func NewProcessor(ch chan interface{}, timeout time.Duration, handler Handler) P
 }
 
 func (p *processor) Start() {
-	p.tomb.Go(p.processing)
+	if p.timeout > 0 {
+		p.tomb.Go(p.timerProcessing)
+	} else {
+		p.tomb.Go(p.processing)
+	}
 }
 
 func (p *processor) Close() {
@@ -44,7 +48,7 @@ func (p *processor) Close() {
 	p.tomb.Wait()
 }
 
-func (p *processor) processing() error {
+func (p *processor) timerProcessing() error {
 	timer := time.NewTimer(p.timeout)
 	defer timer.Stop()
 	for {
@@ -64,6 +68,21 @@ func (p *processor) processing() error {
 				}
 			}
 			p.tomb.Kill(ErrProcessorTimeout)
+		case <-p.tomb.Dying():
+			return nil
+		}
+	}
+}
+
+func (p *processor) processing() error {
+	for {
+		select {
+		case msg := <-p.channel:
+			if p.handler != nil {
+				if err := p.handler.OnMessage(msg); err != nil {
+					p.log.Error("failed to handle message", log.Error(err))
+				}
+			}
 		case <-p.tomb.Dying():
 			return nil
 		}

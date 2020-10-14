@@ -17,7 +17,7 @@ var (
 	syncWG = sync.WaitGroup{}
 )
 
-func TestNewProcessor(t *testing.T) {
+func TestNewTimerProcessor(t *testing.T) {
 	pb, err := NewPubsub(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, pb)
@@ -30,6 +30,29 @@ func TestNewProcessor(t *testing.T) {
 	chUp, err := pb.Subscribe(topicUp)
 	assert.NoError(t, err)
 	hphUp := NewProcessor(chUp, time.Second*2, &hdUp{pb: pb, t: t})
+	hphUp.Start()
+
+	err = pb.Publish(topicDown, "down")
+	assert.NoError(t, err)
+	syncWG.Add(1)
+	syncWG.Wait()
+	hpDown.Close()
+	hphUp.Close()
+}
+
+func TestNewProcessor(t *testing.T) {
+	pb, err := NewPubsub(1)
+	assert.NoError(t, err)
+	assert.NotNil(t, pb)
+
+	chDown, err := pb.Subscribe(topicDown)
+	assert.NoError(t, err)
+	hpDown := NewProcessor(chDown, 0, &hdDown{pb: pb, t: t})
+	hpDown.Start()
+
+	chUp, err := pb.Subscribe(topicUp)
+	assert.NoError(t, err)
+	hphUp := NewProcessor(chUp, 0, &hdUp{pb: pb, t: t})
 	hphUp.Start()
 
 	err = pb.Publish(topicDown, "down")
