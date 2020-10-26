@@ -18,14 +18,14 @@ type Processor interface {
 }
 
 type processor struct {
-	channel chan interface{}
+	channel <-chan interface{}
 	timeout time.Duration
 	handler Handler
 	tomb    utils.Tomb
 	log     *log.Logger
 }
 
-func NewProcessor(ch chan interface{}, timeout time.Duration, handler Handler) Processor {
+func NewProcessor(ch <-chan interface{}, timeout time.Duration, handler Handler) Processor {
 	return &processor{
 		channel: ch,
 		timeout: timeout,

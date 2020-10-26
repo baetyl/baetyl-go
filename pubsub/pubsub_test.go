@@ -47,7 +47,7 @@ func TestPubsub(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func Reading(t *testing.T, ch chan interface{}) {
+func Reading(t *testing.T, ch <-chan interface{}) {
 	for {
 		msg := <-ch
 		switch msg.(type) {
