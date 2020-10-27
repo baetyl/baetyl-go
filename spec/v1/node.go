@@ -25,15 +25,16 @@ var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max lim
 
 // Node the spec of node
 type Node struct {
-	Namespace         string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"omitempty,resourceName"`
-	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
-	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
-	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" validate:"omitempty,validLabels"`
-	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
-	Report            Report            `json:"report,omitempty" yaml:"report,omitempty"`
-	Desire            Desire            `json:"desire,omitempty" yaml:"desire,omitempty"`
-	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
+	Namespace         string                 `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Name              string                 `json:"name,omitempty" yaml:"name,omitempty" validate:"omitempty,resourceName"`
+	Version           string                 `json:"version,omitempty" yaml:"version,omitempty"`
+	CreationTimestamp time.Time              `json:"createTime,omitempty" yaml:"createTime,omitempty"`
+	Labels            map[string]string      `json:"labels,omitempty" yaml:"labels,omitempty" validate:"omitempty,validLabels"`
+	Annotations       map[string]string      `json:"annotations,omitempty" yaml:"annotations,omitempty"`
+	Attributes        map[string]interface{} `json:"attr,omitempty" yaml:"attr,omitempty"`
+	Report            Report                 `json:"report,omitempty" yaml:"report,omitempty"`
+	Desire            Desire                 `json:"desire,omitempty" yaml:"desire,omitempty"`
+	Description       string                 `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 type NodeView struct {
