@@ -11,8 +11,8 @@ type Application struct {
 	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
 	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
 	Selector          string            `json:"selector,omitempty" yaml:"selector,omitempty"`
-	Services          []Service         `json:"services,omitempty" yaml:"services,omitempty"`
-	Volumes           []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty"`
+	Services          []Service         `json:"services,omitempty" yaml:"services,omitempty" validate:"dive"`
+	Volumes           []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty" validate:"dive"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	System            bool              `json:"system,omitempty" yaml:"system,omitempty"`
 }
@@ -20,11 +20,11 @@ type Application struct {
 // Service service config1ma1
 type Service struct {
 	// specifies the unique name of the service
-	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" validate:"omitempty,resourceName"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" validate:"resourceName"`
 	// specifies the hostname of the service
 	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 	// specifies the image of the service, usually using the Docker image name
-	Image string `json:"image,omitempty" yaml:"image,omitempty" binding:"required"`
+	Image string `json:"image,omitempty" yaml:"image,omitempty" binding:"required" validate:"required"`
 	// specifies the number of instances started
 	Replica int `json:"replica,omitempty" yaml:"replica,omitempty" binding:"required" default:"1"`
 	// specifies the storage volumes that the service needs, map the storage volume to the directory in the container
@@ -81,7 +81,7 @@ type ContainerPort struct {
 // Volume volume config
 type Volume struct {
 	// specified name of the volume
-	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" validate:"omitempty,resourceName"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" validate:"resourceName"`
 	// specified driver for the storage volume
 	VolumeSource `json:",inline" yaml:",inline"`
 }
