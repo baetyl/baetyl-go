@@ -544,7 +544,7 @@ func TestShadowDiffV2(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotDelta, err := tt.desire.DiffV2(tt.report)
+			gotDelta, err := tt.desire.DiffWithNil(tt.report)
 			assert.Equal(t, tt.wantErr, err)
 			assert.Equal(t, tt.wantDelta, gotDelta)
 		})

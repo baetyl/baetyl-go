@@ -87,7 +87,8 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 }
 
 // Diff desire diff with report data, return the delta for desire
-func (d Desire) DiffV2(report Report) (Delta, error) {
+// and do not clean nil in delta
+func (d Desire) DiffWithNil(report Report) (Delta, error) {
 	res, err := diff(d, report, false)
 	return res, errors.Trace(err)
 }
