@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"strconv"
 	"testing"
 	"time"
@@ -470,4 +471,170 @@ func TestPopulateNodeStats(t *testing.T) {
 	assert.Equal(t, node6.Report.NodeStats.Usage[string(coreV1.ResourceCPU)], "0")
 	assert.Equal(t, node6.Report.NodeStats.Percent[string(coreV1.ResourceMemory)], "0")
 	assert.Equal(t, node6.Report.NodeStats.Percent[string(coreV1.ResourceCPU)], "0")
+}
+
+func TestShadowDiffV2(t *testing.T) {
+	tests := []struct {
+		name      string
+		desire    Desire
+		report    Report
+		wantDelta Delta
+		wantErr   error
+	}{
+		{
+			name:      "nil-1",
+			desire:    Desire{},
+			report:    nil,
+			wantDelta: Delta{},
+		},
+		{
+			name:      "0",
+			desire:    Desire{},
+			report:    Report{},
+			wantDelta: Delta{},
+		},
+		{
+			name:      "1",
+			desire:    Desire{"name": "module", "version": "45"},
+			report:    Report{"name": "module", "version": "43"},
+			wantDelta: Delta{"version": "45"},
+		},
+		{
+			name:      "2",
+			desire:    Desire{"name": "module", "module": map[string]interface{}{"image": "test:v2"}},
+			report:    Report{"name": "module", "module": map[string]interface{}{"image": "test:v1"}},
+			wantDelta: Delta{"module": map[string]interface{}{"image": "test:v2"}},
+		},
+		{
+			name:      "3",
+			desire:    Desire{"module": map[string]interface{}{"image": "test:v2", "array": []interface{}{}}},
+			report:    Report{"module": map[string]interface{}{"image": "test:v1", "object": map[string]interface{}{"attr": "value"}}},
+			wantDelta: Delta{"module": map[string]interface{}{"image": "test:v2", "array": []interface{}{}, "object": nil}},
+		},
+		{
+			name:      "6",
+			desire:    Desire{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"n": nil, "5": map[string]interface{}{"6": "x"}}}}}},
+			report:    Report{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"5": map[string]interface{}{"n": nil, "6": "y"}}}}}},
+			wantDelta: Delta{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"n": nil, "5": map[string]interface{}{"n": nil, "6": "x"}}}}}},
+		},
+		{
+			name:      "apps",
+			desire:    Desire{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			report:    Report{"apps": []interface{}{map[string]interface{}{"name": "b", "version": "2"}, map[string]interface{}{"name": "c", "version": "2"}}},
+			wantDelta: Delta{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+		},
+		{
+			name:      "apps-2",
+			desire:    Desire{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			report:    Report{"apps": nil},
+			wantDelta: Delta{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+		},
+		{
+			name:      "apps-3",
+			desire:    Desire{"apps": nil},
+			report:    Report{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			wantDelta: Delta{"apps": nil},
+		},
+		{
+			name:      "apps-4",
+			desire:    Desire{"apps": []interface{}{}},
+			report:    Report{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			wantDelta: Delta{"apps": []interface{}{}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDelta, err := tt.desire.DiffWithNil(tt.report)
+			assert.Equal(t, tt.wantErr, err)
+			assert.Equal(t, tt.wantDelta, gotDelta)
+		})
+	}
+}
+
+func TestShadowPatch(t *testing.T) {
+	tests := []struct {
+		name       string
+		desire     Desire
+		delta      Delta
+		wantDesire Desire
+		wantErr    error
+	}{
+		{
+			name:       "nil-desire",
+			desire:     nil,
+			delta:      nil,
+			wantDesire: nil,
+			wantErr:    errors.New("Invalid JSON Patch"),
+		},
+		{
+			name:       "nil-delta",
+			desire:     Desire{},
+			delta:      nil,
+			wantDesire: nil,
+			wantErr:    errors.New("Invalid JSON Patch"),
+		},
+		{
+			name:       "0",
+			desire:     Desire{},
+			delta:      Delta{},
+			wantDesire: Desire{},
+		},
+		{
+			name:       "1",
+			desire:     Desire{"name": "module", "version": "45"},
+			delta:      Delta{"version": "43"},
+			wantDesire: Desire{"name": "module", "version": "43"},
+		},
+		{
+			name:       "2",
+			desire:     Desire{"module": map[string]interface{}{"image": "test:v1"}},
+			delta:      Delta{"name": "module", "module": map[string]interface{}{"image": "test:v2", "port": "23"}},
+			wantDesire: Desire{"name": "module", "module": map[string]interface{}{"image": "test:v2", "port": "23"}},
+		},
+		{
+			name:       "3",
+			desire:     Desire{"module": map[string]interface{}{"image": "test:v1", "object": map[string]interface{}{"attr": "value"}}},
+			delta:      Delta{"module": map[string]interface{}{"image": "test:v2", "array": []interface{}{}, "object": nil}},
+			wantDesire: Desire{"module": map[string]interface{}{"image": "test:v2", "array": []interface{}{}}},
+		},
+		{
+			name:       "6",
+			desire:     Desire{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"5": map[string]interface{}{"n": nil, "6": "y"}}}}}},
+			delta:      Delta{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"n": nil, "5": map[string]interface{}{"6": "x", "n": nil}}}}}},
+			wantDesire: Desire{"1": map[string]interface{}{"2": map[string]interface{}{"3": map[string]interface{}{"4": map[string]interface{}{"5": map[string]interface{}{"6": "x"}}}}}},
+		},
+		{
+			name:       "apps",
+			desire:     Desire{"apps": []interface{}{map[string]interface{}{"name": "b", "version": "2"}, map[string]interface{}{"name": "c", "version": "2"}}},
+			delta:      Delta{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			wantDesire: Desire{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+		},
+		{
+			name:       "apps-2",
+			desire:     Desire{"apps": nil},
+			delta:      Delta{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			wantDesire: Desire{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+		},
+		{
+			name:       "apps-3",
+			desire:     Desire{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			delta:      Delta{"apps": nil},
+			wantDesire: Desire{},
+		},
+		{
+			name:       "apps-4",
+			desire:     Desire{"apps": []interface{}{map[string]interface{}{"name": "a", "version": "1"}, map[string]interface{}{"name": "b", "version": "1"}}},
+			delta:      Delta{"apps": []interface{}{}},
+			wantDesire: Desire{"apps": []interface{}{}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDesire, err := tt.desire.Patch(tt.delta)
+			if err != nil {
+				assert.Error(t, tt.wantErr)
+			}
+			assert.Equal(t, tt.wantDesire, gotDesire)
+		})
+	}
 }

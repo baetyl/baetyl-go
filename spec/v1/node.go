@@ -67,6 +67,9 @@ type Report map[string]interface{}
 // Desire desire data
 type Desire map[string]interface{}
 
+// Delta delta data
+type Delta map[string]interface{}
+
 // Merge merge new reported data
 func (r Report) Merge(reported Report) error {
 	return errors.Trace(merge(r, reported, 1, maxJSONLevel))
@@ -77,10 +80,47 @@ func (d Desire) Merge(desired Desire) error {
 	return errors.Trace(merge(d, desired, 1, maxJSONLevel))
 }
 
-// Diff diff with reported data, return the delta fo desire
+// Diff diff with reported data, return the delta for desire
 func (d Desire) Diff(reported Report) (Desire, error) {
-	res, err := diff(d, reported)
+	res, err := diff(d, reported, true)
 	return res, errors.Trace(err)
+}
+
+// Diff desire diff with report data, return the delta for desire
+// and do not clean nil in delta
+func (d Desire) DiffWithNil(report Report) (Delta, error) {
+	res, err := diff(d, report, false)
+	return res, errors.Trace(err)
+}
+
+// Patch patch desire with delta, get the new desire
+func (d Desire) Patch(delta Delta) (Desire, error) {
+	return patch(d, delta)
+}
+
+// Patch patch report with delta, get the new report
+func (r Report) Patch(delta Delta) (Report, error) {
+	return patch(r, delta)
+}
+
+func patch(doc, delta map[string]interface{}) (map[string]interface{}, error) {
+	docData, err := json.Marshal(doc)
+	if err != nil {
+		return nil, err
+	}
+	deltaData, err := json.Marshal(delta)
+	if err != nil {
+		return nil, err
+	}
+	patchData, err := jsonpatch.MergePatch(docData, deltaData)
+	if err != nil {
+		return nil, err
+	}
+	var newDoc map[string]interface{}
+	if err = json.Unmarshal(patchData, &newDoc); err != nil {
+		return nil, err
+	}
+	return newDoc, nil
 }
 
 func (r Report) AppInfos(isSys bool) []AppInfo {
@@ -339,7 +379,7 @@ func merge(left, right map[string]interface{}, depth, maxDepth int) error {
 	return nil
 }
 
-func diff(desired, reported map[string]interface{}) (map[string]interface{}, error) {
+func diff(desired, reported map[string]interface{}, cleanNil bool) (map[string]interface{}, error) {
 	var delta map[string]interface{}
 	r, err := json.Marshal(reported)
 	if err != nil {
@@ -357,7 +397,9 @@ func diff(desired, reported map[string]interface{}) (map[string]interface{}, err
 	if err != nil {
 		return delta, errors.Trace(err)
 	}
-	clean(delta)
+	if cleanNil {
+		clean(delta)
+	}
 	return delta, nil
 }
 
