@@ -164,6 +164,12 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 		if err = report.translateServiceResourceQuantity(); err != nil {
 			return nil, errors.Trace(err)
 		}
+		if !view.Ready {
+			err = report.resetNodeAppStats()
+			if err != nil {
+				return nil, errors.Trace(err)
+			}
+		}
 	}
 	return view, nil
 }
@@ -240,6 +246,17 @@ func (view *ReportView) translateServiceResourceQuantity() error {
 		}
 	}
 
+	return nil
+}
+
+func (view *ReportView) resetNodeAppStats() error {
+	for idx := range view.SysAppStats {
+		view.SysAppStats[idx].Status = ""
+	}
+
+	for idx := range view.AppStats {
+		view.AppStats[idx].Status = ""
+	}
 	return nil
 }
 
