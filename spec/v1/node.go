@@ -215,20 +215,21 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 }
 
 func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
-	if view.Report == nil || view.Report.NodeStats == nil {
+	if view.Report == nil {
 		return nil
 	}
 
-	s := view.Report.NodeStats
-	s.Percent = map[string]string{}
-	memory := string(coreV1.ResourceMemory)
-	if s.Percent[memory], err = s.processResourcePercent(s, memory, populateMemoryResource); err != nil {
-		return errors.Trace(err)
-	}
+	if s := view.Report.NodeStats; s != nil {
+		s.Percent = map[string]string{}
+		memory := string(coreV1.ResourceMemory)
+		if s.Percent[memory], err = s.processResourcePercent(s, memory, populateMemoryResource); err != nil {
+			return errors.Trace(err)
+		}
 
-	cpu := string(coreV1.ResourceCPU)
-	if s.Percent[cpu], err = s.processResourcePercent(s, cpu, populateCPUResource); err != nil {
-		return errors.Trace(err)
+		cpu := string(coreV1.ResourceCPU)
+		if s.Percent[cpu], err = s.processResourcePercent(s, cpu, populateCPUResource); err != nil {
+			return errors.Trace(err)
+		}
 	}
 
 	if view.Report.Time != nil {
