@@ -232,7 +232,7 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 	}
 
 	if view.Report.Time != nil {
-		view.Ready = time.Now().Before(view.Report.Time.Add(timeout))
+		view.Ready = time.Now().UTC().Before(view.Report.Time.Add(timeout))
 	}
 
 	return
