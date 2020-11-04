@@ -219,8 +219,7 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 		return nil
 	}
 
-	if view.Report.NodeStats != nil {
-		s := view.Report.NodeStats
+	if s := view.Report.NodeStats; s != nil {
 		s.Percent = map[string]string{}
 		memory := string(coreV1.ResourceMemory)
 		if s.Percent[memory], err = s.processResourcePercent(s, memory, populateMemoryResource); err != nil {
