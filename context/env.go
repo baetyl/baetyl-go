@@ -84,7 +84,7 @@ func BrokerHost() string {
 	if RunMode() == RunModeNative {
 		return "127.0.0.1"
 	}
-	return fmt.Sprintf("%s.%s", "baetyl-broker", baetylEdgeNamespace)
+	return fmt.Sprintf("%s.%s", "baetyl-broker", baetylEdgeSystemNamespace)
 }
 
 // FunctionHost return function host.
