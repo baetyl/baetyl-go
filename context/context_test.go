@@ -155,7 +155,7 @@ func TestContext_CheckSystemCert(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, bc)
 
-	bsc, err := ctx.NewSystemBrokerClient()
+	bsc, err := ctx.NewSystemBrokerClient(nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, bsc)
 }
