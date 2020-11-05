@@ -68,6 +68,8 @@ type Context interface {
 	NewSystemBrokerClientConfig() (mqtt.ClientConfig, error)
 	// NewBrokerClient creates a new broker client.
 	NewBrokerClient(mqtt.ClientConfig) (*mqtt.Client, error)
+	// NewSystemBrokerClient creates a new system broker client.
+	NewSystemBrokerClient([]mqtt.QOSTopic) (*mqtt.Client, error)
 }
 
 type ctx struct {
@@ -281,4 +283,19 @@ func (c *ctx) NewBrokerClient(config mqtt.ClientConfig) (*mqtt.Client, error) {
 		return nil, errors.Trace(err)
 	}
 	return mqtt.NewClient(ops), nil
+}
+
+func (c *ctx) NewSystemBrokerClient(subTopics []mqtt.QOSTopic) (*mqtt.Client, error) {
+	config, err := c.NewSystemBrokerClientConfig()
+	if err != nil {
+		return nil, err
+	}
+	if len(subTopics) > 0 {
+		config.Subscriptions = append(config.Subscriptions, subTopics...)
+	}
+	client, err := c.NewBrokerClient(config)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }

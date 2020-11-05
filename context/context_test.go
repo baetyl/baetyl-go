@@ -42,7 +42,7 @@ func TestContext(t *testing.T) {
 			},
 		},
 		Broker: mqtt.ClientConfig{
-			Address:              "ssl://baetyl-broker.baetyl-edge:" + baetylBrokerSystemPort,
+			Address:              "ssl://baetyl-broker.baetyl-edge-system:" + baetylBrokerSystemPort,
 			Username:             "",
 			Password:             "",
 			ClientID:             "",
@@ -154,6 +154,10 @@ func TestContext_CheckSystemCert(t *testing.T) {
 	bc, err := ctx.NewBrokerClient(config)
 	assert.NoError(t, err)
 	assert.NotNil(t, bc)
+
+	bsc, err := ctx.NewSystemBrokerClient(nil)
+	assert.NoError(t, err)
+	assert.NotNil(t, bsc)
 }
 
 func initCert(t *testing.T) string {
