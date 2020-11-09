@@ -16,11 +16,11 @@ import (
 
 // maxJSONLevel the max level of json
 const (
-	maxJSONLevel   = 5
-	milliPrecision = 1000
-	KeySyncMode          = "syncMode"
-	CloudMode   SyncMode = "cloud"
-	LocalMode   SyncMode = "local"
+	maxJSONLevel            = 5
+	milliPrecision          = 1000
+	KeySyncMode             = "syncMode"
+	CloudMode      SyncMode = "cloud"
+	LocalMode      SyncMode = "local"
 )
 
 type SyncMode string
@@ -220,8 +220,10 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 	// default mode is cloud
 	view.Mode = CloudMode
 	if attr := n.Attributes; attr != nil {
-		if mode, ok := attr[KeySyncMode]; ok {
-			view.Mode = SyncMode(mode.(string))
+		if modeVal, ok := attr[KeySyncMode]; ok {
+			if mode, ok := modeVal.(string); ok {
+				view.Mode = SyncMode(mode)
+			}
 		}
 	}
 	return view, nil
