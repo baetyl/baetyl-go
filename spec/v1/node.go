@@ -18,7 +18,12 @@ import (
 const (
 	maxJSONLevel   = 5
 	milliPrecision = 1000
+	KeySyncMode          = "syncMode"
+	CloudMode   SyncMode = "cloud"
+	LocalMode   SyncMode = "local"
 )
+
+type SyncMode string
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
 var ErrJSONLevelExceedsLimit = fmt.Errorf("the level of json exceeds the max limit (%d)", maxJSONLevel)
@@ -48,6 +53,7 @@ type NodeView struct {
 	Desire            Desire            `json:"desire,omitempty" yaml:"desire,omitempty"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	Ready             bool              `json:"ready"`
+	Mode              SyncMode          `json:"mode"`
 }
 
 type ReportView struct {
@@ -209,6 +215,13 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 			if err != nil {
 				return nil, errors.Trace(err)
 			}
+		}
+	}
+	// default mode is cloud
+	view.Mode = CloudMode
+	if attr := n.Attributes; attr != nil {
+		if mode, ok := attr[KeySyncMode]; ok {
+			view.Mode = SyncMode(mode.(string))
 		}
 	}
 	return view, nil
