@@ -1,0 +1,9 @@
+package v1
+
+const (
+	BaetylInit     = "baetyl-init"
+	BaetylCore     = "baetyl-core"
+	BaetylBroker   = "baetyl-broker"
+	BaetylFunction = "baetyl-function"
+	BaetylRule     = "baetyl-rule"
+)
