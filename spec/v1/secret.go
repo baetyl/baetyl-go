@@ -4,7 +4,7 @@ import "time"
 
 // Secret secret info
 type Secret struct {
-	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName,nonBaetyl"`
+	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName"`
 	Namespace         string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`

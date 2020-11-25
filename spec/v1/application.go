@@ -4,7 +4,7 @@ import "time"
 
 // Application application info
 type Application struct {
-	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName,nonBaetyl"`
+	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName"`
 	Type              string            `json:"type,omitempty" yaml:"type,omitempty" default:"container"`
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Namespace         string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
