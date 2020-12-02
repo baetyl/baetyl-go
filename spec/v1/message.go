@@ -14,6 +14,8 @@ const (
 	MessageCMD MessageKind = "cmd"
 	// MessageData data message kind
 	MessageData MessageKind = "data"
+	// MessageError error message kind
+	MessageError MessageKind = "error"
 )
 
 // Message general structure for http and ws sync
