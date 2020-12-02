@@ -16,6 +16,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/jinzhu/copier v0.1.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
@@ -36,7 +37,7 @@ require (
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/validator.v2 v2.0.0-20191107172027-c3144fdedc21
 	gopkg.in/yaml.v2 v2.2.8
-	gotest.tools v2.2.0+incompatible // indirect
+	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.0.0-20190819141258-3544db3b9e44
 	k8s.io/apimachinery v0.0.0-20190817020851-f2f3a405f61d
 )
