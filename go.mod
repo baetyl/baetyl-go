@@ -3,7 +3,7 @@ module github.com/baetyl/baetyl-go/v2
 go 1.13
 
 require (
-	github.com/256dpi/gomqtt v0.14.2
+	github.com/256dpi/gomqtt v0.14.3
 	github.com/containerd/containerd v1.3.4
 	github.com/creasty/defaults v1.4.0
 	github.com/docker/go-connections v0.4.0
@@ -30,8 +30,7 @@ require (
 	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/valyala/fasthttp v1.9.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	go.uber.org/zap v1.13.0
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
+	go.uber.org/zap v1.16.0
 	google.golang.org/grpc v1.25.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
