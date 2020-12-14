@@ -25,6 +25,7 @@ type NodeInfo struct {
 	OSImage          string `yaml:"osImage,omitempty" json:"osImage"`
 	Variant          string `yaml:"variant,omitempty" json:"variant,omitempty"`
 	HostID           string `yaml:"hostID,omitempty" json:"hostID,omitempty"`
+	Role             string `yaml:"role,omitempty" json:"role,omitempty"`
 }
 
 // NodeStats node statistics
