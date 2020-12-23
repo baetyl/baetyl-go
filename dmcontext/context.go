@@ -3,6 +3,7 @@ package dmcontext
 import (
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"sync"
 	"time"
 
@@ -15,9 +16,11 @@ import (
 )
 
 const (
-	DeltaMessage    = "deltaMessage"
-	EventMessage    = "eventMessage"
-	ResponseMessage = "responseMessage"
+	DeltaMessage      = "deltaMessage"
+	EventMessage      = "eventMessage"
+	ResponseMessage   = "responseMessage"
+	DefaultDriverConf = "/etc/baetyl/driver.yml"
+	DefaultPropsConf  = "/etc/baetyl/props.yml"
 )
 
 var (
@@ -299,9 +302,17 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 }
 
 func (c *DmCtx) GetDriverConfig() (string, error) {
-	return "", nil
+	res, err := ioutil.ReadFile(DefaultDriverConf)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+	return string(res), nil
 }
 
 func (c *DmCtx) GetDevicePropConfig() (map[string]string, error) {
-	return nil, nil
+	var res map[string]string
+	if err := c.LoadCustomConfig(&res, DefaultPropsConf); err != nil {
+		return nil, errors.Trace(err)
+	}
+	return res, nil
 }
