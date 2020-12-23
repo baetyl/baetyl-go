@@ -72,7 +72,7 @@ type Context interface {
 	NewSystemBrokerClient([]mqtt.QOSTopic) (*mqtt.Client, error)
 }
 
-type ctx struct {
+type Ctx struct {
 	sync.Map // global cache
 	log      *log.Logger
 }
@@ -83,7 +83,7 @@ func NewContext(confFile string) Context {
 		confFile = os.Getenv(KeyConfFile)
 	}
 
-	c := &ctx{}
+	c := &Ctx{}
 	c.Store(KeyConfFile, confFile)
 	c.Store(KeyNodeName, os.Getenv(KeyNodeName))
 	c.Store(KeyAppName, os.Getenv(KeyAppName))
@@ -158,7 +158,7 @@ func NewContext(confFile string) Context {
 	return c
 }
 
-func (c *ctx) NodeName() string {
+func (c *Ctx) NodeName() string {
 	v, ok := c.Load(KeyNodeName)
 	if !ok {
 		return ""
@@ -166,7 +166,7 @@ func (c *ctx) NodeName() string {
 	return v.(string)
 }
 
-func (c *ctx) AppName() string {
+func (c *Ctx) AppName() string {
 	v, ok := c.Load(KeyAppName)
 	if !ok {
 		return ""
@@ -174,7 +174,7 @@ func (c *ctx) AppName() string {
 	return v.(string)
 }
 
-func (c *ctx) AppVersion() string {
+func (c *Ctx) AppVersion() string {
 	v, ok := c.Load(KeyAppVersion)
 	if !ok {
 		return ""
@@ -182,7 +182,7 @@ func (c *ctx) AppVersion() string {
 	return v.(string)
 }
 
-func (c *ctx) ServiceName() string {
+func (c *Ctx) ServiceName() string {
 	v, ok := c.Load(KeySvcName)
 	if !ok {
 		return ""
@@ -190,7 +190,7 @@ func (c *ctx) ServiceName() string {
 	return v.(string)
 }
 
-func (c *ctx) ConfFile() string {
+func (c *Ctx) ConfFile() string {
 	v, ok := c.Load(KeyConfFile)
 	if !ok {
 		return ""
@@ -198,7 +198,7 @@ func (c *ctx) ConfFile() string {
 	return v.(string)
 }
 
-func (c *ctx) SystemConfig() *SystemConfig {
+func (c *Ctx) SystemConfig() *SystemConfig {
 	v, ok := c.Load(KeySysConf)
 	if !ok {
 		return nil
@@ -206,22 +206,22 @@ func (c *ctx) SystemConfig() *SystemConfig {
 	return v.(*SystemConfig)
 }
 
-func (c *ctx) Log() *log.Logger {
+func (c *Ctx) Log() *log.Logger {
 	return c.log
 }
 
-func (c *ctx) Wait() {
+func (c *Ctx) Wait() {
 	<-c.WaitChan()
 }
 
-func (c *ctx) WaitChan() <-chan os.Signal {
+func (c *Ctx) WaitChan() <-chan os.Signal {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 	signal.Ignore(syscall.SIGPIPE)
 	return sig
 }
 
-func (c *ctx) CheckSystemCert() error {
+func (c *Ctx) CheckSystemCert() error {
 	cfg := c.SystemConfig().Certificate
 	if !utils.FileExists(cfg.CA) || !utils.FileExists(cfg.Key) || !utils.FileExists(cfg.Cert) {
 		return errors.Trace(ErrSystemCertNotFound)
@@ -241,7 +241,7 @@ func (c *ctx) CheckSystemCert() error {
 	return nil
 }
 
-func (c *ctx) LoadCustomConfig(cfg interface{}, files ...string) error {
+func (c *Ctx) LoadCustomConfig(cfg interface{}, files ...string) error {
 	f := c.ConfFile()
 	if len(files) > 0 && len(files[0]) > 0 {
 		f = files[0]
@@ -252,7 +252,7 @@ func (c *ctx) LoadCustomConfig(cfg interface{}, files ...string) error {
 	return errors.Trace(utils.UnmarshalYAML(nil, cfg))
 }
 
-func (c *ctx) NewFunctionHttpClient() (*http.Client, error) {
+func (c *Ctx) NewFunctionHttpClient() (*http.Client, error) {
 	err := c.CheckSystemCert()
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -264,7 +264,7 @@ func (c *ctx) NewFunctionHttpClient() (*http.Client, error) {
 	return http.NewClient(ops), nil
 }
 
-func (c *ctx) NewSystemBrokerClientConfig() (mqtt.ClientConfig, error) {
+func (c *Ctx) NewSystemBrokerClientConfig() (mqtt.ClientConfig, error) {
 	err := c.CheckSystemCert()
 	if err != nil {
 		return mqtt.ClientConfig{}, errors.Trace(err)
@@ -277,7 +277,7 @@ func (c *ctx) NewSystemBrokerClientConfig() (mqtt.ClientConfig, error) {
 	return config, nil
 }
 
-func (c *ctx) NewBrokerClient(config mqtt.ClientConfig) (*mqtt.Client, error) {
+func (c *Ctx) NewBrokerClient(config mqtt.ClientConfig) (*mqtt.Client, error) {
 	ops, err := config.ToClientOptions()
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -285,7 +285,7 @@ func (c *ctx) NewBrokerClient(config mqtt.ClientConfig) (*mqtt.Client, error) {
 	return mqtt.NewClient(ops), nil
 }
 
-func (c *ctx) NewSystemBrokerClient(subTopics []mqtt.QOSTopic) (*mqtt.Client, error) {
+func (c *Ctx) NewSystemBrokerClient(subTopics []mqtt.QOSTopic) (*mqtt.Client, error) {
 	config, err := c.NewSystemBrokerClientConfig()
 	if err != nil {
 		return nil, err
