@@ -9,6 +9,7 @@ import (
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
 	"github.com/baetyl/baetyl-go/v2/mqtt"
+	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 )
 
 const (
@@ -19,11 +20,12 @@ const (
 )
 
 type observer struct {
-	Ctx DmCtx
+	log  *log.Logger
+	msgs map[string]chan *v1.Message
 }
 
-func NewObserver() mqtt.Observer {
-	return &observer{}
+func NewObserver(msgs map[string]chan *v1.Message, log *log.Logger) mqtt.Observer {
+	return &observer{msgs: msgs, log: log}
 }
 
 func parseTopic(topic string) (string, string, error) {
@@ -41,48 +43,48 @@ func parseTopic(topic string) (string, string, error) {
 func (o *observer) OnPublish(pkt *packet.Publish) error {
 	device, kind, err := parseTopic(pkt.Message.Topic)
 	if err != nil {
-		o.Ctx.log.Error("parse topic failed", log.Any("topic", pkt.Message.Topic))
+		o.log.Error("parse topic failed", log.Any("topic", pkt.Message.Topic))
 		return nil
 	}
-	var msg DeviceMessage
+	var msg *v1.Message
 	switch kind {
 	case KindGetResponse:
 		var shad DeviceShadow
 		if err := json.Unmarshal(pkt.Message.Payload, &shad); err != nil {
 			return err
 		}
-		msg = DeviceMessage{
-			Type:       ResponseMessage,
-			DeviceInfo: &DeviceInfo{Name: device},
-			Payload:    &shad,
+		msg = &v1.Message{
+			Kind:     v1.MessageResponse,
+			Metadata: map[string]string{KeyDevice: device},
+			Content:  v1.LazyValue{Value: &shad},
 		}
 	case KindDelta:
-		var deltaMsg DeviceProperties
-		if err := json.Unmarshal(pkt.Message.Payload, &deltaMsg); err != nil {
+		var props DeviceProperties
+		if err := json.Unmarshal(pkt.Message.Payload, &props); err != nil {
 			return err
 		}
-		msg = DeviceMessage{
-			Type:       DeltaMessage,
-			DeviceInfo: &DeviceInfo{Name: device},
-			Payload:    deltaMsg,
+		msg = &v1.Message{
+			Kind:     v1.MessageDelta,
+			Metadata: map[string]string{KeyDevice: device},
+			Content:  v1.LazyValue{Value: &props},
 		}
 	case kindEvent:
-		var eventMsg DeviceEvent
-		if err := json.Unmarshal(pkt.Message.Payload, &eventMsg); err != nil {
+		var event DeviceEvent
+		if err := json.Unmarshal(pkt.Message.Payload, &event); err != nil {
 			return err
 		}
-		msg = DeviceMessage{
-			Type:       EventMessage,
-			DeviceInfo: &DeviceInfo{Name: device},
-			Payload:    eventMsg,
+		msg = &v1.Message{
+			Kind:     v1.MessageEvent,
+			Metadata: map[string]string{KeyDevice: device},
+			Content:  v1.LazyValue{Value: &event},
 		}
 	default:
-		o.Ctx.log.Error("get message from unexpected topic")
+		o.log.Error("get message from unexpected topic")
 	}
 	select {
-	case o.Ctx.msgs[device] <- &msg:
+	case o.msgs[device] <- msg:
 	default:
-		o.Ctx.log.Error("failed to write delta message")
+		o.log.Error("failed to write delta message")
 	}
 	return nil
 }

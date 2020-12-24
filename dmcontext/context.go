@@ -16,11 +16,13 @@ import (
 )
 
 const (
-	DeltaMessage      = "deltaMessage"
-	EventMessage      = "eventMessage"
-	ResponseMessage   = "responseMessage"
 	DefaultDriverConf = "/etc/baetyl/driver.yml"
 	DefaultPropsConf  = "/etc/baetyl/props.yml"
+	KeyDevice         = "device"
+	KeyAction         = "action"
+	ActionReport      = "report"
+	ActionOnline      = "online"
+	ActionOffline     = "offline"
 )
 
 var (
@@ -31,10 +33,9 @@ var (
 	ErrResponseChannelNotExist = errors.New("response channel not exist")
 )
 
-type DeviceMessage struct {
-	Type string
-	*DeviceInfo
-	Payload interface{}
+type DevicePropConfigs struct {
+	Name        string            `yaml:"name,omitempty" json:"name,omitempty"`
+	PropConfigs map[string]string `yaml:"propConfigs,omitempty" json:"propConfigs,omitempty"`
 }
 
 type DeviceProperties struct {
@@ -59,6 +60,7 @@ type EventCallback func(*DeviceInfo, *DeviceEvent) error
 
 type Context interface {
 	context.Context
+	SystemConfigExt() *SystemConfig
 	GetAllDevices() []DeviceInfo
 	ReportDeviceProperties(info *DeviceInfo, props *DeviceProperties) error
 	GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error)
@@ -67,25 +69,25 @@ type Context interface {
 	Online(info *DeviceInfo) error
 	Offline(info *DeviceInfo) error
 	GetDriverConfig() (string, error)
-	GetDevicePropConfig() (map[string]string, error)
+	GetDevicePropConfigs() (map[string]DevicePropConfigs, error)
 	Start()
 	io.Closer
 }
 
 type DmCtx struct {
-	*context.Ctx
+	context.Context
 	log      *log.Logger
 	mqtt     *mqtt2.Client
 	tomb     utils.Tomb
 	events   sync.Map
 	deltas   sync.Map
 	response sync.Map
-	msgs     map[string]chan *DeviceMessage
+	msgs     map[string]chan *v1.Message
 }
 
 func NewContext(confFile string) Context {
 	var c = new(DmCtx)
-	c.Ctx = context.NewContext(confFile).(*context.Ctx)
+	c.Context = context.NewContext(confFile)
 
 	var lfs []log.Field
 	if c.NodeName() != "" {
@@ -109,14 +111,14 @@ func NewContext(confFile string) Context {
 	for _, dev := range sc.Devices {
 		subs = append(subs, dev.Delta, dev.Event, dev.GetResponse)
 	}
-	mqtt, err := c.Ctx.NewSystemBrokerClient(subs)
+	mqtt, err := c.Context.NewSystemBrokerClient(subs)
 	if err != nil {
-		c.Ctx.Log().Warn("fail to create system broker client", log.Any("error", err))
+		c.log.Warn("fail to create system broker client", log.Any("error", err))
 	}
 	c.mqtt = mqtt
-	c.msgs = make(map[string]chan *DeviceMessage, 1024)
-	if err := c.mqtt.Start(NewObserver()); err != nil {
-		c.Ctx.Log().Warn("fail to start mqtt client", log.Any("error", err))
+	c.msgs = make(map[string]chan *v1.Message, 1024)
+	if err := c.mqtt.Start(NewObserver(c.msgs, c.log)); err != nil {
+		c.log.Warn("fail to start mqtt client", log.Any("error", err))
 	}
 	return c
 }
@@ -124,18 +126,22 @@ func NewContext(confFile string) Context {
 func (c *DmCtx) Start() {
 	devices := c.SystemConfigExt().Devices
 	for _, dev := range devices {
-		c.msgs[dev.Name] = make(chan *DeviceMessage)
+		c.msgs[dev.Name] = make(chan *v1.Message)
 		go c.processing(c.msgs[dev.Name])
 	}
 }
 
 func (c *DmCtx) Close() error {
+	if c.mqtt != nil {
+		c.mqtt.Close()
+	}
 	c.tomb.Kill(nil)
 	return c.tomb.Wait()
 }
 
-func (c *DmCtx) processDelta(msg *DeviceMessage) error {
-	val, ok := c.deltas.Load(msg.DeviceInfo.Name)
+func (c *DmCtx) processDelta(msg *v1.Message) error {
+	device := msg.Metadata[KeyDevice]
+	val, ok := c.deltas.Load(device)
 	if !ok {
 		return errors.Trace(ErrCallbackNotRegister)
 	}
@@ -143,18 +149,22 @@ func (c *DmCtx) processDelta(msg *DeviceMessage) error {
 	if !ok {
 		return errors.Trace(ErrInvalidCallback)
 	}
-	props, ok := msg.Payload.(*DeviceProperties)
+	var props *DeviceProperties
+	if err := msg.Content.Unmarshal(&props); err != nil {
+		return errors.Trace(err)
+	}
 	if !ok {
 		return errors.Trace(ErrInvalidMessage)
 	}
-	if err := deltaCallback(msg.DeviceInfo, props); err != nil {
+	if err := deltaCallback(&DeviceInfo{Name: device}, props); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
 }
 
-func (c *DmCtx) processEvent(msg *DeviceMessage) error {
-	val, ok := c.events.Load(msg.DeviceInfo.Name)
+func (c *DmCtx) processEvent(msg *v1.Message) error {
+	device := msg.Metadata[KeyDevice]
+	val, ok := c.events.Load(device)
 	if !ok {
 		return errors.Trace(ErrCallbackNotRegister)
 	}
@@ -162,18 +172,22 @@ func (c *DmCtx) processEvent(msg *DeviceMessage) error {
 	if !ok {
 		return errors.Trace(ErrInvalidCallback)
 	}
-	event, ok := msg.Payload.(*DeviceEvent)
+	var event *DeviceEvent
+	if err := msg.Content.Unmarshal(&event); err != nil {
+		return errors.Trace(err)
+	}
 	if !ok {
 		return errors.Trace(ErrInvalidMessage)
 	}
-	if err := eventCallback(msg.DeviceInfo, event); err != nil {
+	if err := eventCallback(&DeviceInfo{Name: device}, event); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
 }
 
-func (c *DmCtx) processResponse(msg *DeviceMessage) error {
-	val, ok := c.response.Load(msg.DeviceInfo.Name)
+func (c *DmCtx) processResponse(msg *v1.Message) error {
+	device := msg.Metadata[KeyDevice]
+	val, ok := c.response.Load(device)
 	if !ok {
 		return errors.Trace(ErrResponseChannelNotExist)
 	}
@@ -181,38 +195,41 @@ func (c *DmCtx) processResponse(msg *DeviceMessage) error {
 	if !ok {
 		return errors.Trace(ErrInvalidChannel)
 	}
-	res, ok := msg.Payload.(*DeviceShadow)
+	var shad *DeviceShadow
+	if err := msg.Content.Unmarshal(&shad); err != nil {
+		return errors.Trace(err)
+	}
 	if !ok {
 		return errors.Trace(ErrInvalidMessage)
 	}
 	select {
-	case ch <- res:
+	case ch <- shad:
 	default:
 		c.log.Error("failed to write response message")
 	}
 	return nil
 }
 
-func (c *DmCtx) processing(ch chan *DeviceMessage) {
+func (c *DmCtx) processing(ch chan *v1.Message) {
 	for {
 		select {
 		case <-c.tomb.Dying():
 			return
 		case msg := <-ch:
-			switch msg.Type {
-			case DeltaMessage:
+			switch msg.Kind {
+			case v1.MessageDelta:
 				if err := c.processDelta(msg); err != nil {
 					c.log.Error("failed to process delta message", log.Error(err))
 				} else {
 					c.log.Info("process delta message successfully")
 				}
-			case EventMessage:
+			case v1.MessageEvent:
 				if err := c.processEvent(msg); err != nil {
 					c.log.Error("failed to process event message", log.Error(err))
 				} else {
 					c.log.Info("process event message successfully")
 				}
-			case ResponseMessage:
+			case v1.MessageResponse:
 				if err := c.processResponse(msg); err != nil {
 					c.log.Error("failed to process response message", log.Error(err))
 				} else {
@@ -238,9 +255,14 @@ func (c *DmCtx) GetAllDevices() []DeviceInfo {
 }
 
 func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, props *DeviceProperties) error {
-	pld, err := json.Marshal(props)
+	msg := &v1.Message{
+		Kind:     v1.MessageReport,
+		Metadata: map[string]string{KeyDevice: info.Name, KeyAction: ActionReport},
+		Content:  v1.LazyValue{Value: props},
+	}
+	pld, err := json.Marshal(msg)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	if err := c.mqtt.Publish(mqtt2.QOS(info.Report.QOS),
 		info.Report.Topic, pld, 0, false, false); err != nil {
@@ -262,8 +284,12 @@ func (c *DmCtx) GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error) {
 	ch := make(chan *DeviceShadow)
 	_, ok := c.response.LoadOrStore(info.Name, ch)
 	if ok {
+		// another routine may not finish getting device properties
 		return nil, errors.Errorf("waiting for getting properties")
 	}
+	defer func() {
+		c.response.Delete(info.Name)
+	}()
 	for {
 		select {
 		case <-timer.C:
@@ -294,10 +320,34 @@ func (c *DmCtx) RegisterEventCallback(info *DeviceInfo, cb EventCallback) {
 }
 
 func (c *DmCtx) Online(info *DeviceInfo) error {
+	msg := &v1.Message{
+		Kind:     v1.MessageReport,
+		Metadata: map[string]string{KeyDevice: info.Name, KeyAction: ActionOnline},
+	}
+	pld, err := json.Marshal(msg)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	if err := c.mqtt.Publish(mqtt2.QOS(info.Report.QOS),
+		info.Report.Topic, pld, 0, false, false); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (c *DmCtx) Offline(info *DeviceInfo) error {
+	msg := &v1.Message{
+		Kind:     v1.MessageReport,
+		Metadata: map[string]string{KeyDevice: info.Name, KeyAction: ActionOffline},
+	}
+	pld, err := json.Marshal(msg)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	if err := c.mqtt.Publish(mqtt2.QOS(info.Report.QOS),
+		info.Report.Topic, pld, 0, false, false); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -309,8 +359,8 @@ func (c *DmCtx) GetDriverConfig() (string, error) {
 	return string(res), nil
 }
 
-func (c *DmCtx) GetDevicePropConfig() (map[string]string, error) {
-	var res map[string]string
+func (c *DmCtx) GetDevicePropConfigs() (map[string]DevicePropConfigs, error) {
+	var res map[string]DevicePropConfigs
 	if err := c.LoadCustomConfig(&res, DefaultPropsConf); err != nil {
 		return nil, errors.Trace(err)
 	}
