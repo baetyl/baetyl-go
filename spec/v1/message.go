@@ -16,6 +16,12 @@ const (
 	MessageData MessageKind = "data"
 	// MessageError error message kind
 	MessageError MessageKind = "error"
+	// Message response message kind
+	MessageResponse MessageKind = "response"
+	// MessageDelta delta message kind
+	MessageDelta MessageKind = "delta"
+	// MessageEvent event message = "event"
+	MessageEvent MessageKind = "event"
 )
 
 // Message general structure for http and ws sync

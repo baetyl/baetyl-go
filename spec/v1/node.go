@@ -21,6 +21,12 @@ const (
 	KeySyncMode             = "syncMode"
 	CloudMode      SyncMode = "cloud"
 	LocalMode      SyncMode = "local"
+	KeyNodeProps            = "nodeprops"
+	KeyDevices              = "devices"
+	KeyApps                 = "apps"
+	KeySysApps              = "sysapps"
+	KeyAppStats             = "appstats"
+	KeySysAppStats          = "sysappstats"
 )
 
 type SyncMode string
@@ -131,65 +137,65 @@ func patch(doc, delta map[string]interface{}) (map[string]interface{}, error) {
 
 func (r Report) AppInfos(isSys bool) []AppInfo {
 	if isSys {
-		return getAppInfos("sysapps", r)
+		return getAppInfos(KeySysApps, r)
 	} else {
-		return getAppInfos("apps", r)
+		return getAppInfos(KeyApps, r)
 	}
 }
 
 func (r Report) SetAppInfos(isSys bool, apps []AppInfo) {
 	if isSys {
-		r["sysapps"] = apps
+		r[KeySysApps] = apps
 	} else {
-		r["apps"] = apps
+		r[KeyApps] = apps
 	}
 }
 
 func (d Desire) AppInfos(isSys bool) []AppInfo {
 	if isSys {
-		return getAppInfos("sysapps", d)
+		return getAppInfos(KeySysApps, d)
 	} else {
-		return getAppInfos("apps", d)
+		return getAppInfos(KeyApps, d)
 	}
 }
 
 func (d Desire) SetAppInfos(isSys bool, apps []AppInfo) {
 	if isSys {
-		d["sysapps"] = apps
+		d[KeySysApps] = apps
 	} else {
-		d["apps"] = apps
+		d[KeyApps] = apps
 	}
 }
 
 func (r Report) SetAppStats(isSys bool, stats []AppStats) {
 	if isSys {
-		r["sysappstats"] = stats
+		r[KeySysAppStats] = stats
 	} else {
-		r["appstats"] = stats
+		r[KeyAppStats] = stats
 	}
 }
 
 func (d Desire) SetAppStats(isSys bool, stats []AppStats) {
 	if isSys {
-		d["sysappstats"] = stats
+		d[KeySysAppStats] = stats
 	} else {
-		d["appstats"] = stats
+		d[KeyAppStats] = stats
 	}
 }
 
 func (r Report) AppStats(isSys bool) []AppStats {
 	if isSys {
-		return getAppStats("sysappstats", r)
+		return getAppStats(KeySysAppStats, r)
 	} else {
-		return getAppStats("appstats", r)
+		return getAppStats(KeyAppStats, r)
 	}
 }
 
 func (d Desire) AppStats(isSys bool) []AppStats {
 	if isSys {
-		return getAppStats("sysappstats", d)
+		return getAppStats(KeySysAppStats, d)
 	} else {
-		return getAppStats("appstats", d)
+		return getAppStats(KeyAppStats, d)
 	}
 }
 
