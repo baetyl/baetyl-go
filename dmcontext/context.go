@@ -19,10 +19,9 @@ const (
 	DefaultDriverConf = "/etc/baetyl/driver.yml"
 	DefaultPropsConf  = "/etc/baetyl/props.yml"
 	KeyDevice         = "device"
-	KeyAction         = "action"
-	ActionReport      = "report"
-	ActionOnline      = "online"
-	ActionOffline     = "offline"
+	KeyStatus         = "status"
+	OnlineStatus      = "online"
+	OfflineStatus     = "offline"
 )
 
 var (
@@ -117,7 +116,7 @@ func NewContext(confFile string) Context {
 	}
 	c.mqtt = mqtt
 	c.msgs = make(map[string]chan *v1.Message, 1024)
-	if err := c.mqtt.Start(NewObserver(c.msgs, c.log)); err != nil {
+	if err := c.mqtt.Start(newObserver(c.msgs, c.log)); err != nil {
 		c.log.Warn("fail to start mqtt client", log.Any("error", err))
 	}
 	return c
@@ -257,7 +256,7 @@ func (c *DmCtx) GetAllDevices() []DeviceInfo {
 func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, props *DeviceProperties) error {
 	msg := &v1.Message{
 		Kind:     v1.MessageReport,
-		Metadata: map[string]string{KeyDevice: info.Name, KeyAction: ActionReport},
+		Metadata: map[string]string{KeyDevice: info.Name},
 		Content:  v1.LazyValue{Value: props},
 	}
 	pld, err := json.Marshal(msg)
@@ -288,6 +287,7 @@ func (c *DmCtx) GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error) {
 		return nil, errors.Errorf("waiting for getting properties")
 	}
 	defer func() {
+		timer.Stop()
 		c.response.Delete(info.Name)
 	}()
 	for {
@@ -320,9 +320,11 @@ func (c *DmCtx) RegisterEventCallback(info *DeviceInfo, cb EventCallback) {
 }
 
 func (c *DmCtx) Online(info *DeviceInfo) error {
+	props := DeviceProperties{Name: info.Name, Props: map[string]interface{}{KeyStatus: OnlineStatus}}
 	msg := &v1.Message{
 		Kind:     v1.MessageReport,
-		Metadata: map[string]string{KeyDevice: info.Name, KeyAction: ActionOnline},
+		Metadata: map[string]string{KeyDevice: info.Name},
+		Content:  v1.LazyValue{Value: props},
 	}
 	pld, err := json.Marshal(msg)
 	if err != nil {
@@ -336,9 +338,11 @@ func (c *DmCtx) Online(info *DeviceInfo) error {
 }
 
 func (c *DmCtx) Offline(info *DeviceInfo) error {
+	props := DeviceProperties{Name: info.Name, Props: map[string]interface{}{KeyStatus: OfflineStatus}}
 	msg := &v1.Message{
 		Kind:     v1.MessageReport,
-		Metadata: map[string]string{KeyDevice: info.Name, KeyAction: ActionOffline},
+		Metadata: map[string]string{KeyDevice: info.Name},
+		Content:  v1.LazyValue{Value: props},
 	}
 	pld, err := json.Marshal(msg)
 	if err != nil {
