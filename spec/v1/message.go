@@ -22,6 +22,12 @@ const (
 	MessageDelta MessageKind = "delta"
 	// MessageEvent event message = "event"
 	MessageEvent MessageKind = "event"
+	// MessageNodeProps node props message kind
+	MessageNodeProps MessageKind = "nodeProps"
+	// MessageDevices devices message kind
+	MessageDevices MessageKind = "devices"
+	// MessageDeviceProps device props message kind
+	MessageDeviceProps MessageKind = "deviceProps"
 )
 
 // Message general structure for http and ws sync
