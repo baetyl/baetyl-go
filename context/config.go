@@ -11,7 +11,7 @@ const (
 	SystemCertCA   = "ca.pem"
 	SystemCertCrt  = "crt.pem"
 	SystemCertKey  = "key.pem"
-	SystemCertPath = "/var/lib/baetyl/system/certs"
+	SystemCertPath = "var/lib/baetyl/system/certs"
 )
 
 // SystemConfig config of baetyl system
