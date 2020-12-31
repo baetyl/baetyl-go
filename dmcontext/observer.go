@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	DeviceTopicRe   = "\\$baetyl/device/(.+)/(.+)"
+	DeviceTopicRe = "\\$baetyl/device/(.+)/(.+)"
 )
 
 type observer struct {
