@@ -63,14 +63,14 @@ type NodeView struct {
 }
 
 type ReportView struct {
-	Time        *time.Time `json:"time,omitempty" yaml:"time,omitempty"`
-	Apps        []AppInfo  `json:"apps,omitempty" yaml:"apps,omitempty"`
-	SysApps     []AppInfo  `json:"sysapps,omitempty" yaml:"sysapps,omitempty"`
-	Core        *CoreInfo  `json:"core,omitempty" yaml:"core,omitempty"`
-	AppStats    []AppStats `json:"appstats,omitempty" yaml:"appstats,omitempty"`
-	SysAppStats []AppStats `json:"sysappstats,omitempty" yaml:"sysappstats,omitempty"`
-	Node        *NodeInfo  `json:"node,omitempty" yaml:"node,omitempty"`
-	NodeStats   *NodeStats `json:"nodestats,omitempty" yaml:"nodestats,omitempty"`
+	Time        *time.Time            `json:"time,omitempty" yaml:"time,omitempty"`
+	Apps        []AppInfo             `json:"apps,omitempty" yaml:"apps,omitempty"`
+	SysApps     []AppInfo             `json:"sysapps,omitempty" yaml:"sysapps,omitempty"`
+	Core        *CoreInfo             `json:"core,omitempty" yaml:"core,omitempty"`
+	AppStats    []AppStats            `json:"appstats,omitempty" yaml:"appstats,omitempty"`
+	SysAppStats []AppStats            `json:"sysappstats,omitempty" yaml:"sysappstats,omitempty"`
+	Node        map[string]*NodeInfo  `json:"node,omitempty" yaml:"node,omitempty"`
+	NodeStats   map[string]*NodeStats `json:"nodestats,omitempty" yaml:"nodestats,omitempty"`
 }
 
 // Report report data
@@ -240,16 +240,18 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 		return nil
 	}
 
-	if s := view.Report.NodeStats; s != nil {
-		s.Percent = map[string]string{}
-		memory := string(coreV1.ResourceMemory)
-		if s.Percent[memory], err = s.processResourcePercent(s, memory, populateMemoryResource); err != nil {
-			return errors.Trace(err)
-		}
+	if stats := view.Report.NodeStats; stats != nil {
+		for _, s := range stats {
+			s.Percent = map[string]string{}
+			memory := string(coreV1.ResourceMemory)
+			if s.Percent[memory], err = s.processResourcePercent(s, memory, populateMemoryResource); err != nil {
+				return errors.Trace(err)
+			}
 
-		cpu := string(coreV1.ResourceCPU)
-		if s.Percent[cpu], err = s.processResourcePercent(s, cpu, populateCPUResource); err != nil {
-			return errors.Trace(err)
+			cpu := string(coreV1.ResourceCPU)
+			if s.Percent[cpu], err = s.processResourcePercent(s, cpu, populateCPUResource); err != nil {
+				return errors.Trace(err)
+			}
 		}
 	}
 

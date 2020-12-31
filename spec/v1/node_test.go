@@ -248,12 +248,113 @@ func TestAppInfos(t *testing.T) {
 func TestTranslateNodeToNodeReportView(t *testing.T) {
 	nodeData := `
 {
-		"namespace":"default",
-		"name":"baetyl",
-		"version":"v1",
-		"createTime":"2020-04-11T00:21:35.588279937Z",
-		"report":{"apps":[{"name":"function-testnode4","version":"1436880"},{"name":"core-testnode4","version":"1436874"},{"name":"timer","version":"1449120"}],"appstats":[{"name":"timer","version":"1449120","status":"Running","instances":{"timer":{"name":"timer","container":{"name":"timer","id":"docker://3e468a0a55f0aa3dfab65cc74f3d7ee1e3b3e012803bca0179e9f7275d8afe89"},"usage":{"cpu":"47310n","memory":"1526Ki"},"status":"Running","cause":"Back-offrestartingfailedcontainer","createTime":"2020-04-10T09:24:25Z"}}}],"sysappstats":[{"name":"function-testnode4","version":"1436880","status":"Running","instances":{"baetyl-function":{"name":"baetyl-function","container":{"name":"baetyl-function","id":"docker://ad4474b017ace7324884452ecbfaa7206b8201b33d5ce909d776f0887443b611"},"usage":{"cpu":"37310n","memory":"1728Ki"},"status":"Running","createTime":"2020-04-10T06:07:46Z"}}},{"name":"core-testnode4","version":"1436874","status":"Running","instances":{"core-testnode4":{"name":"core-testnode4","container":{"name":"core-testnode4","id":"docker://65d7e9c5754a7702f28cb030202a639e729061f59e88d8d0afbb175b86da203b"},"usage":{"cpu":"8553885n","memory":"8708Ki"},"status":"Running","createTime":"2020-04-10T06:07:50Z"}}}],"node":{"hostname":"docker-desktop","address":"192.168.65.3","arch":"amd64","kernelVer":"4.19.76-linuxkit","os":"linux","containerRuntime":"docker://19.3.8","machineID":"301b485d-749e-4dc5-9bc3-319795e4021c","bootID":"aa584840-2149-44ac-acab-55ef67f69792","systemUUID":"df4949c4-0000-0000-b259-6cc320f45d7d","osImage":"DockerDesktop"},"nodestats":{"usage":{"cpu":"336037951n","memory":"1206552Ki"},"capacity":{"cpu":"2","memory":"4033160Ki"}},"time":"2020-04-11T00:21:35.588279937Z"},
-		"desire":{"apps":"name","age":"12"}
+	"namespace": "default",
+	"name": "baetyl",
+	"version": "v1",
+	"createTime": "2020-04-11T00:21:35.588279937Z",
+	"report": {
+		"apps": [{
+			"name": "function-testnode4",
+			"version": "1436880"
+		}, {
+			"name": "core-testnode4",
+			"version": "1436874"
+		}, {
+			"name": "timer",
+			"version": "1449120"
+		}],
+		"appstats": [{
+			"name": "timer",
+			"version": "1449120",
+			"status": "Running",
+			"instances": {
+				"timer": {
+					"name": "timer",
+					"container": {
+						"name": "timer",
+						"id": "docker://3e468a0a55f0aa3dfab65cc74f3d7ee1e3b3e012803bca0179e9f7275d8afe89"
+					},
+					"usage": {
+						"cpu": "47310n",
+						"memory": "1526Ki"
+					},
+					"status": "Running",
+					"cause": "Back-offrestartingfailedcontainer",
+					"createTime": "2020-04-10T09:24:25Z"
+				}
+			}
+		}],
+		"sysappstats": [{
+			"name": "function-testnode4",
+			"version": "1436880",
+			"status": "Running",
+			"instances": {
+				"baetyl-function": {
+					"name": "baetyl-function",
+					"container": {
+						"name": "baetyl-function",
+						"id": "docker://ad4474b017ace7324884452ecbfaa7206b8201b33d5ce909d776f0887443b611"
+					},
+					"usage": {
+						"cpu": "37310n",
+						"memory": "1728Ki"
+					},
+					"status": "Running",
+					"createTime": "2020-04-10T06:07:46Z"
+				}
+			}
+		}, {
+			"name": "core-testnode4",
+			"version": "1436874",
+			"status": "Running",
+			"instances": {
+				"core-testnode4": {
+					"name": "core-testnode4",
+					"container": {
+						"name": "core-testnode4",
+						"id": "docker://65d7e9c5754a7702f28cb030202a639e729061f59e88d8d0afbb175b86da203b"
+					},
+					"usage": {
+						"cpu": "8553885n",
+						"memory": "8708Ki"
+					},
+					"status": "Running",
+					"createTime": "2020-04-10T06:07:50Z"
+				}
+			}
+		}],
+		"node": {
+			"master": {
+				"hostname": "docker-desktop",
+				"address": "192.168.65.3",
+				"arch": "amd64",
+				"kernelVer": "4.19.76-linuxkit",
+				"os": "linux",
+				"containerRuntime": "docker://19.3.8",
+				"machineID": "301b485d-749e-4dc5-9bc3-319795e4021c",
+				"bootID": "aa584840-2149-44ac-acab-55ef67f69792",
+				"systemUUID": "df4949c4-0000-0000-b259-6cc320f45d7d",
+				"osImage": "DockerDesktop"
+			}
+		},
+		"nodestats": {
+			"master": {
+				"usage": {
+					"cpu": "336037951n",
+					"memory": "1206552Ki"
+				},
+				"capacity": {
+					"cpu": "2",
+					"memory": "4033160Ki"
+				}
+			}
+		},
+		"time": "2020-04-11T00:21:35.588279937Z"
+	},
+	"desire": {
+		"apps": "name",
+		"age": "12"
+	}
 }
 `
 	node := new(Node)
@@ -271,12 +372,12 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 	assert.NotNil(t, view.Report.NodeStats)
 	assert.NotNil(t, view.Report.AppStats)
 	assert.NotNil(t, view.Desire)
-	assert.Equal(t, view.Report.NodeStats.Capacity[string(coreV1.ResourceMemory)], "4129955840")
-	assert.Equal(t, view.Report.NodeStats.Capacity[string(coreV1.ResourceCPU)], "2")
-	assert.Equal(t, view.Report.NodeStats.Usage[string(coreV1.ResourceMemory)], "1235509248")
-	assert.Equal(t, view.Report.NodeStats.Usage[string(coreV1.ResourceCPU)], "0.337")
-	assert.Equal(t, view.Report.NodeStats.Percent[string(coreV1.ResourceCPU)], "0.1685")
-	assert.Equal(t, view.Report.NodeStats.Percent[string(coreV1.ResourceMemory)], "0.2991579803429569")
+	assert.Equal(t, view.Report.NodeStats["master"].Capacity[string(coreV1.ResourceMemory)], "4129955840")
+	assert.Equal(t, view.Report.NodeStats["master"].Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, view.Report.NodeStats["master"].Usage[string(coreV1.ResourceMemory)], "1235509248")
+	assert.Equal(t, view.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "0.337")
+	assert.Equal(t, view.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0.1685")
+	assert.Equal(t, view.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0.2991579803429569")
 	assert.Equal(t, view.Report.AppStats[0].InstanceStats["timer"].Usage[string(coreV1.ResourceCPU)], "0.001")
 	assert.Equal(t, view.Report.AppStats[0].InstanceStats["timer"].Usage[string(coreV1.ResourceMemory)], "1562624")
 	assert.Equal(t, view.Report.SysAppStats[0].InstanceStats["baetyl-function"].Usage[string(coreV1.ResourceCPU)], "0.001")
@@ -293,13 +394,116 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 	nodeData := `
 {
-		"namespace":"default",
-		"name":"baetyl",
-		"version":"v1",
-		"attr": {"syncMode": "local"},
-		"createTime":"2021-04-11T00:21:35.588279937Z",
-		"report":{"apps":[{"name":"function-testnode4","version":"1436880"},{"name":"core-testnode4","version":"1436874"},{"name":"timer","version":"1449120"}],"appstats":[{"name":"timer","version":"1449120","status":"Running","instances":{"timer":{"name":"timer","container":{"name":"timer","id":"docker://3e468a0a55f0aa3dfab65cc74f3d7ee1e3b3e012803bca0179e9f7275d8afe89"},"usage":{"cpu":"47310n","memory":"1526Ki"},"status":"Running","cause":"Back-offrestartingfailedcontainer","createTime":"2020-04-10T09:24:25Z"}}}],"sysappstats":[{"name":"function-testnode4","version":"1436880","status":"Running","instances":{"baetyl-function":{"name":"baetyl-function","container":{"name":"baetyl-function","id":"docker://ad4474b017ace7324884452ecbfaa7206b8201b33d5ce909d776f0887443b611"},"usage":{"cpu":"37310n","memory":"1728Ki"},"status":"Running","createTime":"2020-04-10T06:07:46Z"}}},{"name":"core-testnode4","version":"1436874","status":"Running","instances":{"core-testnode4":{"name":"core-testnode4","container":{"name":"core-testnode4","id":"docker://65d7e9c5754a7702f28cb030202a639e729061f59e88d8d0afbb175b86da203b"},"usage":{"cpu":"8553885n","memory":"8708Ki"},"status":"Running","createTime":"2020-04-10T06:07:50Z"}}}],"node":{"hostname":"docker-desktop","address":"192.168.65.3","arch":"amd64","kernelVer":"4.19.76-linuxkit","os":"linux","containerRuntime":"docker://19.3.8","machineID":"301b485d-749e-4dc5-9bc3-319795e4021c","bootID":"aa584840-2149-44ac-acab-55ef67f69792","systemUUID":"df4949c4-0000-0000-b259-6cc320f45d7d","osImage":"DockerDesktop"},"nodestats":{"usage":{"cpu":"336037951n","memory":"1206552Ki"},"capacity":{"cpu":"2","memory":"4033160Ki"}},"time":"2021-04-11T00:21:35.588279937Z"},
-		"desire":{"apps":"name","age":"12"}
+	"namespace": "default",
+	"name": "baetyl",
+	"version": "v1",
+	"attr": {
+		"syncMode": "local"
+	},
+	"createTime": "2021-04-11T00:21:35.588279937Z",
+	"report": {
+		"apps": [{
+			"name": "function-testnode4",
+			"version": "1436880"
+		}, {
+			"name": "core-testnode4",
+			"version": "1436874"
+		}, {
+			"name": "timer",
+			"version": "1449120"
+		}],
+		"appstats": [{
+			"name": "timer",
+			"version": "1449120",
+			"status": "Running",
+			"instances": {
+				"timer": {
+					"name": "timer",
+					"container": {
+						"name": "timer",
+						"id": "docker://3e468a0a55f0aa3dfab65cc74f3d7ee1e3b3e012803bca0179e9f7275d8afe89"
+					},
+					"usage": {
+						"cpu": "47310n",
+						"memory": "1526Ki"
+					},
+					"status": "Running",
+					"cause": "Back-offrestartingfailedcontainer",
+					"createTime": "2020-04-10T09:24:25Z"
+				}
+			}
+		}],
+		"sysappstats": [{
+			"name": "function-testnode4",
+			"version": "1436880",
+			"status": "Running",
+			"instances": {
+				"baetyl-function": {
+					"name": "baetyl-function",
+					"container": {
+						"name": "baetyl-function",
+						"id": "docker://ad4474b017ace7324884452ecbfaa7206b8201b33d5ce909d776f0887443b611"
+					},
+					"usage": {
+						"cpu": "37310n",
+						"memory": "1728Ki"
+					},
+					"status": "Running",
+					"createTime": "2020-04-10T06:07:46Z"
+				}
+			}
+		}, {
+			"name": "core-testnode4",
+			"version": "1436874",
+			"status": "Running",
+			"instances": {
+				"core-testnode4": {
+					"name": "core-testnode4",
+					"container": {
+						"name": "core-testnode4",
+						"id": "docker://65d7e9c5754a7702f28cb030202a639e729061f59e88d8d0afbb175b86da203b"
+					},
+					"usage": {
+						"cpu": "8553885n",
+						"memory": "8708Ki"
+					},
+					"status": "Running",
+					"createTime": "2020-04-10T06:07:50Z"
+				}
+			}
+		}],
+		"node": {
+			"master": {
+				"hostname": "docker-desktop",
+				"address": "192.168.65.3",
+				"arch": "amd64",
+				"kernelVer": "4.19.76-linuxkit",
+				"os": "linux",
+				"containerRuntime": "docker://19.3.8",
+				"machineID": "301b485d-749e-4dc5-9bc3-319795e4021c",
+				"bootID": "aa584840-2149-44ac-acab-55ef67f69792",
+				"systemUUID": "df4949c4-0000-0000-b259-6cc320f45d7d",
+				"osImage": "DockerDesktop"
+			}
+		},
+		"nodestats": {
+			"master": {
+				"usage": {
+					"cpu": "336037951n",
+					"memory": "1206552Ki"
+				},
+				"capacity": {
+					"cpu": "2",
+					"memory": "4033160Ki"
+				}
+			}
+		},
+        "time": "2021-04-11T00:21:35.588279937Z"
+	},
+	"desire": {
+		"apps": "name",
+		"age": "12"
+	}
 }
 `
 	node := new(Node)
@@ -317,12 +521,12 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 	assert.NotNil(t, view.Report.NodeStats)
 	assert.NotNil(t, view.Report.AppStats)
 	assert.NotNil(t, view.Desire)
-	assert.Equal(t, view.Report.NodeStats.Capacity[string(coreV1.ResourceMemory)], "4129955840")
-	assert.Equal(t, view.Report.NodeStats.Capacity[string(coreV1.ResourceCPU)], "2")
-	assert.Equal(t, view.Report.NodeStats.Usage[string(coreV1.ResourceMemory)], "1235509248")
-	assert.Equal(t, view.Report.NodeStats.Usage[string(coreV1.ResourceCPU)], "0.337")
-	assert.Equal(t, view.Report.NodeStats.Percent[string(coreV1.ResourceCPU)], "0.1685")
-	assert.Equal(t, view.Report.NodeStats.Percent[string(coreV1.ResourceMemory)], "0.2991579803429569")
+	assert.Equal(t, view.Report.NodeStats["master"].Capacity[string(coreV1.ResourceMemory)], "4129955840")
+	assert.Equal(t, view.Report.NodeStats["master"].Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, view.Report.NodeStats["master"].Usage[string(coreV1.ResourceMemory)], "1235509248")
+	assert.Equal(t, view.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "0.337")
+	assert.Equal(t, view.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0.1685")
+	assert.Equal(t, view.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0.2991579803429569")
 	assert.Equal(t, view.Report.AppStats[0].InstanceStats["timer"].Usage[string(coreV1.ResourceCPU)], "0.001")
 	assert.Equal(t, view.Report.AppStats[0].InstanceStats["timer"].Usage[string(coreV1.ResourceMemory)], "1562624")
 	assert.Equal(t, view.Report.SysAppStats[0].InstanceStats["baetyl-function"].Usage[string(coreV1.ResourceCPU)], "0.001")
@@ -340,14 +544,16 @@ func TestPopulateNodeStats(t *testing.T) {
 	t1 := time.Now().Add(-2 * time.Minute)
 	node1 := NodeView{
 		Report: &ReportView{
-			NodeStats: &NodeStats{
-				Usage: map[string]string{
-					"cpu":    "1",
-					"memory": "512Mi",
-				},
-				Capacity: map[string]string{
-					"cpu":    "2",
-					"memory": "1024Mi",
+			NodeStats: map[string]*NodeStats{
+				"master": {
+					Usage: map[string]string{
+						"cpu":    "1",
+						"memory": "512Mi",
+					},
+					Capacity: map[string]string{
+						"cpu":    "2",
+						"memory": "1024Mi",
+					},
 				},
 			},
 			Time: &t1,
@@ -361,25 +567,27 @@ func TestPopulateNodeStats(t *testing.T) {
 	m2, err2 := translateQuantityToDecimal("512Mi", false)
 	assert.NoError(t, err2)
 	s2 := strconv.FormatInt(m2, 10)
-	assert.Equal(t, node1.Report.NodeStats.Capacity[string(coreV1.ResourceMemory)], s1)
-	assert.Equal(t, node1.Report.NodeStats.Capacity[string(coreV1.ResourceCPU)], "2")
-	assert.Equal(t, node1.Report.NodeStats.Usage[string(coreV1.ResourceMemory)], s2)
-	assert.Equal(t, node1.Report.NodeStats.Usage[string(coreV1.ResourceCPU)], "1")
-	assert.Equal(t, node1.Report.NodeStats.Percent[string(coreV1.ResourceMemory)], "0.5")
-	assert.Equal(t, node1.Report.NodeStats.Percent[string(coreV1.ResourceCPU)], "0.5")
+	assert.Equal(t, node1.Report.NodeStats["master"].Capacity[string(coreV1.ResourceMemory)], s1)
+	assert.Equal(t, node1.Report.NodeStats["master"].Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, node1.Report.NodeStats["master"].Usage[string(coreV1.ResourceMemory)], s2)
+	assert.Equal(t, node1.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "1")
+	assert.Equal(t, node1.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0.5")
+	assert.Equal(t, node1.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0.5")
 	assert.Equal(t, node1.Ready, false)
 
 	t2 := time.Now().Add(-30 * time.Second)
 	node2 := NodeView{
 		Report: &ReportView{
-			NodeStats: &NodeStats{
-				Usage: map[string]string{
-					"cpu":    "1",
-					"memory": "512Mi",
-				},
-				Capacity: map[string]string{
-					"cpu":    "2",
-					"memory": "1024Mi",
+			NodeStats: map[string]*NodeStats{
+				"master": {
+					Usage: map[string]string{
+						"cpu":    "1",
+						"memory": "512Mi",
+					},
+					Capacity: map[string]string{
+						"cpu":    "2",
+						"memory": "1024Mi",
+					},
 				},
 			},
 			Time: &t2,
@@ -387,24 +595,26 @@ func TestPopulateNodeStats(t *testing.T) {
 	}
 	err = node2.populateNodeStats(time.Minute)
 	assert.NoError(t, err)
-	assert.Equal(t, node2.Report.NodeStats.Capacity[string(coreV1.ResourceMemory)], s1)
-	assert.Equal(t, node2.Report.NodeStats.Capacity[string(coreV1.ResourceCPU)], "2")
-	assert.Equal(t, node2.Report.NodeStats.Usage[string(coreV1.ResourceMemory)], s2)
-	assert.Equal(t, node2.Report.NodeStats.Usage[string(coreV1.ResourceCPU)], "1")
-	assert.Equal(t, node2.Report.NodeStats.Percent[string(coreV1.ResourceMemory)], "0.5")
-	assert.Equal(t, node2.Report.NodeStats.Percent[string(coreV1.ResourceCPU)], "0.5")
+	assert.Equal(t, node2.Report.NodeStats["master"].Capacity[string(coreV1.ResourceMemory)], s1)
+	assert.Equal(t, node2.Report.NodeStats["master"].Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, node2.Report.NodeStats["master"].Usage[string(coreV1.ResourceMemory)], s2)
+	assert.Equal(t, node2.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "1")
+	assert.Equal(t, node2.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0.5")
+	assert.Equal(t, node2.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0.5")
 	assert.Equal(t, node2.Ready, true)
 
 	node3 := NodeView{
 		Report: &ReportView{
-			NodeStats: &NodeStats{
-				Usage: map[string]string{
-					"cpu":    "500m",
-					"memory": "512Mi",
-				},
-				Capacity: map[string]string{
-					"cpu":    "2.0",
-					"memory": "1024Mi",
+			NodeStats: map[string]*NodeStats{
+				"master": {
+					Usage: map[string]string{
+						"cpu":    "500m",
+						"memory": "512Mi",
+					},
+					Capacity: map[string]string{
+						"cpu":    "2.0",
+						"memory": "1024Mi",
+					},
 				},
 			},
 		},
@@ -412,22 +622,24 @@ func TestPopulateNodeStats(t *testing.T) {
 
 	err = node3.populateNodeStats(time.Minute)
 	assert.NoError(t, err)
-	assert.Equal(t, node3.Report.NodeStats.Capacity[string(coreV1.ResourceCPU)], "2")
-	assert.Equal(t, node3.Report.NodeStats.Usage[string(coreV1.ResourceCPU)], "0.5")
-	assert.Equal(t, node3.Report.NodeStats.Percent[string(coreV1.ResourceMemory)], "0.5")
-	assert.Equal(t, node3.Report.NodeStats.Percent[string(coreV1.ResourceCPU)], "0.25")
+	assert.Equal(t, node3.Report.NodeStats["master"].Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, node3.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "0.5")
+	assert.Equal(t, node3.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0.5")
+	assert.Equal(t, node3.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0.25")
 	assert.Equal(t, node2.Ready, true)
 
 	node4 := NodeView{
 		Report: &ReportView{
-			NodeStats: &NodeStats{
-				Usage: map[string]string{
-					"cpu":    "0.5",
-					"memory": "512a",
-				},
-				Capacity: map[string]string{
-					"cpu":    "2.5",
-					"memory": "1024a",
+			NodeStats: map[string]*NodeStats{
+				"master": {
+					Usage: map[string]string{
+						"cpu":    "0.5",
+						"memory": "512a",
+					},
+					Capacity: map[string]string{
+						"cpu":    "2.5",
+						"memory": "1024a",
+					},
 				},
 			},
 		},
@@ -438,14 +650,16 @@ func TestPopulateNodeStats(t *testing.T) {
 
 	node5 := NodeView{
 		Report: &ReportView{
-			NodeStats: &NodeStats{
-				Usage: map[string]string{
-					"cpu":    "0.5a",
-					"memory": "512Mi",
-				},
-				Capacity: map[string]string{
-					"cpu":    "2.5s",
-					"memory": "1024Mi",
+			NodeStats: map[string]*NodeStats{
+				"master": {
+					Usage: map[string]string{
+						"cpu":    "0.5a",
+						"memory": "512Mi",
+					},
+					Capacity: map[string]string{
+						"cpu":    "2.5s",
+						"memory": "1024Mi",
+					},
 				},
 			},
 		},
@@ -456,24 +670,26 @@ func TestPopulateNodeStats(t *testing.T) {
 
 	node6 := NodeView{
 		Report: &ReportView{
-			NodeStats: &NodeStats{
-				Usage: map[string]string{
-					"cpu":    "0",
-					"memory": "0",
-				},
-				Capacity: map[string]string{
-					"cpu":    "0",
-					"memory": "0",
+			NodeStats: map[string]*NodeStats{
+				"master": {
+					Usage: map[string]string{
+						"cpu":    "0",
+						"memory": "0",
+					},
+					Capacity: map[string]string{
+						"cpu":    "0",
+						"memory": "0",
+					},
 				},
 			},
 		},
 	}
 	err = node6.populateNodeStats(time.Minute)
 	assert.NoError(t, err)
-	assert.Equal(t, node6.Report.NodeStats.Capacity[string(coreV1.ResourceCPU)], "0")
-	assert.Equal(t, node6.Report.NodeStats.Usage[string(coreV1.ResourceCPU)], "0")
-	assert.Equal(t, node6.Report.NodeStats.Percent[string(coreV1.ResourceMemory)], "0")
-	assert.Equal(t, node6.Report.NodeStats.Percent[string(coreV1.ResourceCPU)], "0")
+	assert.Equal(t, node6.Report.NodeStats["master"].Capacity[string(coreV1.ResourceCPU)], "0")
+	assert.Equal(t, node6.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "0")
+	assert.Equal(t, node6.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0")
+	assert.Equal(t, node6.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0")
 }
 
 func TestShadowDiffV2(t *testing.T) {

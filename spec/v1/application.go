@@ -11,6 +11,7 @@ type Application struct {
 	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
 	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
 	Selector          string            `json:"selector,omitempty" yaml:"selector,omitempty"`
+	NodeSelector      string            `json:"nodeSelector,omitempty" yaml:"nodeSelector,omitempty"`
 	Services          []Service         `json:"services,omitempty" yaml:"services,omitempty" validate:"dive"`
 	Volumes           []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty" validate:"dive"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
