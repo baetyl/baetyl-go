@@ -264,19 +264,7 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 
 		if extension := view.Report.NodeStats.Extension; extension != nil &&
 			view.Accelerator == NVAccelerator {
-			ext, _ := extension.(map[string]interface{})
-			if val, ok := ext[KeyGPUUsedMemory]; ok {
-				used, _ := val.(float64)
-				s.Usage[ResourceGPU] = strconv.FormatFloat(used, 'f', -1, 64)
-			}
-			if val, ok := ext[KeyGPUTotalMemory]; ok {
-				total, _ := val.(float64)
-				s.Capacity[ResourceGPU] = strconv.FormatFloat(total, 'f', -1, 64)
-			}
-			if val, ok := ext[KeyGPUPercent]; ok {
-				percent, _ := val.(float64)
-				s.Percent[ResourceGPU] = strconv.FormatFloat(percent, 'f', -1, 64)
-			}
+			view.populateGPUStats(s, extension)
 		}
 	}
 
@@ -285,6 +273,22 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 	}
 
 	return
+}
+
+func (view *NodeView) populateGPUStats(s *NodeStats, extension interface{}) {
+	stats, _ := extension.(map[string]interface{})
+	if val, ok := stats[KeyGPUUsedMemory]; ok {
+		used, _ := val.(float64)
+		s.Usage[ResourceGPU] = strconv.FormatFloat(used, 'f', -1, 64)
+	}
+	if val, ok := stats[KeyGPUTotalMemory]; ok {
+		total, _ := val.(float64)
+		s.Capacity[ResourceGPU] = strconv.FormatFloat(total, 'f', -1, 64)
+	}
+	if val, ok := stats[KeyGPUPercent]; ok {
+		percent, _ := val.(float64)
+		s.Percent[ResourceGPU] = strconv.FormatFloat(percent, 'f', -1, 64)
+	}
 }
 
 func (s *NodeStats) processResourcePercent(status *NodeStats, resourceType string,
