@@ -29,8 +29,6 @@ const (
 	KeySysAppStats             = "sysappstats"
 	KeyAccelerator             = "accelerator"
 	NVAccelerator              = "nvidia"
-	KeyMetricsKind             = "kind"
-	NVMetrics                  = "nvidia-gpu"
 	ResourceGPU                = "gpu"
 	KeyGPUUsedMemory           = "usedMemory"
 	KeyGPUTotalMemory          = "totalMemory"
