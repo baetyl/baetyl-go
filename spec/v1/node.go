@@ -16,17 +16,25 @@ import (
 
 // maxJSONLevel the max level of json
 const (
-	maxJSONLevel            = 5
-	milliPrecision          = 1000
-	KeySyncMode             = "syncMode"
-	CloudMode      SyncMode = "cloud"
-	LocalMode      SyncMode = "local"
-	KeyNodeProps            = "nodeprops"
-	KeyDevices              = "devices"
-	KeyApps                 = "apps"
-	KeySysApps              = "sysapps"
-	KeyAppStats             = "appstats"
-	KeySysAppStats          = "sysappstats"
+	maxJSONLevel               = 5
+	milliPrecision             = 1000
+	KeySyncMode                = "syncMode"
+	CloudMode         SyncMode = "cloud"
+	LocalMode         SyncMode = "local"
+	KeyNodeProps               = "nodeprops"
+	KeyDevices                 = "devices"
+	KeyApps                    = "apps"
+	KeySysApps                 = "sysapps"
+	KeyAppStats                = "appstats"
+	KeySysAppStats             = "sysappstats"
+	KeyAccelerator             = "accelerator"
+	NVAccelerator              = "nvidia"
+	KeyMetricsKind             = "kind"
+	NVMetrics                  = "nvidia-gpu"
+	ResourceGPU                = "gpu"
+	KeyGPUUsedMemory           = "usedMemory"
+	KeyGPUTotalMemory          = "totalMemory"
+	KeyGPUPercent              = "percent"
 )
 
 type SyncMode string
@@ -40,6 +48,7 @@ type Node struct {
 	Name              string                 `json:"name,omitempty" yaml:"name,omitempty" validate:"omitempty,resourceName"`
 	Version           string                 `json:"version,omitempty" yaml:"version,omitempty"`
 	CreationTimestamp time.Time              `json:"createTime,omitempty" yaml:"createTime,omitempty"`
+	Accelerator       string                 `json:"accelerator,omitempty" yaml:"accelerator,omitempty"`
 	Labels            map[string]string      `json:"labels,omitempty" yaml:"labels,omitempty" validate:"omitempty,validLabels"`
 	Annotations       map[string]string      `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Attributes        map[string]interface{} `json:"attr,omitempty" yaml:"attr,omitempty"`
@@ -53,6 +62,7 @@ type NodeView struct {
 	Name              string            `json:"name,omitempty" yaml:"name,omitempty"`
 	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
+	Accelerator       string            `json:"accelerator,omitempty" yaml:"accelerator,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Report            *ReportView       `json:"report,omitempty" yaml:"report,omitempty"`
@@ -251,6 +261,23 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 			cpu := string(coreV1.ResourceCPU)
 			if s.Percent[cpu], err = s.processResourcePercent(s, cpu, populateCPUResource); err != nil {
 				return errors.Trace(err)
+			}
+		}
+
+		if extension := view.Report.NodeStats.Extension; extension != nil &&
+			view.Accelerator == NVAccelerator {
+			ext, _ := extension.(map[string]interface{})
+			if val, ok := ext[KeyGPUUsedMemory]; ok {
+				used, _ := val.(float64)
+				s.Usage[ResourceGPU] = strconv.FormatFloat(used, 'f', -1, 64)
+			}
+			if val, ok := ext[KeyGPUTotalMemory]; ok {
+				total, _ := val.(float64)
+				s.Capacity[ResourceGPU] = strconv.FormatFloat(total, 'f', -1, 64)
+			}
+			if val, ok := ext[KeyGPUPercent]; ok {
+				percent, _ := val.(float64)
+				s.Percent[ResourceGPU] = strconv.FormatFloat(percent, 'f', -1, 64)
 			}
 		}
 	}
