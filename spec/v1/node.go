@@ -260,11 +260,10 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 			if s.Percent[cpu], err = s.processResourcePercent(s, cpu, populateCPUResource); err != nil {
 				return errors.Trace(err)
 			}
-		}
-
-		if extension := view.Report.NodeStats.Extension; extension != nil &&
-			view.Accelerator == NVAccelerator {
-			populateGPUStats(s, extension)
+			if extension := s.Extension; extension != nil &&
+				view.Accelerator == NVAccelerator {
+				populateGPUStats(s, extension)
+			}
 		}
 	}
 
