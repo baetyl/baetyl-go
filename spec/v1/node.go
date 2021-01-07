@@ -264,7 +264,7 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 
 		if extension := view.Report.NodeStats.Extension; extension != nil &&
 			view.Accelerator == NVAccelerator {
-			view.populateGPUStats(s, extension)
+			populateGPUStats(s, extension)
 		}
 	}
 
@@ -275,7 +275,7 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 	return
 }
 
-func (view *NodeView) populateGPUStats(s *NodeStats, extension interface{}) {
+func populateGPUStats(s *NodeStats, extension interface{}) {
 	stats, _ := extension.(map[string]interface{})
 	if val, ok := stats[KeyGPUUsedMemory]; ok {
 		used, _ := val.(float64)
