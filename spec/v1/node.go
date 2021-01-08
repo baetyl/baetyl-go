@@ -217,6 +217,18 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
+	// default mode is cloud
+	view.Mode = CloudMode
+	if attr := n.Attributes; attr != nil {
+		if modeVal, ok := attr[KeySyncMode]; ok {
+			if mode, ok := modeVal.(string); ok {
+				view.Mode = SyncMode(mode)
+			}
+		}
+		if val, ok := attr[KeyAccelerator]; ok {
+			view.Accelerator, _ = val.(string)
+		}
+	}
 	if err = view.populateNodeStats(timeout); err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -229,18 +241,6 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 			if err != nil {
 				return nil, errors.Trace(err)
 			}
-		}
-	}
-	// default mode is cloud
-	view.Mode = CloudMode
-	if attr := n.Attributes; attr != nil {
-		if modeVal, ok := attr[KeySyncMode]; ok {
-			if mode, ok := modeVal.(string); ok {
-				view.Mode = SyncMode(mode)
-			}
-		}
-		if val, ok := attr[KeyAccelerator]; ok {
-			view.Accelerator, _ = val.(string)
 		}
 	}
 	return view, nil
