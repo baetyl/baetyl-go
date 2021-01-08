@@ -239,6 +239,9 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 				view.Mode = SyncMode(mode)
 			}
 		}
+		if val, ok := attr[KeyAccelerator]; ok {
+			view.Accelerator, _ = val.(string)
+		}
 	}
 	return view, nil
 }
