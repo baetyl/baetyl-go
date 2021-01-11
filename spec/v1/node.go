@@ -16,23 +16,24 @@ import (
 
 // maxJSONLevel the max level of json
 const (
-	maxJSONLevel               = 5
-	milliPrecision             = 1000
-	KeySyncMode                = "syncMode"
-	CloudMode         SyncMode = "cloud"
-	LocalMode         SyncMode = "local"
-	KeyNodeProps               = "nodeprops"
-	KeyDevices                 = "devices"
-	KeyApps                    = "apps"
-	KeySysApps                 = "sysapps"
-	KeyAppStats                = "appstats"
-	KeySysAppStats             = "sysappstats"
-	KeyAccelerator             = "accelerator"
-	NVAccelerator              = "nvidia"
-	ResourceGPU                = "gpu"
-	KeyGPUUsedMemory           = "usedMemory"
-	KeyGPUTotalMemory          = "totalMemory"
-	KeyGPUPercent              = "percent"
+	maxJSONLevel                = 5
+	milliPrecision              = 1000
+	KeySyncMode                 = "syncMode"
+	CloudMode          SyncMode = "cloud"
+	LocalMode          SyncMode = "local"
+	KeyNodeProps                = "nodeprops"
+	KeyDevices                  = "devices"
+	KeyApps                     = "apps"
+	KeySysApps                  = "sysapps"
+	KeyAppStats                 = "appstats"
+	KeySysAppStats              = "sysappstats"
+	KeyAccelerator              = "accelerator"
+	KeyOptionalSysApps          = "optionalSysApps"
+	NVAccelerator               = "nvidia"
+	ResourceGPU                 = "gpu"
+	KeyGPUUsedMemory            = "usedMemory"
+	KeyGPUTotalMemory           = "totalMemory"
+	KeyGPUPercent               = "percent"
 )
 
 type SyncMode string
@@ -52,6 +53,7 @@ type Node struct {
 	Attributes        map[string]interface{} `json:"attr,omitempty" yaml:"attr,omitempty"`
 	Report            Report                 `json:"report,omitempty" yaml:"report,omitempty"`
 	Desire            Desire                 `json:"desire,omitempty" yaml:"desire,omitempty"`
+	OptionalSysApps   []string               `json:"optionalSysApps,omitempty" yaml:"optionalSysApps,omitempty"`
 	Description       string                 `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
@@ -65,6 +67,7 @@ type NodeView struct {
 	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Report            *ReportView       `json:"report,omitempty" yaml:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty" yaml:"desire,omitempty"`
+	OptionalSysApps   []string          `json:"optionalSysApps,omitempty" yaml:"optionalSysApps,omitempty"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	Ready             bool              `json:"ready"`
 	Mode              SyncMode          `json:"mode"`
@@ -227,6 +230,9 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 		}
 		if val, ok := attr[KeyAccelerator]; ok {
 			view.Accelerator, _ = val.(string)
+		}
+		if val, ok := attr[KeyOptionalSysApps]; ok {
+			view.OptionalSysApps, _ = val.([]string)
 		}
 	}
 	if err = view.populateNodeStats(timeout); err != nil {
