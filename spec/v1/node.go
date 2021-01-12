@@ -34,6 +34,8 @@ const (
 	KeyGPUUsedMemory            = "usedMemory"
 	KeyGPUTotalMemory           = "totalMemory"
 	KeyGPUPercent               = "percent"
+
+	BaetylCoreFrequency     = "BaetylCoreFrequency"
 )
 
 type SyncMode string
