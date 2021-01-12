@@ -35,7 +35,7 @@ const (
 	KeyGPUTotalMemory           = "totalMemory"
 	KeyGPUPercent               = "percent"
 
-	BaetylCoreFrequency     = "BaetylCoreFrequency"
+	BaetylCoreFrequency         = "BaetylCoreFrequency"
 )
 
 type SyncMode string
@@ -234,7 +234,13 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 			view.Accelerator, _ = val.(string)
 		}
 		if val, ok := attr[KeyOptionalSysApps]; ok {
-			view.OptionalSysApps, _ = val.([]string)
+			if ss, ok := val.([]interface{}); ok {
+				for _, d := range ss {
+					if s, ok := d.(string); ok {
+						view.OptionalSysApps = append(view.OptionalSysApps, s)
+					}
+				}
+			}
 		}
 	}
 	if err = view.populateNodeStats(timeout); err != nil {
