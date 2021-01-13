@@ -55,7 +55,7 @@ type Node struct {
 	Attributes        map[string]interface{} `json:"attr,omitempty" yaml:"attr,omitempty"`
 	Report            Report                 `json:"report,omitempty" yaml:"report,omitempty"`
 	Desire            Desire                 `json:"desire,omitempty" yaml:"desire,omitempty"`
-	OptionalSysApps   []string               `json:"optionalSysApps,omitempty" yaml:"optionalSysApps,omitempty"`
+	SysApps           []string               `json:"sysApps,omitempty" yaml:"sysApps,omitempty"`
 	Description       string                 `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
@@ -69,7 +69,7 @@ type NodeView struct {
 	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Report            *ReportView       `json:"report,omitempty" yaml:"report,omitempty"`
 	Desire            Desire            `json:"desire,omitempty" yaml:"desire,omitempty"`
-	OptionalSysApps   []string          `json:"optionalSysApps,omitempty" yaml:"optionalSysApps,omitempty"`
+	SysApps           []string          `json:"sysApps,omitempty" yaml:"sysApps,omitempty"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	Ready             bool              `json:"ready"`
 	Mode              SyncMode          `json:"mode"`
@@ -237,7 +237,7 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 			if ss, ok := val.([]interface{}); ok {
 				for _, d := range ss {
 					if s, ok := d.(string); ok {
-						view.OptionalSysApps = append(view.OptionalSysApps, s)
+						view.SysApps = append(view.SysApps, s)
 					}
 				}
 			}
