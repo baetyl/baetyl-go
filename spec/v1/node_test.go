@@ -857,3 +857,148 @@ func TestShadowPatch(t *testing.T) {
 		})
 	}
 }
+
+func TestCompatibleSingleNode(t *testing.T) {
+	nodeData := `
+{
+	"namespace": "default",
+	"name": "baetyl",
+	"version": "v1",
+	"attr": {
+		"syncMode": "local"
+	},
+	"createTime": "2021-04-11T00:21:35.588279937Z",
+	"report": {
+		"apps": [{
+			"name": "function-testnode4",
+			"version": "1436880"
+		}, {
+			"name": "core-testnode4",
+			"version": "1436874"
+		}, {
+			"name": "timer",
+			"version": "1449120"
+		}],
+		"appstats": [{
+			"name": "timer",
+			"version": "1449120",
+			"status": "Running",
+			"instances": {
+				"timer": {
+					"name": "timer",
+					"container": {
+						"name": "timer",
+						"id": "docker://3e468a0a55f0aa3dfab65cc74f3d7ee1e3b3e012803bca0179e9f7275d8afe89"
+					},
+					"usage": {
+						"cpu": "47310n",
+						"memory": "1526Ki"
+					},
+					"status": "Running",
+					"cause": "Back-offrestartingfailedcontainer",
+					"createTime": "2020-04-10T09:24:25Z"
+				}
+			}
+		}],
+		"sysappstats": [{
+			"name": "function-testnode4",
+			"version": "1436880",
+			"status": "Running",
+			"instances": {
+				"baetyl-function": {
+					"name": "baetyl-function",
+					"container": {
+						"name": "baetyl-function",
+						"id": "docker://ad4474b017ace7324884452ecbfaa7206b8201b33d5ce909d776f0887443b611"
+					},
+					"usage": {
+						"cpu": "37310n",
+						"memory": "1728Ki"
+					},
+					"status": "Running",
+					"createTime": "2020-04-10T06:07:46Z"
+				}
+			}
+		}, {
+			"name": "core-testnode4",
+			"version": "1436874",
+			"status": "Running",
+			"instances": {
+				"core-testnode4": {
+					"name": "core-testnode4",
+					"container": {
+						"name": "core-testnode4",
+						"id": "docker://65d7e9c5754a7702f28cb030202a639e729061f59e88d8d0afbb175b86da203b"
+					},
+					"usage": {
+						"cpu": "8553885n",
+						"memory": "8708Ki"
+					},
+					"status": "Running",
+					"createTime": "2020-04-10T06:07:50Z"
+				}
+			}
+		}],
+		"node": {
+			"hostname": "master",
+			"address": "192.168.65.3",
+			"arch": "amd64",
+			"kernelVer": "4.19.76-linuxkit",
+			"os": "linux",
+			"containerRuntime": "docker://19.3.8",
+			"machineID": "301b485d-749e-4dc5-9bc3-319795e4021c",
+			"bootID": "aa584840-2149-44ac-acab-55ef67f69792",
+			"systemUUID": "df4949c4-0000-0000-b259-6cc320f45d7d",
+			"osImage": "DockerDesktop"
+		},
+		"nodestats": {
+			"usage": {
+				"cpu": "336037951n",
+				"memory": "1206552Ki"
+			},
+			"capacity": {
+				"cpu": "2",
+				"memory": "4033160Ki"
+			}
+		},
+        "time": "2021-04-11T00:21:35.588279937Z"
+	},
+	"desire": {
+		"apps": "name",
+		"age": "12"
+	}
+}
+`
+	node := new(Node)
+	err := json.Unmarshal([]byte(nodeData), node)
+	assert.NoError(t, err)
+
+	view, err := node.View(time.Second * 20)
+	assert.NoError(t, err)
+	assert.NotNil(t, view)
+	assert.Equal(t, view.Namespace, "default")
+	assert.Equal(t, view.Name, "baetyl")
+	assert.Equal(t, view.Version, "v1")
+	assert.NotNil(t, view.Report)
+	assert.NotNil(t, view.Report.Apps)
+	assert.NotNil(t, view.Report.NodeStats)
+	assert.NotNil(t, view.Report.AppStats)
+	assert.NotNil(t, view.Desire)
+	assert.Equal(t, view.Report.NodeStats["master"].Capacity[string(coreV1.ResourceMemory)], "4129955840")
+	assert.Equal(t, view.Report.NodeStats["master"].Capacity[string(coreV1.ResourceCPU)], "2")
+	assert.Equal(t, view.Report.NodeStats["master"].Usage[string(coreV1.ResourceMemory)], "1235509248")
+	assert.Equal(t, view.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "0.337")
+	assert.Equal(t, view.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0.1685")
+	assert.Equal(t, view.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0.2991579803429569")
+	assert.Equal(t, view.Report.AppStats[0].InstanceStats["timer"].Usage[string(coreV1.ResourceCPU)], "0.001")
+	assert.Equal(t, view.Report.AppStats[0].InstanceStats["timer"].Usage[string(coreV1.ResourceMemory)], "1562624")
+	assert.Equal(t, view.Report.SysAppStats[0].InstanceStats["baetyl-function"].Usage[string(coreV1.ResourceCPU)], "0.001")
+	assert.Equal(t, view.Report.SysAppStats[0].InstanceStats["baetyl-function"].Usage[string(coreV1.ResourceMemory)], "1769472")
+	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceCPU)], "0.009")
+	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceMemory)], "8916992")
+	assert.Equal(t, view.Ready, true)
+	assert.Equal(t, view.Mode, LocalMode)
+	assert.Equal(t, view.Report.SysAppStats[0].Status, Status("Running"))
+	assert.Equal(t, view.Report.SysAppStats[1].Status, Status("Running"))
+	assert.Equal(t, view.Report.AppStats[0].Status, Status("Running"))
+}
