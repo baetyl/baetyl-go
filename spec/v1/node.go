@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
+	"github.com/baetyl/baetyl-go/v2/log"
 )
 
 // maxJSONLevel the max level of json
@@ -35,7 +36,7 @@ const (
 	KeyGPUTotalMemory           = "totalMemory"
 	KeyGPUPercent               = "percent"
 
-	BaetylCoreFrequency         = "BaetylCoreFrequency"
+	BaetylCoreFrequency = "BaetylCoreFrequency"
 )
 
 type SyncMode string
@@ -213,6 +214,10 @@ func (d Desire) AppStats(isSys bool) []AppStats {
 }
 
 func (n *Node) View(timeout time.Duration) (*NodeView, error) {
+	err := n.compatibleSingleNode()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	view := new(NodeView)
 	nodeStr, err := json.Marshal(n)
 	if err != nil {
@@ -259,6 +264,49 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 		}
 	}
 	return view, nil
+}
+
+func (n *Node) compatibleSingleNode() error {
+	edgeNodeName := ""
+	nodeInfo, ok := n.Report["node"]
+	if ok {
+		nodeInfoView := map[string]*NodeInfo{}
+		nodeInfoStr, err := json.Marshal(nodeInfo)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		err = json.Unmarshal(nodeInfoStr, &nodeInfoView)
+		if err != nil {
+			log.L().Warn("failed to translate node to cluster node view", log.Any("node", n.Name))
+			singleNodeInfo := new(NodeInfo)
+			err = json.Unmarshal(nodeInfoStr, singleNodeInfo)
+			if err != nil {
+				return errors.Trace(err)
+			}
+			edgeNodeName = singleNodeInfo.Hostname
+			singleNodeInfo.Role = "master"
+			n.Report["node"] = map[string]*NodeInfo{
+				edgeNodeName: singleNodeInfo,
+			}
+
+			nodeStats, ok := n.Report["nodestats"]
+			if ok {
+				nodeStatsStr, err := json.Marshal(nodeStats)
+				if err != nil {
+					return errors.Trace(err)
+				}
+				singleNodeStats := new(NodeStats)
+				err = json.Unmarshal(nodeStatsStr, singleNodeStats)
+				if err != nil {
+					return errors.Trace(err)
+				}
+				n.Report["nodestats"] = map[string]*NodeStats{
+					edgeNodeName: singleNodeStats,
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
