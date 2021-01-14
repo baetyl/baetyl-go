@@ -234,6 +234,7 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 			view.Accelerator, _ = val.(string)
 		}
 		if val, ok := attr[KeyOptionalSysApps]; ok {
+			view.SysApps = make([]string, 0)
 			if ss, ok := val.([]interface{}); ok {
 				for _, d := range ss {
 					if s, ok := d.(string); ok {
