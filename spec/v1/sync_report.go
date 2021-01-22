@@ -68,5 +68,7 @@ type InstanceStats struct {
 	Usage       map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
 	Status      Status            `yaml:"status,omitempty" json:"status,omitempty"`
 	Cause       string            `yaml:"cause,omitempty" json:"cause,omitempty"`
+	IP          string            `yaml:"ip,omitempty" json:"ip,omitempty"`
+	NodeName    string            `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
 	CreateTime  time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
 }
