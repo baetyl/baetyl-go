@@ -35,5 +35,8 @@ func Flock(file *os.File, timeout time.Duration) error {
 }
 
 func Funlock(file *os.File) error {
-	return syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+	if file != nil {
+		return syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+	}
+	return os.ErrNotExist
 }

@@ -6,4 +6,5 @@ const (
 	BaetylBroker   = "baetyl-broker"
 	BaetylFunction = "baetyl-function"
 	BaetylRule     = "baetyl-rule"
+	BaetylAgent    = "baetyl-agent"
 )
