@@ -29,6 +29,7 @@ const (
 	KeyAppStats                 = "appstats"
 	KeySysAppStats              = "sysappstats"
 	KeyAccelerator              = "accelerator"
+	KeyCluster                  = "cluster"
 	KeyOptionalSysApps          = "optionalSysApps"
 	NVAccelerator               = "nvidia"
 	ResourceGPU                 = "gpu"
@@ -51,6 +52,7 @@ type Node struct {
 	Version           string                 `json:"version,omitempty" yaml:"version,omitempty"`
 	CreationTimestamp time.Time              `json:"createTime,omitempty" yaml:"createTime,omitempty"`
 	Accelerator       string                 `json:"accelerator,omitempty" yaml:"accelerator,omitempty"`
+	Cluster           bool                   `json:"cluster,omitempty" yaml:"cluster,omitempty"`
 	Labels            map[string]string      `json:"labels,omitempty" yaml:"labels,omitempty" validate:"omitempty,validLabels"`
 	Annotations       map[string]string      `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Attributes        map[string]interface{} `json:"attr,omitempty" yaml:"attr,omitempty"`
@@ -65,6 +67,7 @@ type NodeView struct {
 	Name              string            `json:"name,omitempty" yaml:"name,omitempty"`
 	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
+	Cluster           bool              `json:"cluster,omitempty" yaml:"cluster,omitempty"`
 	Accelerator       string            `json:"accelerator,omitempty" yaml:"accelerator,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
@@ -85,6 +88,7 @@ type ReportView struct {
 	SysAppStats []AppStats            `json:"sysappstats,omitempty" yaml:"sysappstats,omitempty"`
 	Node        map[string]*NodeInfo  `json:"node,omitempty" yaml:"node,omitempty"`
 	NodeStats   map[string]*NodeStats `json:"nodestats,omitempty" yaml:"nodestats,omitempty"`
+	NodeInsNum  map[string]int        `json:"nodeinsnum,omitempty" yaml:"nodeinsnum,omitempty"`
 }
 
 // Report report data
@@ -262,6 +266,7 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 				return nil, errors.Trace(err)
 			}
 		}
+		report.countInstanceNum()
 	}
 	return view, nil
 }
@@ -377,6 +382,33 @@ func (s *NodeStats) processResourcePercent(status *NodeStats, resourceType strin
 		return strconv.FormatFloat(float64(usage)/float64(total), 'f', -1, 64), nil
 	}
 	return "0", nil
+}
+
+func (view *ReportView) countInstanceNum() {
+	nums := map[string]int{}
+	if view.AppStats != nil {
+		for _, stat := range view.AppStats {
+			for _, ins := range stat.InstanceStats {
+				if _, ok := nums[ins.NodeName]; ok {
+					nums[ins.NodeName] += 1
+				} else {
+					nums[ins.NodeName] = 1
+				}
+			}
+		}
+	}
+	if view.SysAppStats != nil {
+		for _, stat := range view.SysAppStats {
+			for _, ins := range stat.InstanceStats {
+				if _, ok := nums[ins.NodeName]; ok {
+					nums[ins.NodeName] += 1
+				} else {
+					nums[ins.NodeName] = 1
+				}
+			}
+		}
+	}
+	view.NodeInsNum = nums
 }
 
 func (view *ReportView) translateServiceResourceQuantity() error {
