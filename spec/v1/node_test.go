@@ -397,6 +397,7 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 	"namespace": "default",
 	"name": "baetyl",
 	"version": "v1",
+    "cluster": true,
 	"attr": {
 		"syncMode": "local"
 	},
@@ -449,6 +450,7 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 						"memory": "1728Ki"
 					},
 					"status": "Running",
+					"nodeName": "master",
 					"createTime": "2020-04-10T06:07:46Z"
 				}
 			}
@@ -468,6 +470,7 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 						"memory": "8708Ki"
 					},
 					"status": "Running",
+					"nodeName": "master",
 					"createTime": "2020-04-10T06:07:50Z"
 				}
 			}
@@ -498,6 +501,9 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 				}
 			}
 		},
+        "nodeinsnum": {
+			"master": 2
+        },
         "time": "2021-04-11T00:21:35.588279937Z"
 	},
 	"desire": {
@@ -513,6 +519,7 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 	view, err := node.View(time.Second * 20)
 	assert.NoError(t, err)
 	assert.NotNil(t, view)
+	assert.True(t, view.Cluster)
 	assert.Equal(t, view.Namespace, "default")
 	assert.Equal(t, view.Name, "baetyl")
 	assert.Equal(t, view.Version, "v1")
@@ -520,6 +527,7 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 	assert.NotNil(t, view.Report.Apps)
 	assert.NotNil(t, view.Report.NodeStats)
 	assert.NotNil(t, view.Report.AppStats)
+	assert.NotNil(t, view.Report.NodeInsNum)
 	assert.NotNil(t, view.Desire)
 	assert.Equal(t, view.Report.NodeStats["master"].Capacity[string(coreV1.ResourceMemory)], "4129955840")
 	assert.Equal(t, view.Report.NodeStats["master"].Capacity[string(coreV1.ResourceCPU)], "2")
@@ -533,7 +541,8 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 	assert.Equal(t, view.Report.SysAppStats[0].InstanceStats["baetyl-function"].Usage[string(coreV1.ResourceMemory)], "1769472")
 	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceCPU)], "0.009")
 	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceMemory)], "8916992")
-	assert.Equal(t, view.Ready, true)
+	assert.Equal(t, 2, view.Report.NodeInsNum["master"])
+	assert.True(t, view.Ready)
 	assert.Equal(t, view.Mode, LocalMode)
 	assert.Equal(t, view.Report.SysAppStats[0].Status, Status("Running"))
 	assert.Equal(t, view.Report.SysAppStats[1].Status, Status("Running"))
