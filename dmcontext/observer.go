@@ -67,4 +67,5 @@ func (o *observer) OnPuback(pkt *packet.Puback) error {
 }
 
 func (o *observer) OnError(err error) {
+	o.log.Error("receive message error", log.Any("error", err))
 }

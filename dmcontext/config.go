@@ -11,8 +11,9 @@ type SystemConfig struct {
 }
 
 type DeviceInfo struct {
-	Name  string `yaml:"name,omitempty" json:"name,omitempty"`
-	Topic `yaml:",inline" json:",inline"`
+	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
+	Version string `yaml:"version,omitempty" json:"version,omitempty"`
+	Topic   `yaml:",inline" json:",inline"`
 }
 
 type Topic struct {
