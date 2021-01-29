@@ -93,7 +93,7 @@ func NewContext(confFile string) Context {
 		lfs = append(lfs, log.Any("service", c.ServiceName()))
 	}
 	c.log = log.With(lfs...)
-	var sc SystemConfig
+	sc := new(SystemConfig)
 	if err := c.LoadCustomConfig(sc); err != nil {
 		c.log.Error("failed to load system config, to use default config", log.Error(err))
 		utils.UnmarshalYAML(nil, sc)
@@ -196,13 +196,13 @@ func (c *DmCtx) processing(ch chan *v1.Message) {
 			return
 		case msg := <-ch:
 			switch msg.Kind {
-			case v1.MessageDelta:
+			case v1.MessageDeviceDelta:
 				if err := c.processDelta(msg); err != nil {
 					c.log.Error("failed to process delta message", log.Error(err))
 				} else {
 					c.log.Info("process delta message successfully")
 				}
-			case v1.MessageEvent:
+			case v1.MessageDeviceEvent:
 				if err := c.processEvent(msg); err != nil {
 					c.log.Error("failed to process event message", log.Error(err))
 				} else {
@@ -235,7 +235,7 @@ func (c *DmCtx) GetAllDevices() []DeviceInfo {
 
 func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error {
 	msg := &v1.Message{
-		Kind:     v1.MessageReport,
+		Kind:     v1.MessageDeviceReport,
 		Metadata: map[string]string{KeyDevice: info.Name},
 		Content:  v1.LazyValue{Value: report},
 	}
@@ -302,7 +302,7 @@ func (c *DmCtx) RegisterEventCallback(cb EventCallback) error {
 func (c *DmCtx) Online(info *DeviceInfo) error {
 	r := v1.Report{KeyStatus: OnlineStatus}
 	msg := &v1.Message{
-		Kind:     v1.MessageReport,
+		Kind:     v1.MessageDeviceReport,
 		Metadata: map[string]string{KeyDevice: info.Name},
 		Content:  v1.LazyValue{Value: r},
 	}
@@ -320,7 +320,7 @@ func (c *DmCtx) Online(info *DeviceInfo) error {
 func (c *DmCtx) Offline(info *DeviceInfo) error {
 	r := v1.Report{KeyStatus: OfflineStatus}
 	msg := &v1.Message{
-		Kind:     v1.MessageReport,
+		Kind:     v1.MessageDeviceReport,
 		Metadata: map[string]string{KeyDevice: info.Name},
 		Content:  v1.LazyValue{Value: r},
 	}
