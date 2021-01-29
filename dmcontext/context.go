@@ -16,17 +16,16 @@ import (
 )
 
 const (
-	DefaultDriverConf = "/etc/baetyl/driver.yml"
+	DefaultAccessConf = "/etc/baetyl/access.yml"
 	DefaultPropsConf  = "/etc/baetyl/props.yml"
 	KeyDevice         = "device"
 	KeyStatus         = "status"
 	OnlineStatus      = "online"
 	OfflineStatus     = "offline"
+	TypeReportEvent   = "report"
 )
 
 var (
-	ErrCallbackNotRegister     = errors.New("callback not registered yet")
-	ErrInvalidCallback         = errors.New("invalid device callback")
 	ErrInvalidMessage          = errors.New("invalid device message")
 	ErrInvalidChannel          = errors.New("invalid channel")
 	ErrResponseChannelNotExist = errors.New("response channel not exist")
@@ -37,9 +36,9 @@ type DevicePropConfigs struct {
 	PropConfigs map[string]string `yaml:"propConfigs,omitempty" json:"propConfigs,omitempty"`
 }
 
-type DeviceProperties struct {
-	Name  string                 `json:"name,omitempty"`
-	Props map[string]interface{} `json:"props,omitempty"`
+type Event struct {
+	Type    string      `yaml:"type,omitempty" json:"type,omitempty"`
+	Payload interface{} `yaml:"payload,omitempty" json:"payload,omitempty"`
 }
 
 type DeviceShadow struct {
@@ -48,27 +47,22 @@ type DeviceShadow struct {
 	Desire v1.Desire `json:"desire,omitempty"`
 }
 
-type DeviceEvent struct {
-	Name  string      `json:"name,omitempty"`
-	Event interface{} `json:"event,omitempty"`
-}
+type DeltaCallback func(*DeviceInfo, v1.Delta) error
 
-type DeltaCallback func(*DeviceInfo, *DeviceProperties) error
-
-type EventCallback func(*DeviceInfo, *DeviceEvent) error
+type EventCallback func(*DeviceInfo, *Event) error
 
 type Context interface {
 	context.Context
 	SystemConfigExt() *SystemConfig
 	GetAllDevices() []DeviceInfo
-	ReportDeviceProperties(info *DeviceInfo, props *DeviceProperties) error
+	ReportDeviceProperties(*DeviceInfo, v1.Report) error
 	GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error)
-	RegisterDeltaCallback(info *DeviceInfo, cb DeltaCallback)
-	RegisterEventCallback(info *DeviceInfo, cb EventCallback)
+	RegisterDeltaCallback(cb DeltaCallback) error
+	RegisterEventCallback(cb EventCallback) error
 	Online(info *DeviceInfo) error
 	Offline(info *DeviceInfo) error
-	GetDriverConfig() (string, error)
-	GetDevicePropConfigs() (map[string]DevicePropConfigs, error)
+	GetDeviceAccessConfig() (string, error)
+	GetDevicePropConfigs () (map[string]DevicePropConfigs, error)
 	Start()
 	io.Closer
 }
@@ -78,8 +72,8 @@ type DmCtx struct {
 	log      *log.Logger
 	mqtt     *mqtt2.Client
 	tomb     utils.Tomb
-	events   sync.Map
-	deltas   sync.Map
+	eventCb  EventCallback
+	deltaCb  DeltaCallback
 	response sync.Map
 	msgs     map[string]chan *v1.Message
 }
@@ -99,7 +93,7 @@ func NewContext(confFile string) Context {
 		lfs = append(lfs, log.Any("service", c.ServiceName()))
 	}
 	c.log = log.With(lfs...)
-	var sc SystemConfig
+	sc := new(SystemConfig)
 	if err := c.LoadCustomConfig(sc); err != nil {
 		c.log.Error("failed to load system config, to use default config", log.Error(err))
 		utils.UnmarshalYAML(nil, sc)
@@ -140,22 +134,15 @@ func (c *DmCtx) Close() error {
 
 func (c *DmCtx) processDelta(msg *v1.Message) error {
 	device := msg.Metadata[KeyDevice]
-	val, ok := c.deltas.Load(device)
-	if !ok {
-		return errors.Trace(ErrCallbackNotRegister)
+	if c.deltaCb == nil {
+		c.log.Debug("delta callback not set and message will not be process")
+		return nil
 	}
-	deltaCallback, ok := val.(DeltaCallback)
-	if !ok {
-		return errors.Trace(ErrInvalidCallback)
-	}
-	var props *DeviceProperties
-	if err := msg.Content.Unmarshal(&props); err != nil {
+	var delta v1.Delta
+	if err := msg.Content.Unmarshal(&delta); err != nil {
 		return errors.Trace(err)
 	}
-	if !ok {
-		return errors.Trace(ErrInvalidMessage)
-	}
-	if err := deltaCallback(&DeviceInfo{Name: device}, props); err != nil {
+	if err := c.deltaCb(&DeviceInfo{Name: device}, delta); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
@@ -163,22 +150,15 @@ func (c *DmCtx) processDelta(msg *v1.Message) error {
 
 func (c *DmCtx) processEvent(msg *v1.Message) error {
 	device := msg.Metadata[KeyDevice]
-	val, ok := c.events.Load(device)
-	if !ok {
-		return errors.Trace(ErrCallbackNotRegister)
+	if c.eventCb == nil {
+		c.log.Debug("event callback not set and message will not be process")
+		return nil
 	}
-	eventCallback, ok := val.(EventCallback)
-	if !ok {
-		return errors.Trace(ErrInvalidCallback)
-	}
-	var event *DeviceEvent
+	var event Event
 	if err := msg.Content.Unmarshal(&event); err != nil {
 		return errors.Trace(err)
 	}
-	if !ok {
-		return errors.Trace(ErrInvalidMessage)
-	}
-	if err := eventCallback(&DeviceInfo{Name: device}, event); err != nil {
+	if err := c.eventCb(&DeviceInfo{Name: device}, &event); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
@@ -216,13 +196,13 @@ func (c *DmCtx) processing(ch chan *v1.Message) {
 			return
 		case msg := <-ch:
 			switch msg.Kind {
-			case v1.MessageDelta:
+			case v1.MessageDeviceDelta:
 				if err := c.processDelta(msg); err != nil {
 					c.log.Error("failed to process delta message", log.Error(err))
 				} else {
 					c.log.Info("process delta message successfully")
 				}
-			case v1.MessageEvent:
+			case v1.MessageDeviceEvent:
 				if err := c.processEvent(msg); err != nil {
 					c.log.Error("failed to process event message", log.Error(err))
 				} else {
@@ -253,11 +233,11 @@ func (c *DmCtx) GetAllDevices() []DeviceInfo {
 	return c.SystemConfigExt().Devices
 }
 
-func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, props *DeviceProperties) error {
+func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error {
 	msg := &v1.Message{
-		Kind:     v1.MessageReport,
+		Kind:     v1.MessageDeviceReport,
 		Metadata: map[string]string{KeyDevice: info.Name},
-		Content:  v1.LazyValue{Value: props},
+		Content:  v1.LazyValue{Value: report},
 	}
 	pld, err := json.Marshal(msg)
 	if err != nil {
@@ -301,30 +281,30 @@ func (c *DmCtx) GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error) {
 	}
 }
 
-func (c *DmCtx) RegisterDeltaCallback(info *DeviceInfo, cb DeltaCallback) {
-	_, ok := c.deltas.LoadOrStore(info.Name, cb)
-	if ok {
-		c.log.Info("delta callback has updated for device", log.Any("device", info.Name))
-	} else {
-		c.log.Info("delta callback has registered for device", log.Any("device", info.Name))
+func (c *DmCtx) RegisterDeltaCallback(cb DeltaCallback) error {
+	if c.deltaCb != nil {
+		return errors.New("delta callback already registered")
 	}
+	c.deltaCb = cb
+	c.log.Debug("register delta callback successfully")
+	return nil
 }
 
-func (c *DmCtx) RegisterEventCallback(info *DeviceInfo, cb EventCallback) {
-	_, ok := c.events.LoadOrStore(info.Name, cb)
-	if ok {
-		c.log.Info("event callback has updated for device", log.Any("device", info.Name))
-	} else {
-		c.log.Info("event callback has registered for device", log.Any("device", info.Name))
+func (c *DmCtx) RegisterEventCallback(cb EventCallback) error {
+	if c.eventCb != nil {
+		return errors.New("event callback already registered")
 	}
+	c.eventCb = cb
+	c.log.Debug("register event callback successfully")
+	return nil
 }
 
 func (c *DmCtx) Online(info *DeviceInfo) error {
-	props := DeviceProperties{Name: info.Name, Props: map[string]interface{}{KeyStatus: OnlineStatus}}
+	r := v1.Report{KeyStatus: OnlineStatus}
 	msg := &v1.Message{
-		Kind:     v1.MessageReport,
+		Kind:     v1.MessageDeviceReport,
 		Metadata: map[string]string{KeyDevice: info.Name},
-		Content:  v1.LazyValue{Value: props},
+		Content:  v1.LazyValue{Value: r},
 	}
 	pld, err := json.Marshal(msg)
 	if err != nil {
@@ -338,11 +318,11 @@ func (c *DmCtx) Online(info *DeviceInfo) error {
 }
 
 func (c *DmCtx) Offline(info *DeviceInfo) error {
-	props := DeviceProperties{Name: info.Name, Props: map[string]interface{}{KeyStatus: OfflineStatus}}
+	r := v1.Report{KeyStatus: OfflineStatus}
 	msg := &v1.Message{
-		Kind:     v1.MessageReport,
+		Kind:     v1.MessageDeviceReport,
 		Metadata: map[string]string{KeyDevice: info.Name},
-		Content:  v1.LazyValue{Value: props},
+		Content:  v1.LazyValue{Value: r},
 	}
 	pld, err := json.Marshal(msg)
 	if err != nil {
@@ -355,8 +335,8 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 	return nil
 }
 
-func (c *DmCtx) GetDriverConfig() (string, error) {
-	res, err := ioutil.ReadFile(DefaultDriverConf)
+func (c *DmCtx) GetDeviceAccessConfig() (string, error) {
+	res, err := ioutil.ReadFile(DefaultAccessConf)
 	if err != nil {
 		return "", errors.Trace(err)
 	}

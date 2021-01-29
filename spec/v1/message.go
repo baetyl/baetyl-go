@@ -26,8 +26,14 @@ const (
 	MessageNodeProps MessageKind = "nodeProps"
 	// MessageDevices devices message kind
 	MessageDevices MessageKind = "devices"
-	// MessageDeviceProps device props message kind
-	MessageDeviceProps MessageKind = "deviceProps"
+	// MessageDeviceEvent device event message kind
+	MessageDeviceEvent MessageKind = "deviceEvent"
+	// MessageReport device report message kind
+	MessageDeviceReport MessageKind = "deviceReport"
+	// MessageDesire device desire message kind
+	MessageDeviceDesire MessageKind = "deviceDesire"
+	// MessageDesire device delta message kind
+	MessageDeviceDelta MessageKind = "deviceDelta"
 )
 
 // Message general structure for http and ws sync
