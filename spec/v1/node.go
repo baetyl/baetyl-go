@@ -38,6 +38,7 @@ const (
 	KeyGPUPercent               = "percent"
 
 	BaetylCoreFrequency = "BaetylCoreFrequency"
+	BaetylCoreAPIPort   = "BaetylCoreAPIPort"
 )
 
 type SyncMode string

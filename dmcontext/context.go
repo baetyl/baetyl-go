@@ -62,7 +62,7 @@ type Context interface {
 	Online(info *DeviceInfo) error
 	Offline(info *DeviceInfo) error
 	GetDeviceAccessConfig() (string, error)
-	GetDevicePropConfigs () (map[string]DevicePropConfigs, error)
+	GetDevicePropConfigs() (map[string]DevicePropConfigs, error)
 	Start()
 	io.Closer
 }
