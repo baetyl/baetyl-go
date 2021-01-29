@@ -47,14 +47,9 @@ type DeviceShadow struct {
 	Desire v1.Desire `json:"desire,omitempty"`
 }
 
-type DeviceEvent struct {
-	Name  string      `json:"name,omitempty"`
-	Event interface{} `json:"event,omitempty"`
-}
-
 type DeltaCallback func(*DeviceInfo, v1.Delta) error
 
-type EventCallback func(*DeviceInfo, Event) error
+type EventCallback func(*DeviceInfo, *Event) error
 
 type Context interface {
 	context.Context
@@ -163,7 +158,7 @@ func (c *DmCtx) processEvent(msg *v1.Message) error {
 	if err := msg.Content.Unmarshal(&event); err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.eventCb(&DeviceInfo{Name: device}, event); err != nil {
+	if err := c.eventCb(&DeviceInfo{Name: device}, &event); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
