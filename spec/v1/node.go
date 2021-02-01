@@ -154,6 +154,49 @@ func patch(doc, delta map[string]interface{}) (map[string]interface{}, error) {
 	return newDoc, nil
 }
 
+func getDeviceInfos(data map[string]interface{}) []DeviceInfo {
+	if data == nil {
+		return nil
+	}
+	devs, ok := data[KeyDevices]
+	if !ok || devs == nil {
+		return nil
+	}
+	res, ok := devs.([]DeviceInfo)
+	if ok {
+		return res
+	}
+	res = []DeviceInfo{}
+	dis, ok := devs.([]interface{})
+	if !ok {
+		return nil
+	}
+	for _, di := range dis {
+		dim := di.(map[string]interface{})
+		if dim == nil {
+			return nil
+		}
+		res = append(res, DeviceInfo{Name: dim["name"].(string), Version: dim["version"].(string)})
+	}
+	return res
+}
+
+func (r Report) DeviceInfos() []DeviceInfo {
+	return getDeviceInfos(r)
+}
+
+func (r Report) SetDeviceInfos(devs []DeviceInfo) {
+	r[KeyDevices] = devs
+}
+
+func (d Desire) DeviceInfos() []DeviceInfo {
+	return getDeviceInfos(d)
+}
+
+func (d Desire) SetDeviceInfos(devs []DeviceInfo) {
+	d[KeyDevices] = devs
+}
+
 func (r Report) AppInfos(isSys bool) []AppInfo {
 	if isSys {
 		return getAppInfos(KeySysApps, r)

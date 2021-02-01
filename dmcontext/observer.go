@@ -18,11 +18,11 @@ const (
 
 type observer struct {
 	log  *log.Logger
-	msgs map[string]chan *v1.Message
+	msgChs map[string]chan *v1.Message
 }
 
-func newObserver(msgs map[string]chan *v1.Message, log *log.Logger) mqtt.Observer {
-	return &observer{msgs: msgs, log: log}
+func newObserver(msgChs map[string]chan *v1.Message, log *log.Logger) mqtt.Observer {
+	return &observer{msgChs: msgChs, log: log}
 }
 
 func ParseTopic(topic string) (string, error) {
@@ -49,7 +49,7 @@ func (o *observer) OnPublish(pkt *packet.Publish) error {
 			log.Any("payload", string(pkt.Message.Payload)))
 		return nil
 	}
-	if ch, ok := o.msgs[device]; ok {
+	if ch, ok := o.msgChs[device]; ok {
 		select {
 		case ch <- &msg:
 		default:
