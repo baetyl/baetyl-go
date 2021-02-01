@@ -285,7 +285,7 @@ func (c *DmCtx) GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error) {
 		info.Get.Topic, pld, 0, false, false); err != nil {
 		return nil, err
 	}
-	timer := time.NewTimer(20 * time.Second)
+	timer := time.NewTimer(time.Second)
 	ch := make(chan *DeviceShadow)
 	_, ok := c.response.LoadOrStore(info.Name, ch)
 	if ok {
