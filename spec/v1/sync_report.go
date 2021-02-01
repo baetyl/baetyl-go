@@ -41,6 +41,11 @@ type NodeStats struct {
 	Extension          interface{}       `yaml:"extension,omitempty" json:"extension,omitempty"`
 }
 
+type DeviceInfo struct {
+	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
+	Version string `yaml:"version,omitempty" json:"version,omitempty"`
+}
+
 // AppInfo app info
 type AppInfo struct {
 	Name    string `yaml:"name,omitempty" json:"name,omitempty"`

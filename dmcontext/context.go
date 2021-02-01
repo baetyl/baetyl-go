@@ -23,6 +23,7 @@ const (
 	OnlineStatus      = "online"
 	OfflineStatus     = "offline"
 	TypeReportEvent   = "report"
+	KeySysExtConf     = "BAETYL_SYSTEM_EXT_CONF"
 )
 
 var (
@@ -31,10 +32,35 @@ var (
 	ErrResponseChannelNotExist = errors.New("response channel not exist")
 )
 
-type DevicePropConfigs struct {
-	Name        string            `yaml:"name,omitempty" json:"name,omitempty"`
-	PropConfigs map[string]string `yaml:"propConfigs,omitempty" json:"propConfigs,omitempty"`
+type DeviceProperty struct {
+	Name    string          `json:"name,omitempty"`
+	Type    string          `json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
+	Mode    string          `json:"mode,omitempty" validate:"regexp=^(ro|rw)?$"`
+	Visitor PropertyVisitor `json:"visitor,omitempty"`
 }
+
+type PropertyVisitor struct {
+	Modbus *ModbusVisitor `json:"modbus,omitempty"`
+	Opcua  *OpcuaVisitor  `json:"opcua,omitempty"`
+	Custom *CustomVisitor `json:"custom,omitempty"`
+}
+
+type ModbusVisitor struct {
+	Function     byte    `json:"function" validate:"min=1,max=4"`
+	Address      string  `json:"address"`
+	Quantity     uint16  `json:"quantity"`
+	Type         string  `json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
+	Scale        float64 `json:"scale"`
+	SwapByte     bool    `json:"swapByte"`
+	SwapRegister bool    `json:"swapRegister"`
+}
+
+type OpcuaVisitor struct {
+	NodeID string `json:"nodeid,omitempty"`
+	Type   string `json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
+}
+
+type CustomVisitor string
 
 type Event struct {
 	Type    string      `yaml:"type,omitempty" json:"type,omitempty"`
@@ -62,7 +88,7 @@ type Context interface {
 	Online(info *DeviceInfo) error
 	Offline(info *DeviceInfo) error
 	GetDeviceAccessConfig() (string, error)
-	GetDevicePropConfigs() (map[string]DevicePropConfigs, error)
+	GetDevicePropConfigs() (map[string][]DeviceProperty, error)
 	Start()
 	io.Closer
 }
@@ -75,7 +101,7 @@ type DmCtx struct {
 	eventCb  EventCallback
 	deltaCb  DeltaCallback
 	response sync.Map
-	msgs     map[string]chan *v1.Message
+	msgChs   map[string]chan *v1.Message
 }
 
 func NewContext(confFile string) Context {
@@ -98,7 +124,7 @@ func NewContext(confFile string) Context {
 		c.log.Error("failed to load system config, to use default config", log.Error(err))
 		utils.UnmarshalYAML(nil, sc)
 	}
-	c.Store(context.KeySysConf, sc)
+	c.Store(KeySysExtConf, sc)
 
 	var subs []mqtt2.QOSTopic
 	for _, dev := range sc.Devices {
@@ -109,8 +135,8 @@ func NewContext(confFile string) Context {
 		c.log.Warn("fail to create system broker client", log.Any("error", err))
 	}
 	c.mqtt = mqtt
-	c.msgs = make(map[string]chan *v1.Message, 1024)
-	if err := c.mqtt.Start(newObserver(c.msgs, c.log)); err != nil {
+	c.msgChs = make(map[string]chan *v1.Message)
+	if err := c.mqtt.Start(newObserver(c.msgChs, c.log)); err != nil {
 		c.log.Warn("fail to start mqtt client", log.Any("error", err))
 	}
 	return c
@@ -119,8 +145,8 @@ func NewContext(confFile string) Context {
 func (c *DmCtx) Start() {
 	devices := c.SystemConfigExt().Devices
 	for _, dev := range devices {
-		c.msgs[dev.Name] = make(chan *v1.Message)
-		go c.processing(c.msgs[dev.Name])
+		c.msgChs[dev.Name] = make(chan *v1.Message, 1024)
+		go c.processing(c.msgChs[dev.Name])
 	}
 }
 
@@ -222,7 +248,7 @@ func (c *DmCtx) processing(ch chan *v1.Message) {
 }
 
 func (c *DmCtx) SystemConfigExt() *SystemConfig {
-	v, ok := c.Load(context.KeySysConf)
+	v, ok := c.Load(KeySysExtConf)
 	if !ok {
 		return nil
 	}
@@ -343,8 +369,8 @@ func (c *DmCtx) GetDeviceAccessConfig() (string, error) {
 	return string(res), nil
 }
 
-func (c *DmCtx) GetDevicePropConfigs() (map[string]DevicePropConfigs, error) {
-	var res map[string]DevicePropConfigs
+func (c *DmCtx) GetDevicePropConfigs() (map[string][]DeviceProperty, error) {
+	var res map[string][]DeviceProperty
 	if err := c.LoadCustomConfig(&res, DefaultPropsConf); err != nil {
 		return nil, errors.Trace(err)
 	}
