@@ -2,6 +2,14 @@ package v1
 
 import "time"
 
+const (
+	TypeApplicationNative      = "native"
+	TypeApplicationContainer   = "container"
+	TypeApplicationDeployment  = "deployment"
+	TypeApplicationStatefulSet = "statefulset"
+	TypeApplicationDaemonSet   = "daemonset"
+)
+
 // Application application info
 type Application struct {
 	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName"`
