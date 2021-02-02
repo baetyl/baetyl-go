@@ -2,10 +2,20 @@ package v1
 
 import "time"
 
+const (
+	AppTypeContainer = "container"
+	AppTypeFunction  = "function"
+
+	AppDeployTypeDeployment  = "deployment"
+	AppDeployTypeStatefulSet = "statefulset"
+	AppDeployTypeDaemonSet   = "daemonset"
+)
+
 // Application application info
 type Application struct {
 	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName"`
 	Type              string            `json:"type,omitempty" yaml:"type,omitempty" default:"container"`
+	DeployType        string            `json:"deployType,omitempty" yaml:"deployType,omitempty" default:"deployment"`
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Namespace         string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
