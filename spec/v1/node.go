@@ -68,7 +68,6 @@ type NodeView struct {
 	Name              string            `json:"name,omitempty" yaml:"name,omitempty"`
 	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
-	Cluster           bool              `json:"cluster,omitempty" yaml:"cluster,omitempty"`
 	Accelerator       string            `json:"accelerator,omitempty" yaml:"accelerator,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
@@ -76,6 +75,7 @@ type NodeView struct {
 	Desire            Desire            `json:"desire,omitempty" yaml:"desire,omitempty"`
 	SysApps           []string          `json:"sysApps,omitempty" yaml:"sysApps,omitempty"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
+	Cluster           bool              `json:"cluster" yaml:"cluster"`
 	Ready             bool              `json:"ready"`
 	Mode              SyncMode          `json:"mode"`
 }
