@@ -13,19 +13,20 @@ const (
 
 // NodeInfo node info
 type NodeInfo struct {
-	Hostname         string `yaml:"hostname,omitempty" json:"hostname,omitempty"`
-	Address          string `yaml:"address,omitempty" json:"address,omitempty"`
-	Arch             string `yaml:"arch,omitempty" json:"arch,omitempty"`
-	KernelVersion    string `yaml:"kernelVer,omitempty" json:"kernelVer,omitempty"`
-	OS               string `yaml:"os,omitempty" json:"os,omitempty"`
-	ContainerRuntime string `yaml:"containerRuntime,omitempty" json:"containerRuntime"`
-	MachineID        string `yaml:"machineID,omitempty" json:"machineID"`
-	BootID           string `yaml:"bootID,omitempty" json:"bootID"`
-	SystemUUID       string `yaml:"systemUUID,omitempty" json:"systemUUID"`
-	OSImage          string `yaml:"osImage,omitempty" json:"osImage"`
-	Variant          string `yaml:"variant,omitempty" json:"variant,omitempty"`
-	HostID           string `yaml:"hostID,omitempty" json:"hostID,omitempty"`
-	Role             string `yaml:"role,omitempty" json:"role,omitempty"`
+	Hostname         string            `yaml:"hostname,omitempty" json:"hostname,omitempty"`
+	Address          string            `yaml:"address,omitempty" json:"address,omitempty"`
+	Arch             string            `yaml:"arch,omitempty" json:"arch,omitempty"`
+	KernelVersion    string            `yaml:"kernelVer,omitempty" json:"kernelVer,omitempty"`
+	OS               string            `yaml:"os,omitempty" json:"os,omitempty"`
+	ContainerRuntime string            `yaml:"containerRuntime,omitempty" json:"containerRuntime"`
+	MachineID        string            `yaml:"machineID,omitempty" json:"machineID"`
+	BootID           string            `yaml:"bootID,omitempty" json:"bootID"`
+	SystemUUID       string            `yaml:"systemUUID,omitempty" json:"systemUUID"`
+	OSImage          string            `yaml:"osImage,omitempty" json:"osImage"`
+	Variant          string            `yaml:"variant,omitempty" json:"variant,omitempty"`
+	HostID           string            `yaml:"hostID,omitempty" json:"hostID,omitempty"`
+	Role             string            `yaml:"role,omitempty" json:"role,omitempty"`
+	Labels           map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"  validate:"omitempty,validLabels"`
 }
 
 // NodeStats node statistics
