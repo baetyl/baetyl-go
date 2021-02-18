@@ -17,7 +17,7 @@ const (
 )
 
 type observer struct {
-	log  *log.Logger
+	log    *log.Logger
 	msgChs map[string]chan *v1.Message
 }
 

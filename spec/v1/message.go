@@ -34,6 +34,13 @@ const (
 	MessageDeviceDesire MessageKind = "deviceDesire"
 	// MessageDesire device delta message kind
 	MessageDeviceDelta MessageKind = "deviceDelta"
+
+	// MessageCommandConnect start remote debug command
+	MessageCommandConnect = "connect"
+	// MessageCommandDisconnect stop remote debug command
+	MessageCommandDisconnect = "disconnect"
+	// MessageCommandNodeLabel label the edge cluster nodes
+	MessageCommandNodeLabel = "nodeLabel"
 )
 
 // Message general structure for http and ws sync
