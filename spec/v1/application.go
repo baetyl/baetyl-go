@@ -15,6 +15,7 @@ const (
 type Application struct {
 	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName"`
 	Type              string            `json:"type,omitempty" yaml:"type,omitempty" default:"container"`
+	Mode              string            `json:"mode,omitempty" default:"kube"`
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Namespace         string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 	CreationTimestamp time.Time         `json:"createTime,omitempty" yaml:"createTime,omitempty"`
