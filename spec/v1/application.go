@@ -35,7 +35,7 @@ type Service struct {
 	// specifies the hostname of the service
 	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 	// specifies the image of the service, usually using the Docker image name
-	Image string `json:"image,omitempty" yaml:"image,omitempty" binding:"required"`
+	Image string `json:"image,omitempty" yaml:"image,omitempty"`
 	// specifies the number of instances started
 	Replica int `json:"replica,omitempty" yaml:"replica,omitempty" binding:"required" default:"1"`
 	// specifies the storage volumes that the service needs, map the storage volume to the directory in the container
