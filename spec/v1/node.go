@@ -53,6 +53,7 @@ type Node struct {
 	Version           string                 `json:"version,omitempty" yaml:"version,omitempty"`
 	CreationTimestamp time.Time              `json:"createTime,omitempty" yaml:"createTime,omitempty"`
 	Accelerator       string                 `json:"accelerator,omitempty" yaml:"accelerator,omitempty"`
+	Mode              SyncMode               `json:"mode,omitempty" yaml:"mode,omitempty"`
 	Cluster           bool                   `json:"cluster,omitempty" yaml:"cluster,omitempty"`
 	Labels            map[string]string      `json:"labels,omitempty" yaml:"labels,omitempty" validate:"omitempty,validLabels"`
 	Annotations       map[string]string      `json:"annotations,omitempty" yaml:"annotations,omitempty"`
@@ -274,18 +275,6 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 	err = json.Unmarshal(nodeStr, view)
 	if err != nil {
 		return nil, errors.Trace(err)
-	}
-	// default mode is cloud
-	view.Mode = CloudMode
-	if attr := n.Attributes; attr != nil {
-		if modeVal, ok := attr[KeySyncMode]; ok {
-			if mode, ok := modeVal.(string); ok {
-				view.Mode = SyncMode(mode)
-			}
-		}
-		if val, ok := attr[KeyAccelerator]; ok {
-			view.Accelerator, _ = val.(string)
-		}
 	}
 	if err = view.populateNodeStats(timeout); err != nil {
 		return nil, errors.Trace(err)
