@@ -286,16 +286,6 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 		if val, ok := attr[KeyAccelerator]; ok {
 			view.Accelerator, _ = val.(string)
 		}
-		if val, ok := attr[KeyOptionalSysApps]; ok {
-			view.SysApps = make([]string, 0)
-			if ss, ok := val.([]interface{}); ok {
-				for _, d := range ss {
-					if s, ok := d.(string); ok {
-						view.SysApps = append(view.SysApps, s)
-					}
-				}
-			}
-		}
 	}
 	if err = view.populateNodeStats(timeout); err != nil {
 		return nil, errors.Trace(err)
