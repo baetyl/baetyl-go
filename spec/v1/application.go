@@ -31,7 +31,7 @@ type Application struct {
 // Service service config1ma1
 type Service struct {
 	// specifies the unique name of the service
-	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" validate:"resourceName"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" validate:"serviceName"`
 	// specifies the hostname of the service
 	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 	// specifies the image of the service, usually using the Docker image name
