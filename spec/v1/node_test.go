@@ -697,6 +697,29 @@ func TestPopulateNodeStats(t *testing.T) {
 	assert.Equal(t, node6.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "0")
 	assert.Equal(t, node6.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0")
 	assert.Equal(t, node6.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0")
+
+	node7 := NodeView{
+		Report: &ReportView{
+			NodeStats: map[string]*NodeStats{
+				"master": {
+					Usage: map[string]string{
+						"cpu":    "1",
+						"memory": "2037",
+					},
+					Capacity: map[string]string{
+						"cpu":    "1",
+						"memory": "2036",
+					},
+				},
+			},
+		},
+	}
+	err = node7.populateNodeStats(time.Minute)
+	assert.NoError(t, err)
+	assert.Equal(t, node7.Report.NodeStats["master"].Capacity[string(coreV1.ResourceCPU)], "1")
+	assert.Equal(t, node7.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "1")
+	assert.Equal(t, node7.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "1")
+	assert.Equal(t, node7.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "1")
 }
 
 func TestShadowDiffV2(t *testing.T) {

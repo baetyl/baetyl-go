@@ -402,6 +402,9 @@ func (s *NodeStats) processResourcePercent(status *NodeStats, resourceType strin
 	}
 
 	if capOk && usageOk && total != 0 {
+		if usage >= total {
+			return "1", nil
+		}
 		return strconv.FormatFloat(float64(usage)/float64(total), 'f', -1, 64), nil
 	}
 	return "0", nil
