@@ -39,6 +39,7 @@ const (
 
 	BaetylCoreFrequency = "BaetylCoreFrequency"
 	BaetylCoreAPIPort   = "BaetylCoreAPIPort"
+	BaetylCoreVersion   = "BaetylCoreVersion"
 )
 
 type SyncMode string
