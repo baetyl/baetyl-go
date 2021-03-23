@@ -33,9 +33,17 @@ const (
 	KeyOptionalSysApps          = "optionalSysApps"
 	NVAccelerator               = "nvidia"
 	ResourceGPU                 = "gpu"
+	ResourceDisk                = "disk"
 	KeyGPUUsedMemory            = "usedMemory"
 	KeyGPUTotalMemory           = "totalMemory"
 	KeyGPUPercent               = "percent"
+	KeyDiskUsed                 = "diskUsed"
+	KeyDiskTotal                = "diskTotal"
+	KeyDiskPercent              = "diskPercent"
+	KeyNetBytesSent             = "netBytesSent"
+	KeyNetBytesRecv             = "netBytesRecv"
+	KeyNetPacketsSent           = "netPacketsSent"
+	KeyNetPacketsRecv           = "netPacketsRecv"
 
 	BaetylCoreFrequency = "BaetylCoreFrequency"
 	BaetylCoreAPIPort   = "BaetylCoreAPIPort"
@@ -355,9 +363,11 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 			if s.Percent[cpu], err = s.processResourcePercent(s, cpu, populateCPUResource); err != nil {
 				return errors.Trace(err)
 			}
-			if extension := s.Extension; extension != nil &&
-				view.Accelerator == NVAccelerator {
-				populateGPUStats(s, extension)
+			if extension := s.Extension; extension != nil {
+				if view.Accelerator == NVAccelerator {
+					populateGPUStats(s, extension)
+				}
+				populateDiskNetStats(s, extension)
 			}
 		}
 	}
@@ -382,6 +392,38 @@ func populateGPUStats(s *NodeStats, extension interface{}) {
 	if val, ok := stats[KeyGPUPercent]; ok {
 		percent, _ := val.(float64)
 		s.Percent[ResourceGPU] = strconv.FormatFloat(percent, 'f', -1, 64)
+	}
+}
+
+func populateDiskNetStats(s *NodeStats, extension interface{}) {
+	stats, _ := extension.(map[string]interface{})
+	if val, ok := stats[KeyDiskUsed]; ok {
+		used, _ := val.(uint64)
+		s.Usage[ResourceDisk] = strconv.FormatUint(used, 10)
+	}
+	if val, ok := stats[KeyDiskTotal]; ok {
+		total, _ := val.(uint64)
+		s.Capacity[ResourceDisk] = strconv.FormatUint(total, 10)
+	}
+	if val, ok := stats[KeyDiskPercent]; ok {
+		percent, _ := val.(float64)
+		s.Percent[ResourceDisk] = strconv.FormatFloat(percent, 'f', -1, 64)
+	}
+	if val, ok := stats[KeyNetBytesSent]; ok {
+		bytesSent, _ := val.(float64)
+		s.NetIO[KeyNetBytesSent] = strconv.FormatFloat(bytesSent, 'f', -1, 64)
+	}
+	if val, ok := stats[KeyNetBytesRecv]; ok {
+		bytesRecv, _ := val.(float64)
+		s.NetIO[KeyNetBytesRecv] = strconv.FormatFloat(bytesRecv, 'f', -1, 64)
+	}
+	if val, ok := stats[KeyNetPacketsRecv]; ok {
+		packetsRecv, _ := val.(uint64)
+		s.NetIO[KeyNetPacketsRecv] = strconv.FormatUint(packetsRecv, 10)
+	}
+	if val, ok := stats[KeyNetPacketsSent]; ok {
+		packetsSent, _ := val.(uint64)
+		s.NetIO[KeyNetPacketsSent] = strconv.FormatUint(packetsSent, 10)
 	}
 }
 
