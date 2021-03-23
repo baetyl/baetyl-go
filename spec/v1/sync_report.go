@@ -39,6 +39,7 @@ type NodeStats struct {
 	Usage              map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
 	Capacity           map[string]string `yaml:"capacity,omitempty" json:"capacity,omitempty"`
 	Percent            map[string]string `yaml:"percent,omitempty" json:"percent,omitempty"`
+	NetIO              map[string]string `yaml:"netio,omitempty" json:"netio,omitempty"`
 	Extension          interface{}       `yaml:"extension,omitempty" json:"extension,omitempty"`
 }
 
