@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"bytes"
 	"encoding/json"
 )
 
@@ -45,6 +46,24 @@ func (v *LazyValue) Unmarshal(obj interface{}) error {
 			return err
 		}
 		return json.Unmarshal(bs, obj)
+	}
+	return nil
+}
+
+func (v *LazyValue) ExactUnmarshal(obj interface{}) error {
+	if v.doc != nil {
+		decoder := json.NewDecoder(bytes.NewReader(v.doc))
+		decoder.UseNumber()
+		return decoder.Decode(obj)
+	}
+	if v.Value != nil {
+		bs, err := json.Marshal(v.Value)
+		if err != nil {
+			return err
+		}
+		decoder := json.NewDecoder(bytes.NewReader(bs))
+		decoder.UseNumber()
+		return decoder.Decode(obj)
 	}
 	return nil
 }
