@@ -77,4 +77,36 @@ func TestSpecV1_LazyValue(t *testing.T) {
 	data4, err := json.Marshal(msg3)
 	assert.NoError(t, err)
 	assert.Equal(t, expData, string(data4))
+
+	i64 := int64(-1958835689816845425)
+	s := "test"
+	b := true
+	msg4 := &Message{
+		Kind:     MessageReport,
+		Content:  LazyValue{Value: map[string]interface{}{"int64": i64, "string": s, "bool": b}},
+	}
+	data5, err := json.Marshal(msg4)
+	assert.NoError(t, err)
+	var res Message
+	err = json.Unmarshal(data5, &res)
+	assert.NoError(t, err)
+	var im map[string]interface{}
+	err = res.Content.Unmarshal(&im)
+	assert.NoError(t, err)
+	resi := int64(im["int64"].(float64))
+	resb := im["bool"].(bool)
+	ress := im["string"].(string)
+	assert.NotEqual(t, resi, i64)
+	assert.Equal(t, resb, b)
+	assert.Equal(t, ress, s)
+
+	err = res.Content.ExactUnmarshal(&im)
+	assert.NoError(t, err)
+	resi, err = im["int64"].(json.Number).Int64()
+	resb = im["bool"].(bool)
+	ress = im["string"].(string)
+	assert.NoError(t, err)
+	assert.Equal(t, resi, i64)
+	assert.Equal(t, resb, b)
+	assert.Equal(t, ress, s)
 }
