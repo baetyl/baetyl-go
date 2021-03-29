@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/baetyl/baetyl-go/v2/context"
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
@@ -16,92 +18,58 @@ import (
 )
 
 const (
-	DefaultAccessConf = "/etc/baetyl/access.yml"
-	DefaultPropsConf  = "/etc/baetyl/props.yml"
+	DefaultAccessConf = "etc/baetyl/access.yml"
+	DefaultPropsConf  = "etc/baetyl/props.yml"
+	DefaultDriverConf = "etc/baetyl/conf.yml"
 	KeyDevice         = "device"
 	KeyStatus         = "status"
 	OnlineStatus      = "online"
 	OfflineStatus     = "offline"
 	TypeReportEvent   = "report"
-	KeySysExtConf     = "BAETYL_SYSTEM_EXT_CONF"
 )
 
 var (
 	ErrInvalidMessage          = errors.New("invalid device message")
 	ErrInvalidChannel          = errors.New("invalid channel")
 	ErrResponseChannelNotExist = errors.New("response channel not exist")
+	ErrAccessConfigNotExist    = errors.New("access config not exist")
+	ErrPropsConfigNotExist     = errors.New("properties config not exist")
 )
 
-type DeviceProperty struct {
-	Name    string          `json:"name,omitempty"`
-	Type    string          `json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
-	Mode    string          `json:"mode,omitempty" validate:"regexp=^(ro|rw)?$"`
-	Visitor PropertyVisitor `json:"visitor,omitempty"`
-}
-
-type PropertyVisitor struct {
-	Modbus *ModbusVisitor `json:"modbus,omitempty"`
-	Opcua  *OpcuaVisitor  `json:"opcua,omitempty"`
-	Custom *CustomVisitor `json:"custom,omitempty"`
-}
-
-type ModbusVisitor struct {
-	Function     byte    `json:"function" validate:"min=1,max=4"`
-	Address      string  `json:"address"`
-	Quantity     uint16  `json:"quantity"`
-	Type         string  `json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
-	Scale        float64 `json:"scale"`
-	SwapByte     bool    `json:"swapByte"`
-	SwapRegister bool    `json:"swapRegister"`
-}
-
-type OpcuaVisitor struct {
-	NodeID string `json:"nodeid,omitempty"`
-	Type   string `json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
-}
-
-type CustomVisitor string
-
-type Event struct {
-	Type    string      `yaml:"type,omitempty" json:"type,omitempty"`
-	Payload interface{} `yaml:"payload,omitempty" json:"payload,omitempty"`
-}
-
-type DeviceShadow struct {
-	Name   string    `json:"name,omitempty"`
-	Report v1.Report `json:"report,omitempty"`
-	Desire v1.Desire `json:"desire,omitempty"`
-}
-
 type DeltaCallback func(*DeviceInfo, v1.Delta) error
-
 type EventCallback func(*DeviceInfo, *Event) error
 
 type Context interface {
 	context.Context
-	SystemConfigExt() *SystemConfig
 	GetAllDevices() []DeviceInfo
 	ReportDeviceProperties(*DeviceInfo, v1.Report) error
-	GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error)
+	GetDeviceProperties(device *DeviceInfo) (*DeviceShadow, error)
 	RegisterDeltaCallback(cb DeltaCallback) error
 	RegisterEventCallback(cb EventCallback) error
-	Online(info *DeviceInfo) error
-	Offline(info *DeviceInfo) error
-	GetDeviceAccessConfig() (string, error)
-	GetDevicePropConfigs() (map[string][]DeviceProperty, error)
+	Online(device *DeviceInfo) error
+	Offline(device *DeviceInfo) error
+	GetDriverConfig() string
+	GetAccessConfig() map[string]string
+	GetDeviceAccessConfig(device *DeviceInfo) (string, error)
+	GetPropertiesConfig() map[string][]DeviceProperty
+	GetDevicePropertiesConfig(device *DeviceInfo) ([]DeviceProperty, error)
 	Start()
 	io.Closer
 }
 
 type DmCtx struct {
 	context.Context
-	log      *log.Logger
-	mqtt     *mqtt2.Client
-	tomb     utils.Tomb
-	eventCb  EventCallback
-	deltaCb  DeltaCallback
-	response sync.Map
-	msgChs   map[string]chan *v1.Message
+	log          *log.Logger
+	mqtt         *mqtt2.Client
+	tomb         utils.Tomb
+	eventCb      EventCallback
+	deltaCb      DeltaCallback
+	response     sync.Map
+	devices      map[string]DeviceInfo
+	msgChs       map[string]chan *v1.Message
+	driverConfig string
+	propsConfig  map[string][]DeviceProperty
+	accessConfig map[string]string
 }
 
 func NewContext(confFile string) Context {
@@ -119,17 +87,31 @@ func NewContext(confFile string) Context {
 		lfs = append(lfs, log.Any("service", c.ServiceName()))
 	}
 	c.log = log.With(lfs...)
-	sc := new(SystemConfig)
-	if err := c.LoadCustomConfig(sc); err != nil {
-		c.log.Error("failed to load system config, to use default config", log.Error(err))
-		utils.UnmarshalYAML(nil, sc)
-	}
-	c.Store(KeySysExtConf, sc)
 
-	var subs []mqtt2.QOSTopic
-	for _, dev := range sc.Devices {
-		subs = append(subs, dev.Delta, dev.Event, dev.GetResponse)
+	if err := unmarshalYAML(DefaultAccessConf, &c.accessConfig); err != nil {
+		c.log.Error("failed to load access config, to use default config", log.Error(err))
+		utils.UnmarshalYAML(nil, &c.accessConfig)
 	}
+
+	if err := unmarshalYAML(DefaultPropsConf, &c.propsConfig); err != nil {
+		c.log.Error("failed to load props config, to use default config", log.Error(err))
+		utils.UnmarshalYAML(nil, &c.propsConfig)
+	}
+
+	var dCfg driverConfig
+	if err := unmarshalYAML(DefaultDriverConf, &dCfg); err != nil {
+		c.log.Error("failed to load driver config, to use default config", log.Error(err))
+		utils.UnmarshalYAML(nil, &dCfg)
+	}
+	c.driverConfig = dCfg.Driver
+
+	devices := make(map[string]DeviceInfo)
+	var subs []mqtt2.QOSTopic
+	for _, dev := range dCfg.Devices {
+		subs = append(subs, dev.Delta, dev.Event, dev.GetResponse)
+		devices[dev.Name] = dev
+	}
+	c.devices = devices
 	mqtt, err := c.Context.NewSystemBrokerClient(subs)
 	if err != nil {
 		c.log.Warn("fail to create system broker client", log.Any("error", err))
@@ -143,9 +125,8 @@ func NewContext(confFile string) Context {
 }
 
 func (c *DmCtx) Start() {
-	devices := c.SystemConfigExt().Devices
-	for _, dev := range devices {
-		c.msgChs[dev.Name] = make(chan *v1.Message, 1024)
+	for name, dev := range c.devices {
+		c.msgChs[name] = make(chan *v1.Message, 1024)
 		go c.processing(c.msgChs[dev.Name])
 	}
 }
@@ -159,7 +140,7 @@ func (c *DmCtx) Close() error {
 }
 
 func (c *DmCtx) processDelta(msg *v1.Message) error {
-	device := msg.Metadata[KeyDevice]
+	deviceName := msg.Metadata[KeyDevice]
 	if c.deltaCb == nil {
 		c.log.Debug("delta callback not set and message will not be process")
 		return nil
@@ -168,14 +149,19 @@ func (c *DmCtx) processDelta(msg *v1.Message) error {
 	if err := msg.Content.Unmarshal(&delta); err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.deltaCb(&DeviceInfo{Name: device}, delta); err != nil {
+	dev, ok := c.devices[deviceName]
+	if !ok {
+		c.log.Warn("delta callback can not find device", log.Any("device", deviceName))
+		return nil
+	}
+	if err := c.deltaCb(&dev, delta); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
 }
 
 func (c *DmCtx) processEvent(msg *v1.Message) error {
-	device := msg.Metadata[KeyDevice]
+	deviceName := msg.Metadata[KeyDevice]
 	if c.eventCb == nil {
 		c.log.Debug("event callback not set and message will not be process")
 		return nil
@@ -184,7 +170,12 @@ func (c *DmCtx) processEvent(msg *v1.Message) error {
 	if err := msg.Content.Unmarshal(&event); err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.eventCb(&DeviceInfo{Name: device}, &event); err != nil {
+	dev, ok := c.devices[deviceName]
+	if !ok {
+		c.log.Warn("event callback can not find device", log.Any("device", deviceName))
+		return nil
+	}
+	if err := c.eventCb(&dev, &event); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
@@ -247,16 +238,12 @@ func (c *DmCtx) processing(ch chan *v1.Message) {
 	}
 }
 
-func (c *DmCtx) SystemConfigExt() *SystemConfig {
-	v, ok := c.Load(KeySysExtConf)
-	if !ok {
-		return nil
-	}
-	return v.(*SystemConfig)
-}
-
 func (c *DmCtx) GetAllDevices() []DeviceInfo {
-	return c.SystemConfigExt().Devices
+	var deviceList []DeviceInfo
+	for _, dev := range c.devices {
+		deviceList = append(deviceList, dev)
+	}
+	return deviceList
 }
 
 func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error {
@@ -361,18 +348,37 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 	return nil
 }
 
-func (c *DmCtx) GetDeviceAccessConfig() (string, error) {
-	res, err := ioutil.ReadFile(DefaultAccessConf)
-	if err != nil {
-		return "", errors.Trace(err)
-	}
-	return string(res), nil
+func (c *DmCtx) GetDriverConfig() string {
+	return c.driverConfig
+}
+func (c *DmCtx) GetAccessConfig() map[string]string {
+	return c.accessConfig
 }
 
-func (c *DmCtx) GetDevicePropConfigs() (map[string][]DeviceProperty, error) {
-	var res map[string][]DeviceProperty
-	if err := c.LoadCustomConfig(&res, DefaultPropsConf); err != nil {
-		return nil, errors.Trace(err)
+func (c *DmCtx) GetDeviceAccessConfig(device *DeviceInfo) (string, error) {
+	if cfg, ok := c.accessConfig[device.Name]; ok {
+		return cfg, nil
+	} else {
+		return "", ErrAccessConfigNotExist
 	}
-	return res, nil
+}
+
+func (c *DmCtx) GetPropertiesConfig() map[string][]DeviceProperty {
+	return c.propsConfig
+}
+
+func (c *DmCtx) GetDevicePropertiesConfig(device *DeviceInfo) ([]DeviceProperty, error) {
+	if cfg, ok := c.propsConfig[device.Name]; ok {
+		return cfg, nil
+	} else {
+		return nil, ErrPropsConfigNotExist
+	}
+}
+
+func unmarshalYAML(file string, out interface{}) error {
+	bs, err := ioutil.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(bs, out)
 }
