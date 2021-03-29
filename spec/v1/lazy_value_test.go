@@ -82,8 +82,8 @@ func TestSpecV1_LazyValue(t *testing.T) {
 	s := "test"
 	b := true
 	msg4 := &Message{
-		Kind:     MessageReport,
-		Content:  LazyValue{Value: map[string]interface{}{"int64": i64, "string": s, "bool": b}},
+		Kind:    MessageReport,
+		Content: LazyValue{Value: map[string]interface{}{"int64": i64, "string": s, "bool": b}},
 	}
 	data5, err := json.Marshal(msg4)
 	assert.NoError(t, err)
