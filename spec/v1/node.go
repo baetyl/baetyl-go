@@ -398,17 +398,18 @@ func populateGPUStats(s *NodeStats, extension interface{}) {
 func populateDiskNetStats(s *NodeStats, extension interface{}) {
 	stats, _ := extension.(map[string]interface{})
 	if val, ok := stats[KeyDiskUsed]; ok {
-		used, _ := val.(uint64)
-		s.Usage[ResourceDisk] = strconv.FormatUint(used, 10)
+		used, _ := val.(float64)
+		s.Usage[ResourceDisk] = strconv.FormatFloat(used, 'f', -1, 64)
 	}
 	if val, ok := stats[KeyDiskTotal]; ok {
-		total, _ := val.(uint64)
-		s.Capacity[ResourceDisk] = strconv.FormatUint(total, 10)
+		total, _ := val.(float64)
+		s.Capacity[ResourceDisk] = strconv.FormatFloat(total, 'f', -1, 64)
 	}
 	if val, ok := stats[KeyDiskPercent]; ok {
 		percent, _ := val.(float64)
 		s.Percent[ResourceDisk] = strconv.FormatFloat(percent, 'f', -1, 64)
 	}
+	s.NetIO = map[string]string{}
 	if val, ok := stats[KeyNetBytesSent]; ok {
 		bytesSent, _ := val.(float64)
 		s.NetIO[KeyNetBytesSent] = strconv.FormatFloat(bytesSent, 'f', -1, 64)
@@ -418,12 +419,12 @@ func populateDiskNetStats(s *NodeStats, extension interface{}) {
 		s.NetIO[KeyNetBytesRecv] = strconv.FormatFloat(bytesRecv, 'f', -1, 64)
 	}
 	if val, ok := stats[KeyNetPacketsRecv]; ok {
-		packetsRecv, _ := val.(uint64)
-		s.NetIO[KeyNetPacketsRecv] = strconv.FormatUint(packetsRecv, 10)
+		packetsRecv, _ := val.(float64)
+		s.NetIO[KeyNetPacketsRecv] = strconv.FormatFloat(packetsRecv, 'f', -1, 64)
 	}
 	if val, ok := stats[KeyNetPacketsSent]; ok {
-		packetsSent, _ := val.(uint64)
-		s.NetIO[KeyNetPacketsSent] = strconv.FormatUint(packetsSent, 10)
+		packetsSent, _ := val.(float64)
+		s.NetIO[KeyNetPacketsSent] = strconv.FormatFloat(packetsSent, 'f', -1, 64)
 	}
 }
 
