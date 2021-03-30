@@ -11,6 +11,7 @@ import (
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
+	"github.com/baetyl/baetyl-go/v2/context"
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
 )
@@ -82,6 +83,7 @@ type NodeView struct {
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Report            *ReportView       `json:"report,omitempty" yaml:"report,omitempty"`
+	AppMode           string            `json:"appMode,omitempty" yaml:"appMode,omitempty"`
 	Desire            Desire            `json:"desire,omitempty" yaml:"desire,omitempty"`
 	SysApps           []string          `json:"sysApps,omitempty" yaml:"sysApps,omitempty"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
@@ -299,6 +301,7 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 			}
 		}
 		report.countInstanceNum()
+		view.AppMode = report.calculateAppMode()
 	}
 	return view, nil
 }
@@ -452,6 +455,15 @@ func (s *NodeStats) processResourcePercent(status *NodeStats, resourceType strin
 		return strconv.FormatFloat(float64(usage)/float64(total), 'f', -1, 64), nil
 	}
 	return "0", nil
+}
+
+func (view *ReportView) calculateAppMode() string {
+	for _, node := range view.Node {
+		if node.ContainerRuntime == "" && node.MachineID == "" {
+			return context.RunModeNative
+		}
+	}
+	return context.RunModeKube
 }
 
 func (view *ReportView) countInstanceNum() {
