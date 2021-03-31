@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"strconv"
 	"sync"
 	"time"
 
@@ -34,6 +35,18 @@ var (
 	ErrResponseChannelNotExist = errors.New("response channel not exist")
 	ErrAccessConfigNotExist    = errors.New("access config not exist")
 	ErrPropsConfigNotExist     = errors.New("properties config not exist")
+	ErrDeviceNotExist          = errors.New("device not exist")
+	ErrTypeNotSupported        = errors.New("type not supported")
+)
+
+const (
+	TypeInt16   = "int16"
+	TypeInt32   = "int32"
+	TypeInt64   = "int64"
+	TypeFloat32 = "float32"
+	TypeFloat64 = "float64"
+	TypeBool    = "bool"
+	TypeString  = "string"
 )
 
 type DeltaCallback func(*DeviceInfo, v1.Delta) error
@@ -49,8 +62,8 @@ type Context interface {
 	Online(device *DeviceInfo) error
 	Offline(device *DeviceInfo) error
 	GetDriverConfig() string
-	GetAccessConfig() map[string]string
-	GetDeviceAccessConfig(device *DeviceInfo) (string, error)
+	GetAccessConfig() map[string]AccessConfig
+	GetDeviceAccessConfig(device *DeviceInfo) (*AccessConfig, error)
 	GetPropertiesConfig() map[string][]DeviceProperty
 	GetDevicePropertiesConfig(device *DeviceInfo) ([]DeviceProperty, error)
 	Start()
@@ -69,7 +82,7 @@ type DmCtx struct {
 	msgChs       map[string]chan *v1.Message
 	driverConfig string
 	propsConfig  map[string][]DeviceProperty
-	accessConfig map[string]string
+	accessConfig map[string]AccessConfig
 }
 
 func NewContext(confFile string) Context {
@@ -146,13 +159,16 @@ func (c *DmCtx) processDelta(msg *v1.Message) error {
 		return nil
 	}
 	var delta v1.Delta
-	if err := msg.Content.Unmarshal(&delta); err != nil {
+	if err := msg.Content.ExactUnmarshal(&delta); err != nil {
 		return errors.Trace(err)
 	}
 	dev, ok := c.devices[deviceName]
 	if !ok {
-		c.log.Warn("delta callback can not find device", log.Any("device", deviceName))
-		return nil
+		return errors.Trace(ErrDeviceNotExist)
+	}
+	delta, err := c.parsePropertyValues(deviceName, delta)
+	if err != nil {
+		return errors.Trace(err)
 	}
 	if err := c.deltaCb(&dev, delta); err != nil {
 		return errors.Trace(err)
@@ -182,8 +198,8 @@ func (c *DmCtx) processEvent(msg *v1.Message) error {
 }
 
 func (c *DmCtx) processResponse(msg *v1.Message) error {
-	device := msg.Metadata[KeyDevice]
-	val, ok := c.response.Load(device)
+	deviceName := msg.Metadata[KeyDevice]
+	val, ok := c.response.Load(deviceName)
 	if !ok {
 		return errors.Trace(ErrResponseChannelNotExist)
 	}
@@ -192,11 +208,20 @@ func (c *DmCtx) processResponse(msg *v1.Message) error {
 		return errors.Trace(ErrInvalidChannel)
 	}
 	var shad *DeviceShadow
-	if err := msg.Content.Unmarshal(&shad); err != nil {
+	if err := msg.Content.ExactUnmarshal(&shad); err != nil {
 		return errors.Trace(err)
 	}
 	if !ok {
 		return errors.Trace(ErrInvalidMessage)
+	}
+	var err error
+	shad.Report, err = c.parsePropertyValues(deviceName, shad.Report)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	shad.Desire, err = c.parsePropertyValues(deviceName, shad.Desire)
+	if err != nil {
+		return errors.Trace(err)
 	}
 	select {
 	case ch <- shad:
@@ -351,15 +376,15 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 func (c *DmCtx) GetDriverConfig() string {
 	return c.driverConfig
 }
-func (c *DmCtx) GetAccessConfig() map[string]string {
+func (c *DmCtx) GetAccessConfig() map[string]AccessConfig {
 	return c.accessConfig
 }
 
-func (c *DmCtx) GetDeviceAccessConfig(device *DeviceInfo) (string, error) {
+func (c *DmCtx) GetDeviceAccessConfig(device *DeviceInfo) (*AccessConfig, error) {
 	if cfg, ok := c.accessConfig[device.Name]; ok {
-		return cfg, nil
+		return &cfg, nil
 	} else {
-		return "", ErrAccessConfigNotExist
+		return nil, ErrAccessConfigNotExist
 	}
 }
 
@@ -381,4 +406,73 @@ func unmarshalYAML(file string, out interface{}) error {
 		return err
 	}
 	return yaml.Unmarshal(bs, out)
+}
+
+func (c *DmCtx) parsePropertyValues(devName string, props map[string]interface{}) (map[string]interface{}, error) {
+	res := make(map[string]interface{})
+	vals, ok := c.propsConfig[devName]
+	if !ok {
+		return nil, errors.Trace(ErrDeviceNotExist)
+	}
+	cfgs := make(map[string]DeviceProperty)
+	for _, val := range vals {
+		cfgs[val.Name] = val
+	}
+	for key, val := range props {
+		if cfg, ok := cfgs[key]; ok {
+			pVal, err := parsePropertyValue(cfg.Type, val)
+			if err != nil {
+				return nil, errors.Trace(err)
+			}
+			res[key] = pVal
+		} else {
+			return nil, errors.Trace(ErrPropsConfigNotExist)
+		}
+	}
+	return res, nil
+}
+
+func parsePropertyValue(tpy string, val interface{}) (interface{}, error) {
+	// it is json.Number (string actually) when val is number
+	switch tpy {
+	case TypeInt16:
+		num, _ := val.(json.Number)
+		i, err := strconv.ParseInt(num.String(), 10, 16)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		return int16(i), nil
+	case TypeInt32:
+		num, _ := val.(json.Number)
+		i, err := strconv.ParseInt(num.String(), 10, 32)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		return int32(i), nil
+	case TypeInt64:
+		num, _ := val.(json.Number)
+		i, err := strconv.ParseInt(num.String(), 10, 64)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		return i, nil
+	case TypeFloat32:
+		num, _ := val.(json.Number)
+		f, err := strconv.ParseFloat(num.String(), 32)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		return float32(f), nil
+	case TypeFloat64:
+		num, _ := val.(json.Number)
+		f, err := strconv.ParseFloat(num.String(), 64)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		return f, nil
+	case TypeBool, TypeString:
+		return val, nil
+	default:
+		return nil, errors.Trace(ErrTypeNotSupported)
+	}
 }
