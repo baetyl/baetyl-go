@@ -1,6 +1,8 @@
 package dmcontext
 
 import (
+	"time"
+
 	mqtt2 "github.com/baetyl/baetyl-go/v2/mqtt"
 	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 )
@@ -18,6 +20,74 @@ type Topic struct {
 	Get         mqtt2.QOSTopic `yaml:"get,omitempty" json:"get,omitempty"`
 	GetResponse mqtt2.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
 }
+
+func (a *AccessConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var modbus ModbusAccessConfig
+	if err := unmarshal(&modbus); err == nil {
+		a.Modbus = &modbus
+		return nil
+	}
+	var opcua OpcuaAccessConfig
+	if err := unmarshal(&opcua); err == nil {
+		a.Opcua = &opcua
+		return nil
+	}
+	var custom CustomAccessConfig
+	if err := unmarshal(&custom); err != nil {
+		return err
+	}
+	a.Custom = &custom
+	return nil
+}
+
+type AccessConfig struct {
+	Modbus *ModbusAccessConfig `yaml:"modbus,omitempty" json:"modbus,omitempty"`
+	Opcua  *OpcuaAccessConfig  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
+	Custom *CustomAccessConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
+}
+
+type ModbusAccessConfig struct {
+	Tcp *TcpConfig `yaml:"tcp,omitempty" json:"tcp,omitempty"`
+	Rtu *RtuConfig `yaml:"rtu,omitempty" json:"rtu,omitempty"`
+}
+
+type TcpConfig struct {
+	Address string `yaml:"address,omitempty" json:"address,omitempty" validate:"required"`
+	Port    uint16 `yaml:"port,omitempty" json:"port,omitempty" validate:"required"`
+}
+
+type RtuConfig struct {
+	Port     string `yaml:"port,omitempty" json:"port,omitempty" validate:"required"`
+	BaudRate int    `yaml:"baudrate,omitempty" json:"baudrate,omitempty" default:"19200"`
+	Parity   string `yaml:"parity,omitempty" json:"parity,omitempty" default:"E" validate:"regexp=^(E|N|O)?$"`
+	DataBit  int    `yaml:"databit,omitempty" json:"databit,omitempty" default:"8" validate:"min=5, max=8"`
+	StopBit  int    `yaml:"stopbit,omitempty" json:"stopbit,omitempty" default:"1" validate:"min=1, max=2"`
+}
+
+type OpcuaAccessConfig struct {
+	ID          byte             `yaml:"id,omitempty" json:"id,omitempty"`
+	Timeout     time.Duration    `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	Security    OpcuaSecurity    `yaml:"security,omitempty" json:"security,omitempty"`
+	Auth        OpcuaAuth        `yaml:"auth,omitempty" json:"auth,omitempty"`
+	Certificate OpcuaCertificate `yaml:"certificate,omitempty" json:"certificate,omitempty"`
+}
+
+type OpcuaSecurity struct {
+	Policy string `yaml:"policy,omitempty" json:"policy,omitempty"`
+	Mode   string `yaml:"mode,omitempty" json:"mode,omitempty"`
+}
+
+type OpcuaAuth struct {
+	Username string `yaml:"username,omitempty" json:"username,omitempty"`
+	Password string `yaml:"password,omitempty" json:"password,omitempty"`
+}
+
+type OpcuaCertificate struct {
+	Cert string `yaml:"certFile,omitempty" json:"certFile,omitempty"`
+	Key  string `yaml:"keyFile,omitempty" json:"keyFile,omitempty"`
+}
+
+type CustomAccessConfig string
 
 type DeviceProperty struct {
 	Name    string          `yaml:"name,omitempty" json:"name,omitempty"`
