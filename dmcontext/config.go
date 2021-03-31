@@ -73,18 +73,18 @@ type OpcuaAccessConfig struct {
 }
 
 type OpcuaSecurity struct {
-	Policy string `json:"policy,omitempty"`
-	Mode   string `json:"mode,omitempty"`
+	Policy string `yaml:"policy,omitempty" json:"policy,omitempty"`
+	Mode   string `yaml:"mode,omitempty" json:"mode,omitempty"`
 }
 
 type OpcuaAuth struct {
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Username string `yaml:"username,omitempty" json:"username,omitempty"`
+	Password string `yaml:"password,omitempty" json:"password,omitempty"`
 }
 
 type OpcuaCertificate struct {
-	Cert string `json:"certFile,omitempty"`
-	Key  string `json:"keyFile,omitempty"`
+	Cert string `yaml:"certFile,omitempty" json:"certFile,omitempty"`
+	Key  string `yaml:"keyFile,omitempty" json:"keyFile,omitempty"`
 }
 
 type CustomAccessConfig string
