@@ -47,8 +47,10 @@ type AccessConfig struct {
 }
 
 type ModbusAccessConfig struct {
-	Tcp *TcpConfig `yaml:"tcp,omitempty" json:"tcp,omitempty"`
-	Rtu *RtuConfig `yaml:"rtu,omitempty" json:"rtu,omitempty"`
+	Id       byte          `yaml:"id,omitempty" json:"id,omitempty"`
+	Interval time.Duration `yaml:"interval,omitempty" json:"omitempty"`
+	Tcp      *TcpConfig    `yaml:"tcp,omitempty" json:"tcp,omitempty"`
+	Rtu      *RtuConfig    `yaml:"rtu,omitempty" json:"rtu,omitempty"`
 }
 
 type TcpConfig struct {
@@ -65,7 +67,8 @@ type RtuConfig struct {
 }
 
 type OpcuaAccessConfig struct {
-	ID          byte             `yaml:"id,omitempty" json:"id,omitempty"`
+	Id          byte             `yaml:"id,omitempty" json:"id,omitempty"`
+	Interval    time.Duration    `yaml:"interval,omitempty" json:"omitempty"`
 	Timeout     time.Duration    `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	Security    OpcuaSecurity    `yaml:"security,omitempty" json:"security,omitempty"`
 	Auth        OpcuaAuth        `yaml:"auth,omitempty" json:"auth,omitempty"`
