@@ -43,6 +43,8 @@ const (
 	MessageCommandLogs = "logs"
 	// MessageCommandNodeLabel label the edge cluster nodes
 	MessageCommandNodeLabel = "nodeLabel"
+	// MessageCommandMultiNodeLabels label multiple nodes
+	MessageCommandMultiNodeLabels = "multiNodeLabels"
 )
 
 // Message general structure for http and ws sync
