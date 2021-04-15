@@ -65,6 +65,7 @@ type Node struct {
 	Accelerator       string                 `json:"accelerator,omitempty" yaml:"accelerator,omitempty"`
 	Mode              SyncMode               `json:"mode,omitempty" yaml:"mode,omitempty"`
 	Cluster           bool                   `json:"cluster,omitempty" yaml:"cluster,omitempty"`
+	GPUMetrics        bool                   `json:"gpuMetrics"`
 	Labels            map[string]string      `json:"labels,omitempty" yaml:"labels,omitempty" validate:"omitempty,validLabels"`
 	Annotations       map[string]string      `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Attributes        map[string]interface{} `json:"attr,omitempty" yaml:"attr,omitempty"`
@@ -89,6 +90,7 @@ type NodeView struct {
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	Cluster           bool              `json:"cluster" yaml:"cluster"`
 	Ready             bool              `json:"ready"`
+	GPUMetrics        bool              `json:"gpuMetrics"`
 	Mode              SyncMode          `json:"mode"`
 }
 
