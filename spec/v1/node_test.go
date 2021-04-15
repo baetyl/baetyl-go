@@ -503,7 +503,7 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
         "nodeinsnum": {
 			"master": 2
         },
-        "time": "2021-04-11T00:21:35.588279937Z"
+        "time": "2221-04-11T00:21:35.588279937Z"
 	},
 	"desire": {
 		"apps": "name",
@@ -991,7 +991,7 @@ func TestCompatibleSingleNode(t *testing.T) {
 				"memory": "4033160Ki"
 			}
 		},
-        "time": "2021-04-11T00:21:35.588279937Z"
+        "time": "2221-04-11T00:21:35.588279937Z"
 	},
 	"desire": {
 		"apps": "name",

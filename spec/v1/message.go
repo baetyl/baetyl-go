@@ -39,6 +39,8 @@ const (
 	MessageCommandConnect = "connect"
 	// MessageCommandDisconnect stop remote debug command
 	MessageCommandDisconnect = "disconnect"
+	// MessageCommandLogs logs
+	MessageCommandLogs = "logs"
 	// MessageCommandNodeLabel label the edge cluster nodes
 	MessageCommandNodeLabel = "nodeLabel"
 )
