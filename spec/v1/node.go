@@ -357,6 +357,12 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 	if stats := view.Report.NodeStats; stats != nil {
 		for _, s := range stats {
 			s.Percent = map[string]string{}
+			if s.Capacity == nil {
+				s.Capacity = map[string]string{}
+			}
+			if s.Usage == nil {
+				s.Usage = map[string]string{}
+			}
 			memory := string(coreV1.ResourceMemory)
 			if s.Percent[memory], err = s.processResourcePercent(s, memory, populateMemoryResource); err != nil {
 				return errors.Trace(err)
@@ -383,7 +389,10 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 }
 
 func populateGPUStats(s *NodeStats, extension interface{}) {
-	stats, _ := extension.(map[string]interface{})
+	stats, ok := extension.(map[string]interface{})
+	if !ok {
+		return
+	}
 	if val, ok := stats[KeyGPUUsedMemory]; ok {
 		used, _ := val.(float64)
 		s.Usage[ResourceGPU] = strconv.FormatFloat(used, 'f', -1, 64)
