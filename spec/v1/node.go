@@ -71,7 +71,6 @@ type Node struct {
 	Report            Report                 `json:"report,omitempty" yaml:"report,omitempty"`
 	Desire            Desire                 `json:"desire,omitempty" yaml:"desire,omitempty"`
 	SysApps           []string               `json:"sysApps,omitempty" yaml:"sysApps,omitempty"`
-	Simulators        []string               `json:"simulators,omitempty" yaml:"simulators,omitempty"`
 	Description       string                 `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
@@ -87,7 +86,6 @@ type NodeView struct {
 	AppMode           string            `json:"appMode,omitempty" yaml:"appMode,omitempty"`
 	Desire            Desire            `json:"desire,omitempty" yaml:"desire,omitempty"`
 	SysApps           []string          `json:"sysApps,omitempty" yaml:"sysApps,omitempty"`
-	Simulators        []string          `json:"simulators,omitempty" yaml:"simulators,omitempty"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	Cluster           bool              `json:"cluster" yaml:"cluster"`
 	Ready             bool              `json:"ready"`
