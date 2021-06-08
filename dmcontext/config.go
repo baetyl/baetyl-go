@@ -22,14 +22,17 @@ type Topic struct {
 }
 
 func (a *AccessConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var acc accessConfig
+	if err := unmarshal(&acc); err == nil {
+		a.Modbus = acc.Modbus
+		a.Opcua = acc.Opcua
+		a.Custom = acc.Custom
+		return nil
+	}
+	// for backward compatibility
 	var modbus ModbusAccessConfig
 	if err := unmarshal(&modbus); err == nil {
 		a.Modbus = &modbus
-		return nil
-	}
-	var opcua OpcuaAccessConfig
-	if err := unmarshal(&opcua); err == nil {
-		a.Opcua = &opcua
 		return nil
 	}
 	var custom CustomAccessConfig
@@ -41,6 +44,12 @@ func (a *AccessConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type AccessConfig struct {
+	Modbus *ModbusAccessConfig `yaml:"modbus,omitempty" json:"modbus,omitempty"`
+	Opcua  *OpcuaAccessConfig  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
+	Custom *CustomAccessConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
+}
+
+type accessConfig struct {
 	Modbus *ModbusAccessConfig `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	Opcua  *OpcuaAccessConfig  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	Custom *CustomAccessConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
