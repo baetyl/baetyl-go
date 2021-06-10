@@ -28,7 +28,7 @@ func (a *AccessConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		a.Opcua = acc.Opcua
 		a.Custom = acc.Custom
 		// for backward compatibility
-		if a.Modbus == nil || a.Opcua == nil || a.Custom == nil {
+		if a.Modbus == nil && a.Opcua == nil && a.Custom == nil {
 			var modbus ModbusAccessConfig
 			if err = unmarshal(&modbus); err == nil {
 				a.Modbus = &modbus
