@@ -45,6 +45,7 @@ const (
 	KeyNetBytesRecv             = "netBytesRecv"
 	KeyNetPacketsSent           = "netPacketsSent"
 	KeyNetPacketsRecv           = "netPacketsRecv"
+	KeyAppRequestCnt            = "requestCounter"
 
 	BaetylCoreFrequency = "BaetylCoreFrequency"
 	BaetylCoreAPIPort   = "BaetylCoreAPIPort"

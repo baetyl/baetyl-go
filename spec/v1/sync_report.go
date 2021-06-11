@@ -74,6 +74,7 @@ type InstanceStats struct {
 	Name        string            `yaml:"name,omitempty" json:"name,omitempty"`
 	ServiceName string            `yaml:"serviceName,omitempty" json:"serviceName"`
 	Usage       map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
+	Extension   interface{}       `yaml:"extension,omitempty" json:"extension,omitempty"`
 	Status      Status            `yaml:"status,omitempty" json:"status,omitempty"`
 	Cause       string            `yaml:"cause,omitempty" json:"cause,omitempty"`
 	IP          string            `yaml:"ip,omitempty" json:"ip,omitempty"`
