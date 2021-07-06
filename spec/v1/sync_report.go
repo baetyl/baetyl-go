@@ -67,7 +67,6 @@ type CoreInfo struct {
 	GoVersion   string `yaml:"goVersion,omitempty" json:"goVersion,omitempty"`
 	BinVersion  string `yaml:"binVersion,omitempty" json:"binVersion,omitempty"`
 	GitRevision string `yaml:"gitRevision,omitempty" json:"gitRevision,omitempty"`
-	ModeVersion string `yaml:"modeVersion,omitempty" json:"modeVersion,omitempty"`
 }
 
 // InstanceStats instance stats
