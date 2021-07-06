@@ -103,6 +103,7 @@ type ReportView struct {
 	Node        map[string]*NodeInfo  `json:"node,omitempty" yaml:"node,omitempty"`
 	NodeStats   map[string]*NodeStats `json:"nodestats,omitempty" yaml:"nodestats,omitempty"`
 	NodeInsNum  map[string]int        `json:"nodeinsnum,omitempty" yaml:"nodeinsnum,omitempty"`
+	ModeInfo    string                `yaml:"modeInfo,omitempty" json:"modeInfo,omitempty"`
 }
 
 // Report report data
