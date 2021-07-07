@@ -16,6 +16,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/google/uuid v1.0.0
 	github.com/jinzhu/copier v0.1.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/mholt/archiver v3.1.1+incompatible
