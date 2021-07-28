@@ -26,6 +26,8 @@ type Application struct {
 	Volumes           []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty" validate:"dive"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	System            bool              `json:"system,omitempty" yaml:"system,omitempty"`
+	Scheduled         bool              `json:"scheduled,omitempty" yaml:"scheduled,omitempty" default:"false"`
+	CronTime          time.Time         `json:"cronTime,omitempty" yaml:"cronTime,omitempty"`
 }
 
 // Service service config1ma1
