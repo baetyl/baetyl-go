@@ -11,6 +11,14 @@ const (
 	ServiceTypeDaemonSet   = "daemonset"
 )
 
+type CronStatusCode int
+
+const (
+	CronNotSet   CronStatusCode = 0
+	CronWait     CronStatusCode = 1
+	CronFinished CronStatusCode = 2
+)
+
 // Application application info
 type Application struct {
 	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName"`
@@ -26,7 +34,7 @@ type Application struct {
 	Volumes           []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty" validate:"dive"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	System            bool              `json:"system,omitempty" yaml:"system,omitempty"`
-	Scheduled         bool              `json:"scheduled,omitempty" yaml:"scheduled,omitempty" default:"false"`
+	CronStatus        CronStatusCode    `json:"cronStatus,omitempty" yaml:"cronStatus,omitempty" default:"0"`
 	CronTime          time.Time         `json:"cronTime,omitempty" yaml:"cronTime,omitempty"`
 }
 
