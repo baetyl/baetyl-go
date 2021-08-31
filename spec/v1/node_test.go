@@ -384,7 +384,7 @@ func TestTranslateNodeToNodeReportView(t *testing.T) {
 	assert.Equal(t, view.Report.SysAppStats[0].InstanceStats["baetyl-function"].Usage[string(coreV1.ResourceMemory)], "1769472")
 	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceCPU)], "0.009")
 	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceMemory)], "8916992")
-	assert.Equal(t, view.Ready, false)
+	assert.Equal(t, view.Ready, NodeOffline)
 	assert.Equal(t, view.Report.SysAppStats[0].Status, Status(""))
 	assert.Equal(t, view.Report.SysAppStats[1].Status, Status(""))
 	assert.Equal(t, view.Report.AppStats[0].Status, Status(""))
@@ -541,7 +541,7 @@ func TestTranslateNodeToNodeReportViewRunning(t *testing.T) {
 	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceCPU)], "0.009")
 	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceMemory)], "8916992")
 	assert.Equal(t, 2, view.Report.NodeInsNum["master"])
-	assert.True(t, view.Ready)
+	assert.Equal(t, view.Ready, NodeOnline)
 	assert.Equal(t, view.Report.SysAppStats[0].Status, Status("Running"))
 	assert.Equal(t, view.Report.SysAppStats[1].Status, Status("Running"))
 	assert.Equal(t, view.Report.AppStats[0].Status, Status("Running"))
@@ -580,7 +580,7 @@ func TestPopulateNodeStats(t *testing.T) {
 	assert.Equal(t, node1.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "1")
 	assert.Equal(t, node1.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0.5")
 	assert.Equal(t, node1.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0.5")
-	assert.Equal(t, node1.Ready, false)
+	assert.Equal(t, node1.Ready, NodeOffline)
 
 	t2 := time.Now().Add(-30 * time.Second)
 	node2 := NodeView{
@@ -608,7 +608,7 @@ func TestPopulateNodeStats(t *testing.T) {
 	assert.Equal(t, node2.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "1")
 	assert.Equal(t, node2.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0.5")
 	assert.Equal(t, node2.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0.5")
-	assert.Equal(t, node2.Ready, true)
+	assert.Equal(t, node2.Ready, NodeOnline)
 
 	node3 := NodeView{
 		Report: &ReportView{
@@ -633,7 +633,7 @@ func TestPopulateNodeStats(t *testing.T) {
 	assert.Equal(t, node3.Report.NodeStats["master"].Usage[string(coreV1.ResourceCPU)], "0.5")
 	assert.Equal(t, node3.Report.NodeStats["master"].Percent[string(coreV1.ResourceMemory)], "0.5")
 	assert.Equal(t, node3.Report.NodeStats["master"].Percent[string(coreV1.ResourceCPU)], "0.25")
-	assert.Equal(t, node2.Ready, true)
+	assert.Equal(t, node2.Ready, NodeOnline)
 
 	node4 := NodeView{
 		Report: &ReportView{
@@ -1026,8 +1026,33 @@ func TestCompatibleSingleNode(t *testing.T) {
 	assert.Equal(t, view.Report.SysAppStats[0].InstanceStats["baetyl-function"].Usage[string(coreV1.ResourceMemory)], "1769472")
 	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceCPU)], "0.009")
 	assert.Equal(t, view.Report.SysAppStats[1].InstanceStats["core-testnode4"].Usage[string(coreV1.ResourceMemory)], "8916992")
-	assert.Equal(t, view.Ready, true)
+	assert.Equal(t, view.Ready, NodeOnline)
 	assert.Equal(t, view.Report.SysAppStats[0].Status, Status("Running"))
 	assert.Equal(t, view.Report.SysAppStats[1].Status, Status("Running"))
 	assert.Equal(t, view.Report.AppStats[0].Status, Status("Running"))
+}
+
+func TestUnistallNode(t *testing.T) {
+	nodeData := `
+{
+	"namespace": "default",
+	"name": "baetyl",
+	"version": "v1",
+	"attr": {
+		"syncMode": "local"
+	},
+	"createTime": "2021-04-11T00:21:35.588279937Z",
+	"report": {},
+	"desire": {
+		"apps": "name",
+		"age": "12"
+	}
+}
+`
+	node := new(Node)
+	err := json.Unmarshal([]byte(nodeData), node)
+	assert.NoError(t, err)
+
+	view, err := node.View(time.Second * 20)
+	assert.Equal(t, view.Ready, NodeUninstall)
 }

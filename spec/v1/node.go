@@ -50,6 +50,10 @@ const (
 	BaetylCoreFrequency = "BaetylCoreFrequency"
 	BaetylCoreAPIPort   = "BaetylCoreAPIPort"
 	BaetylCoreVersion   = "BaetylCoreVersion"
+
+	NodeOffline   = 0
+	NodeOnline    = 1
+	NodeUninstall = 2
 )
 
 type SyncMode string
@@ -89,7 +93,7 @@ type NodeView struct {
 	SysApps           []string          `json:"sysApps,omitempty" yaml:"sysApps,omitempty"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	Cluster           bool              `json:"cluster" yaml:"cluster"`
-	Ready             bool              `json:"ready"`
+	Ready             int               `json:"ready"`
 	Mode              SyncMode          `json:"mode"`
 }
 
@@ -296,7 +300,7 @@ func (n *Node) View(timeout time.Duration) (*NodeView, error) {
 		if err = report.translateServiceResourceQuantity(); err != nil {
 			return nil, errors.Trace(err)
 		}
-		if !view.Ready {
+		if view.Ready != NodeOnline {
 			err = report.resetNodeAppStats()
 			if err != nil {
 				return nil, errors.Trace(err)
@@ -353,8 +357,10 @@ func (n *Node) compatibleSingleNode() error {
 
 func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 	if view.Report == nil {
+		view.Ready = NodeUninstall
 		return nil
 	}
+	view.Ready = NodeOffline
 
 	if stats := view.Report.NodeStats; stats != nil {
 		for _, s := range stats {
@@ -383,8 +389,8 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 		}
 	}
 
-	if view.Report.Time != nil {
-		view.Ready = time.Now().UTC().Before(view.Report.Time.Add(timeout))
+	if view.Report.Time != nil && time.Now().UTC().Before(view.Report.Time.Add(timeout)) {
+		view.Ready = NodeOnline
 	}
 
 	return
