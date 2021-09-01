@@ -360,7 +360,6 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 		view.Ready = NodeUninstall
 		return nil
 	}
-	view.Ready = NodeOffline
 
 	if stats := view.Report.NodeStats; stats != nil {
 		for _, s := range stats {
@@ -389,8 +388,14 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 		}
 	}
 
-	if view.Report.Time != nil && time.Now().UTC().Before(view.Report.Time.Add(timeout)) {
+	if view.Report.Time == nil {
+		view.Ready = NodeUninstall
+		return nil
+	}
+	if time.Now().UTC().Before(view.Report.Time.Add(timeout)) {
 		view.Ready = NodeOnline
+	} else {
+		view.Ready = NodeOffline
 	}
 
 	return
