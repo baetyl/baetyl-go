@@ -32,6 +32,7 @@ const (
 	KeyAccelerator              = "accelerator"
 	KeyCluster                  = "cluster"
 	KeyOptionalSysApps          = "optionalSysApps"
+	KeyNodeMode                 = "nodeMode"
 	NVAccelerator               = "nvidia"
 	ResourceGPU                 = "gpu"
 	ResourceDisk                = "disk"
@@ -54,6 +55,9 @@ const (
 	NodeOffline   = 0
 	NodeOnline    = 1
 	NodeUninstall = 2
+
+	NodeModeKube   = "kube"
+	NodeModeNative = "native"
 )
 
 type SyncMode string
@@ -69,6 +73,7 @@ type Node struct {
 	CreationTimestamp time.Time              `json:"createTime,omitempty" yaml:"createTime,omitempty"`
 	Accelerator       string                 `json:"accelerator,omitempty" yaml:"accelerator,omitempty"`
 	Mode              SyncMode               `json:"mode,omitempty" yaml:"mode,omitempty"`
+	NodeMode          string                 `json:"nodeMode,omitempty" yaml:"nodeMode,omitempty"`
 	Cluster           bool                   `json:"cluster,omitempty" yaml:"cluster,omitempty"`
 	Labels            map[string]string      `json:"labels,omitempty" yaml:"labels,omitempty" validate:"omitempty,validLabels"`
 	Annotations       map[string]string      `json:"annotations,omitempty" yaml:"annotations,omitempty"`
@@ -95,6 +100,7 @@ type NodeView struct {
 	Cluster           bool              `json:"cluster" yaml:"cluster"`
 	Ready             int               `json:"ready"`
 	Mode              SyncMode          `json:"mode"`
+	NodeMode          string            `json:"nodeMode,omitempty" yaml:"nodeMode,omitempty"`
 }
 
 type ReportView struct {
