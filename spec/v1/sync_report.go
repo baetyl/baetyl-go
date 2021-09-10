@@ -27,6 +27,7 @@ type NodeInfo struct {
 	HostID           string            `yaml:"hostID,omitempty" json:"hostID,omitempty"`
 	Role             string            `yaml:"role,omitempty" json:"role,omitempty"`
 	Labels           map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"  validate:"omitempty,validLabels"`
+	ClientIP         string            `yaml:"clientIP,omitempty" json:"clientIP,omitempty"`
 }
 
 // NodeStats node statistics
