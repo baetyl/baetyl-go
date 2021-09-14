@@ -9,6 +9,7 @@ const (
 	ServiceTypeDeployment  = "deployment"
 	ServiceTypeStatefulSet = "statefulset"
 	ServiceTypeDaemonSet   = "daemonset"
+	ServiceTypeJob         = "job"
 )
 
 type CronStatusCode int
@@ -72,6 +73,8 @@ type Service struct {
 	FunctionConfig *ServiceFunctionConfig `json:"functionConfig,omitempty" yaml:"functionConfig,omitempty"`
 	// specifies functions of service
 	Functions []ServiceFunction `json:"functions,omitempty" yaml:"functions,omitempty"`
+	// specifies job config of service
+	JobConfig *ServiceJobConfig `json:"jobConfig,omitempty" yaml:"jobConfig,omitempty"`
 	// specifies type of service. deployment, daemonset, statefulset
 	Type string `json:"type,omitempty" yaml:"type,omitempty" default:"deployment"`
 }
@@ -159,4 +162,11 @@ type ServiceFunction struct {
 	Name    string `json:"name,omitempty" yaml:"name,omitempty"`
 	Handler string `json:"handler,omitempty" yaml:"handler,omitempty"`
 	CodeDir string `json:"codedir,omitempty" yaml:"codedir,omitempty"`
+}
+
+type ServiceJobConfig struct {
+	Completions   int    `json:"completions,omitempty" yaml:"completions,omitempty"`
+	Parallelism   int    `json:"parallelism,omitempty" yaml:"parallelism,omitempty"`
+	BackoffLimit  int    `json:"backoffLimit,omitempty" yaml:"backoffLimit,omitempty"`
+	RestartPolicy string `json:"restartPolicy,omitempty" yaml:"restartPolicy,omitempty" default:"Never"`
 }

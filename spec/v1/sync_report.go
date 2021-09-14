@@ -5,10 +5,11 @@ import "time"
 type Status string
 
 const (
-	Pending Status = "Pending"
-	Failed  Status = "Failed"
-	Running Status = "Running"
-	Unknown Status = "Unknown"
+	Pending   Status = "Pending"
+	Failed    Status = "Failed"
+	Running   Status = "Running"
+	Succeeded Status = "Succeeded"
+	Unknown   Status = "Unknown"
 )
 
 // NodeInfo node info
