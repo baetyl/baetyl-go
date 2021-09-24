@@ -55,9 +55,6 @@ const (
 	NodeOffline   = 0
 	NodeOnline    = 1
 	NodeUninstall = 2
-
-	NodeModeKube   = "kube"
-	NodeModeNative = "native"
 )
 
 type SyncMode string
