@@ -34,6 +34,7 @@ const (
 	KeyOptionalSysApps          = "optionalSysApps"
 	KeyNodeMode                 = "nodeMode"
 	NVAccelerator               = "nvidia"
+	JetsonAccelerator           = "jetson"
 	ResourceGPU                 = "gpu"
 	ResourceDisk                = "disk"
 	KeyGPUUsedMemory            = "usedMemory"
