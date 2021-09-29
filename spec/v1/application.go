@@ -140,6 +140,8 @@ type VolumeMount struct {
 	ReadOnly bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
 	// specifies if the volumeMount is immutable
 	Immutable bool `json:"immutable,omitempty" yaml:"immutable,omitempty"`
+	// specifies if clean the volume automatically
+	AutoClean bool `json:"autoClean,omitempty" yaml:"autoClean,omitempty"`
 }
 
 // Retry retry config
