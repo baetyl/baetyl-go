@@ -386,7 +386,7 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 				return errors.Trace(err)
 			}
 			if extension := s.Extension; extension != nil {
-				if view.Accelerator == NVAccelerator {
+				if view.Accelerator == NVAccelerator || view.Accelerator == JetsonAccelerator {
 					populateGPUStats(s, extension)
 				}
 				populateDiskNetStats(s, extension)
