@@ -367,7 +367,9 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 
 	if stats := view.Report.NodeStats; stats != nil {
 		for _, s := range stats {
-			s.Percent = map[string]string{}
+			if s.Percent == nil {
+				s.Percent = map[string]string{}
+			}
 			if s.Capacity == nil {
 				s.Capacity = map[string]string{}
 			}
