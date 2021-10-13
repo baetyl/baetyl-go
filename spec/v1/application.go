@@ -36,6 +36,7 @@ type Application struct {
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	System            bool              `json:"system,omitempty" yaml:"system,omitempty"`
 	CronStatus        CronStatusCode    `json:"cronStatus,omitempty" yaml:"cronStatus,omitempty" default:"0"`
+	UpdateTime        time.Time         `json:"updateTime,omitempty" yaml:"updateTime,omitempty"`
 	CronTime          time.Time         `json:"cronTime,omitempty" yaml:"cronTime,omitempty"`
 }
 
