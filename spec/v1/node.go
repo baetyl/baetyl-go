@@ -622,8 +622,6 @@ func getAppStats(statsType string, data map[string]interface{}) []AppStats {
 	decoder, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{DecodeHook: timeHookFunc, Result: &appstats})
 	if err := decoder.Decode(apps); err == nil {
 		return appstats
-	} else {
-		fmt.Println(err)
 	}
 	return nil
 }
