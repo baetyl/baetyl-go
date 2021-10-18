@@ -20,6 +20,7 @@ require (
 	github.com/jinzhu/copier v0.1.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/mholt/archiver v3.1.1+incompatible
+	github.com/mitchellh/mapstructure v0.0.0-20170523030023-d0303fe80992
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/evanphx/json-patch"
+	"github.com/mitchellh/mapstructure"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -616,8 +617,24 @@ func getAppStats(statsType string, data map[string]interface{}) []AppStats {
 	}
 	if res, ok := apps.([]AppStats); ok {
 		return res
-	} else {
-		return nil
+	}
+	var appstats []AppStats
+	decoder, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{DecodeHook: timeHookFunc, Result: &appstats})
+	if err := decoder.Decode(apps); err == nil {
+		return appstats
+	}
+	return nil
+}
+
+func timeHookFunc(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if t != reflect.TypeOf(time.Time{}) {
+		return data, nil
+	}
+	switch f.Kind() {
+	case reflect.String:
+		return time.Parse(time.RFC3339, data.(string))
+	default:
+		return data, nil
 	}
 }
 

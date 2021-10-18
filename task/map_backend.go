@@ -16,7 +16,7 @@ type mapBackend struct {
 }
 
 func NewMapBackend() TaskBackend {
-	return &mapBackend {
+	return &mapBackend{
 		cache: map[string]*ResultMessage{},
 	}
 }
