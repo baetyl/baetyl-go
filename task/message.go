@@ -11,23 +11,23 @@ const (
 	TaskSuccess = "success"
 	TaskFail    = "fail"
 
-	RetryGap    = 10 * time.Millisecond
+	RetryGap = 10 * time.Millisecond
 )
 
 type TaskMessage struct {
-	ID       string                 `json:"id"`
-	Name     string                 `json:"task"`
-	Args     []interface{}          `json:"args"`
-	Kwargs   map[string]interface{} `json:"kwargs"`
-	Retries  int                    `json:"retries"`
-	Expires  *time.Time             `json:"expires"`
+	ID      string                 `json:"id"`
+	Name    string                 `json:"task"`
+	Args    []interface{}          `json:"args"`
+	Kwargs  map[string]interface{} `json:"kwargs"`
+	Retries int                    `json:"retries"`
+	Expires *time.Time             `json:"expires"`
 }
 
 type ResultMessage struct {
-	ID        string        `json:"id"`
-	Status    string        `json:"status"`
-	Traceback string        `json:"traceback"`
-	Result    interface{}   `json:"result"`
+	ID        string      `json:"id"`
+	Status    string      `json:"status"`
+	Traceback string      `json:"traceback"`
+	Result    interface{} `json:"result"`
 }
 
 type BrokerMessage struct {
@@ -72,9 +72,9 @@ func (tr *TaskResult) Get(timeout time.Duration) (*ResultMessage, error) {
 	defer ticker.Stop()
 	for {
 		select {
-		case <- timeoutChan:
+		case <-timeoutChan:
 			return nil, fmt.Errorf("timeout result for %s", tr.ID)
-		case <- ticker.C:
+		case <-ticker.C:
 			result, err := tr.AsyncGet()
 			if err == ErrResultNotFound {
 				continue

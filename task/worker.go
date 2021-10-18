@@ -47,7 +47,7 @@ func (w *taskWorker) StartWorker(ctx context.Context) {
 		defer ticker.Stop()
 		for {
 			select {
-			case <- workerCtx.Done():
+			case <-workerCtx.Done():
 				return
 			case <-ticker.C:
 				taskMsg, err := w.broker.GetMessage()
@@ -114,10 +114,10 @@ func (w *taskWorker) runTask(msg *TaskMessage) (*ResultMessage, error) {
 		}
 		val, err := taskInterface.RunTask()
 		result := &ResultMessage{
-			ID: msg.ID,
-			Status: TaskSuccess,
+			ID:        msg.ID,
+			Status:    TaskSuccess,
 			Traceback: "",
-			Result: val,
+			Result:    val,
 		}
 		if err != nil {
 			result.Status = TaskFail
@@ -153,8 +153,8 @@ func runTaskFunc(taskFunc *reflect.Value, msg *TaskMessage) (*ResultMessage, err
 
 	res := taskFunc.Call(params)
 	result := &ResultMessage{
-		ID: msg.ID,
-		Status: TaskSuccess,
+		ID:        msg.ID,
+		Status:    TaskSuccess,
 		Traceback: "",
 	}
 	if len(res) == 0 {

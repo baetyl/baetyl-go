@@ -58,11 +58,11 @@ type AppInfo struct {
 
 // AppStats app statistics
 type AppStats struct {
-	AppInfo       `yaml:",inline" json:",inline"`
+	AppInfo       `yaml:",inline" json:",inline" mapstructure:",squash"`
 	DeployType    string                   `json:"deployType,omitempty" yaml:"deployType,omitempty"`
 	Status        Status                   `yaml:"status,omitempty" json:"status,omitempty"`
 	Cause         string                   `yaml:"cause,omitempty" json:"cause,omitempty"`
-	InstanceStats map[string]InstanceStats `yaml:"instances,omitempty" json:"instances,omitempty"`
+	InstanceStats map[string]InstanceStats `yaml:"instances,omitempty" json:"instances,omitempty" mapstructure:"instances"`
 }
 
 type CoreInfo struct {
@@ -74,7 +74,7 @@ type CoreInfo struct {
 // InstanceStats instance stats
 type InstanceStats struct {
 	Name        string            `yaml:"name,omitempty" json:"name,omitempty"`
-	ServiceName string            `yaml:"serviceName,omitempty" json:"serviceName"`
+	ServiceName string            `yaml:"serviceName,omitempty" json:"serviceName,omitempty"`
 	Usage       map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
 	Extension   interface{}       `yaml:"extension,omitempty" json:"extension,omitempty"`
 	Status      Status            `yaml:"status,omitempty" json:"status,omitempty"`

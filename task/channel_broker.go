@@ -13,7 +13,6 @@ var (
 
 type channelBroker struct {
 	broker chan *BrokerMessage
-
 }
 
 func NewChannelBroker(cache int) TaskBroker {
@@ -26,16 +25,16 @@ func (b *channelBroker) SendMessage(msg *BrokerMessage) error {
 	select {
 	case b.broker <- msg:
 		return nil
-	case <- time.After(time.Millisecond):
+	case <-time.After(time.Millisecond):
 		return SendMsgTimeout
 	}
 }
 
 func (b *channelBroker) GetMessage() (*BrokerMessage, error) {
 	select {
-	case msg := <- b.broker:
+	case msg := <-b.broker:
 		return msg, nil
-	case <- time.After(time.Millisecond):
+	case <-time.After(time.Millisecond):
 		return nil, GetMsgTimeout
 	}
 }

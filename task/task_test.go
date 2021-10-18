@@ -104,7 +104,7 @@ func ValueString(a string) (string, error) {
 }
 
 func ValueMap(a string) (map[string]string, error) {
-	return map[string]string{"result":a}, nil
+	return map[string]string{"result": a}, nil
 }
 
 func TestTaskMultiValues(t *testing.T) {
@@ -149,7 +149,7 @@ func TestTaskMultiValues(t *testing.T) {
 	assert.Equal(t, resultString.Result, "test")
 	resultMap, err := asyncMap.Get(time.Second)
 	assert.NoError(t, err)
-	assert.Equal(t, resultMap.Result, map[string]string{"result":"test"})
+	assert.Equal(t, resultMap.Result, map[string]string{"result": "test"})
 
 	_, err = asyncBlank.Get(time.Millisecond)
 	assert.NotNil(t, err)
