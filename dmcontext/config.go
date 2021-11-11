@@ -81,13 +81,13 @@ type RtuConfig struct {
 }
 
 type OpcuaAccessConfig struct {
-	Id          byte             `yaml:"id,omitempty" json:"id,omitempty"`
-	Endpoint    string           `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
-	Interval    time.Duration    `yaml:"interval,omitempty" json:"interval,omitempty"`
-	Timeout     time.Duration    `yaml:"timeout,omitempty" json:"timeout,omitempty"`
-	Security    OpcuaSecurity    `yaml:"security,omitempty" json:"security,omitempty"`
-	Auth        OpcuaAuth        `yaml:"auth,omitempty" json:"auth,omitempty"`
-	Certificate OpcuaCertificate `yaml:"certificate,omitempty" json:"certificate,omitempty"`
+	Id          byte              `yaml:"id,omitempty" json:"id,omitempty"`
+	Endpoint    string            `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+	Interval    time.Duration     `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Timeout     time.Duration     `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	Security    OpcuaSecurity     `yaml:"security,omitempty" json:"security,omitempty"`
+	Auth        *OpcuaAuth        `yaml:"auth,omitempty" json:"auth,omitempty"`
+	Certificate *OpcuaCertificate `yaml:"certificate,omitempty" json:"certificate,omitempty"`
 }
 
 type OpcuaSecurity struct {
@@ -101,8 +101,8 @@ type OpcuaAuth struct {
 }
 
 type OpcuaCertificate struct {
-	Cert string `yaml:"certFile,omitempty" json:"certFile,omitempty"`
-	Key  string `yaml:"keyFile,omitempty" json:"keyFile,omitempty"`
+	Cert string `yaml:"cert,omitempty" json:"cert,omitempty"`
+	Key  string `yaml:"key,omitempty" json:"key,omitempty"`
 }
 
 type CustomAccessConfig string
