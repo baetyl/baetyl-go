@@ -101,8 +101,8 @@ type OpcuaAuth struct {
 }
 
 type OpcuaCertificate struct {
-	Cert string `yaml:"certFile,omitempty" json:"certFile,omitempty"`
-	Key  string `yaml:"keyFile,omitempty" json:"keyFile,omitempty"`
+	Cert string `yaml:"cert,omitempty" json:"cert,omitempty"`
+	Key  string `yaml:"key,omitempty" json:"key,omitempty"`
 }
 
 type CustomAccessConfig string
