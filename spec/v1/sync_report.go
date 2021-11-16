@@ -74,9 +74,10 @@ type CoreInfo struct {
 // InstanceStats instance stats
 type InstanceStats struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
-	// Deprecated: Field ServiceName is no longer used.
+	// Deprecated: Use AppName instead
 	// Change from one workload for each service to one workload for one app, and each service as a container
 	ServiceName string            `yaml:"serviceName,omitempty" json:"serviceName,omitempty"`
+	AppName     string            `yaml:"appName,omitempty" json:"appName,omitempty"`
 	Usage       map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
 	Extension   interface{}       `yaml:"extension,omitempty" json:"extension,omitempty"`
 	Status      Status            `yaml:"status,omitempty" json:"status,omitempty"`
