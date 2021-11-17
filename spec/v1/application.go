@@ -61,7 +61,7 @@ type Service struct {
 	// specifies the startup arguments of the service program, but does not include `arg[0]`
 	Args []string `json:"args,omitempty" yaml:"args,omitempty"`
 	// specifies the commands of the service program
-	Cmds []string `json:"cmds,omitempty" yaml:"cmds,omitempty"`
+	Command []string `json:"command,omitempty" yaml:"command,omitempty"`
 	// specifies the environment variable of the service program
 	Env []Environment `json:"env,omitempty" yaml:"env,omitempty"`
 	// specifies resource limits for a single instance of the service,  only for Docker container mode
