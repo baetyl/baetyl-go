@@ -85,7 +85,7 @@ type Service struct {
 	// specifies the number of instances started
 	// Deprecated: Use Application.Replica instead
 	// Change from one workload for each service to one workload for one app, and each service as a container
-	Replica int `json:"replica,omitempty" yaml:"replica,omitempty" binding:"required" default:"1"`
+	Replica int `json:"replica,omitempty" yaml:"replica,omitempty" default:"1"`
 	// specifies job config of service
 	// Deprecated: Use Application.JobConfig instead.
 	// Change from one workload for each service to one workload for one app, and each service as a container
