@@ -39,7 +39,7 @@ type Application struct {
 	UpdateTime        time.Time         `json:"updateTime,omitempty" yaml:"updateTime,omitempty"`
 	CronTime          time.Time         `json:"cronTime,omitempty" yaml:"cronTime,omitempty"`
 	HostNetwork       bool              `json:"hostNetwork,omitempty" yaml:"hostNetwork,omitempty"` // specifies host network mode of service
-	Replica           int               `json:"replica,omitempty" yaml:"replica,omitempty" binding:"required" default:"1"`
+	Replica           int               `json:"replica,omitempty" yaml:"replica,omitempty" default:"1"`
 	Workload          string            `json:"workload,omitempty" yaml:"workload,omitempty" default:"deployment"` // deployment | daemonset | statefulset | job
 	JobConfig         *AppJobConfig     `json:"jobConfig,omitempty" yaml:"jobConfig,omitempty"`
 }
@@ -85,7 +85,7 @@ type Service struct {
 	// specifies the number of instances started
 	// Deprecated: Use Application.Replica instead
 	// Change from one workload for each service to one workload for one app, and each service as a container
-	Replica int `json:"replica,omitempty" yaml:"replica,omitempty" binding:"required" default:"1"`
+	Replica int `json:"replica,omitempty" yaml:"replica,omitempty" default:"1"`
 	// specifies job config of service
 	// Deprecated: Use Application.JobConfig instead.
 	// Change from one workload for each service to one workload for one app, and each service as a container
