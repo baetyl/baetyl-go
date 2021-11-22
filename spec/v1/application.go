@@ -1,6 +1,8 @@
 package v1
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	AppTypeContainer = "container"
@@ -134,6 +136,12 @@ type VolumeSource struct {
 	HostPath *HostPathVolumeSource `json:"hostPath,omitempty" yaml:"hostPath,omitempty"`
 	Config   *ObjectReference      `json:"config,omitempty" yaml:"config,omitempty"`
 	Secret   *ObjectReference      `json:"secret,omitempty" yaml:"secret,omitempty"`
+	EmptyDir *EmptyDirVolumeSource `json:"emptyDir,omitempty" yaml:"emptyDir,omitempty"`
+}
+
+type EmptyDirVolumeSource struct {
+	Medium    string `json:"medium,omitempty" yaml:"medium,omitempty"`
+	SizeLimit string `json:"sizeLimit,omitempty" yaml:"sizeLimit,omitempty"`
 }
 
 // HostPathVolumeSource volume source of host path
