@@ -36,6 +36,8 @@ const (
 	KeyNodeMode                 = "nodeMode"
 	NVAccelerator               = "nvidia"
 	JetsonAccelerator           = "jetson"
+	AscendAccelerator           = "ascend"
+	BitmainAccelerator          = "bitmain"
 	ResourceGPU                 = "gpu"
 	ResourceDisk                = "disk"
 	KeyGPUUsedMemory            = "usedMemory"
