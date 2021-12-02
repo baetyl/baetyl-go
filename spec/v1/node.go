@@ -64,6 +64,15 @@ const (
 	NodeUninstall = 2
 )
 
+var acceleratorMap = map[string]bool{
+	NVAccelerator:        true,
+	JetsonAccelerator:    true,
+	AscendAccelerator:    true,
+	BitmainAccelerator:   true,
+	CambriconAccelerator: true,
+	KunLunAccelerator:    true,
+}
+
 type SyncMode string
 
 // ErrJSONLevelExceedsLimit the level of json exceeds the max limit
@@ -392,7 +401,7 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 				return errors.Trace(err)
 			}
 			if extension := s.Extension; extension != nil {
-				if view.Accelerator == NVAccelerator || view.Accelerator == JetsonAccelerator || view.Accelerator == BitmainAccelerator {
+				if IsLegalAcceleratorType(view.Accelerator) {
 					populateGPUStats(s, extension)
 				}
 				populateDiskNetStats(s, extension)
@@ -411,6 +420,13 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 	}
 
 	return
+}
+
+func IsLegalAcceleratorType(accelerator string) bool {
+	if _, ok := acceleratorMap[accelerator]; ok {
+		return true
+	}
+	return false
 }
 
 func populateGPUStats(s *NodeStats, extension interface{}) {
