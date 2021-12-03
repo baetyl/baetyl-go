@@ -3,6 +3,7 @@ package v1
 import "time"
 
 type Status string
+type ContainerState string
 
 const (
 	Pending   Status = "Pending"
@@ -10,6 +11,12 @@ const (
 	Running   Status = "Running"
 	Succeeded Status = "Succeeded"
 	Unknown   Status = "Unknown"
+)
+
+const (
+	ContainerWaiting    ContainerState = "Waiting"
+	ContainerRunning    ContainerState = "Running"
+	ContainerTerminated ContainerState = "Terminated"
 )
 
 // NodeInfo node info
@@ -76,19 +83,22 @@ type InstanceStats struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 	// Deprecated: Use AppName instead
 	// Change from one workload for each service to one workload for one app, and each service as a container
-	ServiceName string            `yaml:"serviceName,omitempty" json:"serviceName,omitempty"`
-	AppName     string            `yaml:"appName,omitempty" json:"appName,omitempty"`
-	Usage       map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
-	Extension   interface{}       `yaml:"extension,omitempty" json:"extension,omitempty"`
-	Status      Status            `yaml:"status,omitempty" json:"status,omitempty"`
-	Cause       string            `yaml:"cause,omitempty" json:"cause,omitempty"`
-	IP          string            `yaml:"ip,omitempty" json:"ip,omitempty"`
-	NodeName    string            `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
-	CreateTime  time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
-	Containers  []ContainerInfo   `yaml:"containers" json:"containers"`
+	ServiceName    string            `yaml:"serviceName,omitempty" json:"serviceName,omitempty"`
+	AppName        string            `yaml:"appName,omitempty" json:"appName,omitempty"`
+	Usage          map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
+	Extension      interface{}       `yaml:"extension,omitempty" json:"extension,omitempty"`
+	Status         Status            `yaml:"status,omitempty" json:"status,omitempty"`
+	Cause          string            `yaml:"cause,omitempty" json:"cause,omitempty"`
+	IP             string            `yaml:"ip,omitempty" json:"ip,omitempty"`
+	NodeName       string            `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
+	CreateTime     time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
+	Containers     []ContainerInfo   `yaml:"containers,omitempty" json:"containers,omitempty"`
+	InitContainers []ContainerInfo   `yaml:"initContainers,omitempty" json:"initContainers,omitempty"`
 }
 
 type ContainerInfo struct {
-	Name  string            `yaml:"name,omitempty" json:"name,omitempty"`
-	Usage map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
+	Name   string            `yaml:"name,omitempty" json:"name,omitempty"`
+	Usage  map[string]string `yaml:"usage,omitempty" json:"usage,omitempty"`
+	State  ContainerState    `yaml:"state,omitempty" json:"state,omitempty"`
+	Reason string            `yaml:"reason,omitempty" json:"reason,omitempty"`
 }
