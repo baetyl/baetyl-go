@@ -122,6 +122,10 @@ type ContainerPort struct {
 	ContainerPort int32  `json:"containerPort,omitempty" yaml:"containerPort,omitempty"`
 	Protocol      string `json:"protocol,omitempty" yaml:"protocol,omitempty"`
 	HostIP        string `json:"hostIP,omitempty" yaml:"hostIP,omitempty"`
+	// specifies type of ingress methods for a service.
+	// Default ClusterIP, can choose NodePort.
+	ServiceType string `json:"serviceType,omitempty" yaml:"serviceType,omitempty" default:"ClusterIP"`
+	NodePort    int32  `json:"nodePort,omitempty" yaml:"nodePort,omitempty"`
 }
 
 // Volume volume config
