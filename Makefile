@@ -19,8 +19,7 @@ prepare-dep:
 	git config --global http.sslVerify false
 
 set-env:
-	$(GO) env -w GONOPROXY=\*\*.baidu.com\*\*
-	$(GO) env -w GOPROXY=https://goproxy.baidu.com
+	$(GO) env -w GOPROXY=https://goproxy.cn
 	$(GO) env -w GONOSUMDB=\*
 
 compile:build
