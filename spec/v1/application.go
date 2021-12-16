@@ -43,7 +43,7 @@ type Application struct {
 	CronTime          time.Time         `json:"cronTime,omitempty" yaml:"cronTime,omitempty"`
 	HostNetwork       bool              `json:"hostNetwork,omitempty" yaml:"hostNetwork,omitempty"` // specifies host network mode of service
 	Replica           int               `json:"replica,omitempty" yaml:"replica,omitempty" default:"1"`
-	Workload          string            `json:"workload,omitempty" yaml:"workload,omitempty" default:"deployment"` // deployment | daemonset | statefulset | job
+	Workload          string            `json:"workload,omitempty" yaml:"workload,omitempty"` // deployment | daemonset | statefulset | job
 	JobConfig         *AppJobConfig     `json:"jobConfig,omitempty" yaml:"jobConfig,omitempty"`
 }
 
@@ -197,7 +197,7 @@ type ServiceFunction struct {
 }
 
 type AppJobConfig struct {
-	Completions   int    `json:"completions,omitempty" yaml:"completions,omitempty"`
+	Completions   int    `json:"completions,omitempty" yaml:"completions,omitempty" default:"1"`
 	Parallelism   int    `json:"parallelism,omitempty" yaml:"parallelism,omitempty"`
 	BackoffLimit  int    `json:"backoffLimit,omitempty" yaml:"backoffLimit,omitempty"`
 	RestartPolicy string `json:"restartPolicy,omitempty" yaml:"restartPolicy,omitempty" default:"Never"`
@@ -206,7 +206,7 @@ type AppJobConfig struct {
 // Deprecated: Use AppJobConfig instead.
 // Change from one workload for each service to one workload for one app, and each service as a container
 type ServiceJobConfig struct {
-	Completions   int    `json:"completions,omitempty" yaml:"completions,omitempty"`
+	Completions   int    `json:"completions,omitempty" yaml:"completions,omitempty" default:"1"`
 	Parallelism   int    `json:"parallelism,omitempty" yaml:"parallelism,omitempty"`
 	BackoffLimit  int    `json:"backoffLimit,omitempty" yaml:"backoffLimit,omitempty"`
 	RestartPolicy string `json:"restartPolicy,omitempty" yaml:"restartPolicy,omitempty" default:"Never"`
