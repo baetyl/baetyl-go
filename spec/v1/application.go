@@ -152,6 +152,7 @@ type EmptyDirVolumeSource struct {
 // HostPathVolumeSource volume source of host path
 type HostPathVolumeSource struct {
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
+	Type string `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
 // ObjectReference object reference to config or secret
