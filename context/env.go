@@ -3,6 +3,7 @@ package context
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
 )
@@ -33,17 +34,22 @@ const (
 	baetylFunctionSystemHttpPort = "50011"
 	baetylFunctionSystemGrpcPort = "50012"
 	defaultHostPathLib           = "/var/lib/baetyl"
+	defaultWindowsHostPathLib    = "c:/baetyl"
 )
 
 // HostPathLib return HostPathLib
 func HostPathLib() (string, error) {
 	var hostPathLib string
 	if val := os.Getenv(KeyBaetylHostPathLib); val == "" {
-		err := os.Setenv(KeyBaetylHostPathLib, defaultHostPathLib)
+		val = defaultHostPathLib
+		if runtime.GOOS == "windows" {
+			val = defaultWindowsHostPathLib
+		}
+		err := os.Setenv(KeyBaetylHostPathLib, val)
 		if err != nil {
 			return "", errors.Trace(err)
 		}
-		hostPathLib = defaultHostPathLib
+		hostPathLib = val
 	} else {
 		hostPathLib = val
 	}
