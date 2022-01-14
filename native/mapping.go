@@ -3,7 +3,7 @@ package native
 import (
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
@@ -77,8 +77,8 @@ func (s *ServiceMapping) save() error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if !utils.PathExists(path.Dir(ServiceMappingFile)) {
-		err = os.MkdirAll(path.Dir(ServiceMappingFile), 0755)
+	if !utils.PathExists(filepath.Dir(ServiceMappingFile)) {
+		err = os.MkdirAll(filepath.Dir(ServiceMappingFile), 0755)
 		if err != nil {
 			return errors.Trace(err)
 		}
