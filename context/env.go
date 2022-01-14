@@ -33,17 +33,17 @@ const (
 	baetylBrokerSystemPort       = "50010"
 	baetylFunctionSystemHttpPort = "50011"
 	baetylFunctionSystemGrpcPort = "50012"
-	defaultHostPathLib           = "/var/lib/baetyl"
-	defaultWindowsHostPathLib    = "c:/baetyl"
+	DefaultHostPathLib           = "/var/lib/baetyl"
+	DefaultWindowsHostPathLib    = `C:\baetyl`
 )
 
 // HostPathLib return HostPathLib
 func HostPathLib() (string, error) {
 	var hostPathLib string
 	if val := os.Getenv(KeyBaetylHostPathLib); val == "" {
-		val = defaultHostPathLib
+		val = DefaultHostPathLib
 		if runtime.GOOS == "windows" {
-			val = defaultWindowsHostPathLib
+			val = DefaultWindowsHostPathLib
 		}
 		err := os.Setenv(KeyBaetylHostPathLib, val)
 		if err != nil {
