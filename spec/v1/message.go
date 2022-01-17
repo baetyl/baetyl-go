@@ -45,6 +45,8 @@ const (
 	MessageCommandNodeLabel = "nodeLabel"
 	// MessageCommandMultiNodeLabels label multiple nodes
 	MessageCommandMultiNodeLabels = "multiNodeLabels"
+	// MessageRPC call edge app
+	MessageRPC = "rpc"
 )
 
 // Message general structure for http and ws sync
