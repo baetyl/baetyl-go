@@ -8,5 +8,5 @@ const (
 	BaetylRule       = "baetyl-rule"
 	BaetylAgent      = "baetyl-agent"
 	BaetylLog        = "baetyl-log"
-	BaetylGPUMetrics = "baetyl-gpu-metrics"
+	BaetylGPUMetrics = "baetyl-accelerator-metrics"
 )
