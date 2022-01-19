@@ -70,6 +70,8 @@ func TestSendURL(t *testing.T) {
 		mock.NewResponse(200, []byte("Get")),
 		mock.NewResponse(200, []byte("Post")),
 		mock.NewResponse(200, []byte("Put")),
+		mock.NewResponse(200, []byte("Put")),
+		mock.NewResponse(200, []byte("Delete")),
 	}
 	ms := mock.NewServer(nil, resp...)
 	defer ms.Close()
@@ -96,4 +98,16 @@ func TestSendURL(t *testing.T) {
 	data, err = HandleResponse(res)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("Put"), data)
+
+	res, err = cli.PutURL(ms.URL, bytes.NewReader([]byte("body")), header)
+	assert.NoError(t, err)
+	data, err = HandleResponse(res)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("Put"), data)
+
+	res, err = cli.DeleteURL(ms.URL, header)
+	assert.NoError(t, err)
+	data, err = HandleResponse(res)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("Delete"), data)
 }
