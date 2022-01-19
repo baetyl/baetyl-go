@@ -78,8 +78,16 @@ func (c *Client) GetURL(url string, header ...map[string]string) (*gohttp.Respon
 	return c.SendUrl("GET", url, nil, header...)
 }
 
+func (c *Client) DeleteURL(url string, header ...map[string]string) (*gohttp.Response, error) {
+	return c.SendUrl("DELETE", url, nil, header...)
+}
+
 func (c *Client) PostURL(url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
 	return c.SendUrl("POST", url, body, header...)
+}
+
+func (c *Client) PutURL(url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
+	return c.SendUrl("PUT", url, body, header...)
 }
 
 func (c *Client) SendUrl(method, url string, body io.Reader, header ...map[string]string) (*gohttp.Response, error) {
