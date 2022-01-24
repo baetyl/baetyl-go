@@ -34,7 +34,7 @@ const (
 	baetylFunctionSystemHttpPort = "50011"
 	baetylFunctionSystemGrpcPort = "50012"
 	DefaultHostPathLib           = "/var/lib/baetyl"
-	DefaultWindowsHostPathLib    = `C:\baetyl`
+	DefaultWindowsHostPathLib    = "C:/baetyl"
 )
 
 // HostPathLib return HostPathLib
