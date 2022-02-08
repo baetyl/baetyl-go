@@ -54,6 +54,9 @@ const (
 	KeyNetPacketsRecv              = "netPacketsRecv"
 	KeyAppRequestCnt               = "requestCounter"
 	KeyAppRequestTotalCnt          = "requestTotal"
+	KeyLink                        = "link"
+	KeyCoreId                      = "coreId"
+	MQTTLink                       = "mqtt"
 
 	BaetylCoreFrequency = "BaetylCoreFrequency"
 	BaetylCoreAPIPort   = "BaetylCoreAPIPort"
@@ -95,6 +98,8 @@ type Node struct {
 	Desire            Desire                 `json:"desire,omitempty" yaml:"desire,omitempty"`
 	SysApps           []string               `json:"sysApps,omitempty" yaml:"sysApps,omitempty"`
 	Description       string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Link              string                 `json:"link,omitempty" yaml:"link,omitempty"`
+	CoreId            string                 `json:"coreId,omitempty" yaml:"coreId,omitempty"`
 }
 
 type NodeView struct {
@@ -114,6 +119,8 @@ type NodeView struct {
 	Ready             int               `json:"ready"`
 	Mode              SyncMode          `json:"mode"`
 	NodeMode          string            `json:"nodeMode,omitempty" yaml:"nodeMode,omitempty"`
+	Link              string            `json:"link,omitempty" yaml:"link,omitempty"`
+	CoreId            string            `json:"coreId,omitempty" yaml:"coreId,omitempty"`
 }
 
 type ReportView struct {
