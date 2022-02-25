@@ -47,6 +47,8 @@ const (
 	MessageCommandMultiNodeLabels = "multiNodeLabels"
 	// MessageRPC call edge app
 	MessageRPC = "rpc"
+	// MessageAgent get or set agent stat
+	MessageAgent = "agent"
 )
 
 // Message general structure for http and ws sync
