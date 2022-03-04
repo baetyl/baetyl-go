@@ -3,15 +3,20 @@ package native
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/baetyl/baetyl-go/v2/context"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/baetyl/baetyl-go/v2/log"
 )
 
 func TestServiceMapping_SetServicePorts(t *testing.T) {
+	tempDir, _ := ioutil.TempDir("", t.Name())
+	os.Setenv(context.KeyBaetylHostPathLib, tempDir)
+	mappingFile := filepath.Join(tempDir, ServiceMappingFile)
 	mapping, err := NewServiceMapping()
 	assert.NoError(t, err)
 	assert.NotNil(t, mapping)
@@ -21,7 +26,7 @@ func TestServiceMapping_SetServicePorts(t *testing.T) {
 	err = mapping.SetServicePorts("serviceA", []int{50010, 50011, 50012})
 	assert.NoError(t, err)
 
-	data, err := ioutil.ReadFile(ServiceMappingFile)
+	data, err := ioutil.ReadFile(mappingFile)
 	assert.NoError(t, err)
 
 	expected := `serviceA:
@@ -35,7 +40,7 @@ func TestServiceMapping_SetServicePorts(t *testing.T) {
 	err = mapping.SetServicePorts("serviceB", []int{50020, 50021, 50022})
 	assert.NoError(t, err)
 
-	data, err = ioutil.ReadFile(ServiceMappingFile)
+	data, err = ioutil.ReadFile(mappingFile)
 	assert.NoError(t, err)
 
 	expected = `serviceA:
@@ -54,7 +59,7 @@ serviceB:
 	err = mapping.SetServicePorts("serviceA", []int{50030, 50031, 50032})
 	assert.NoError(t, err)
 
-	data, err = ioutil.ReadFile(ServiceMappingFile)
+	data, err = ioutil.ReadFile(mappingFile)
 	assert.NoError(t, err)
 
 	expected = `serviceA:
@@ -72,6 +77,9 @@ serviceB:
 }
 
 func TestServiceMapping_WatchFile(t *testing.T) {
+	tempDir, _ := ioutil.TempDir("", t.Name())
+	os.Setenv(context.KeyBaetylHostPathLib, tempDir)
+	mappingFile := filepath.Join(tempDir, ServiceMappingFile)
 	mapping, err := NewServiceMapping()
 	assert.NoError(t, err)
 	assert.NotNil(t, mapping)
@@ -91,7 +99,7 @@ serviceB:
   - 50021
 `
 
-	err = ioutil.WriteFile(ServiceMappingFile, []byte(config), 0755)
+	err = ioutil.WriteFile(mappingFile, []byte(config), 0755)
 	assert.NoError(t, err)
 
 	logger := log.L()
@@ -135,7 +143,7 @@ serviceC:
  - 51030
  - 51031
 `
-	err = ioutil.WriteFile(ServiceMappingFile, []byte(config), 0755)
+	err = ioutil.WriteFile(mappingFile, []byte(config), 0755)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
@@ -179,7 +187,7 @@ serviceC:
 	err = mapping.DeleteServicePorts("serviceC")
 	assert.NoError(t, err)
 
-	data, err := ioutil.ReadFile(ServiceMappingFile)
+	data, err := ioutil.ReadFile(mappingFile)
 	assert.NoError(t, err)
 
 	expected := `serviceA:

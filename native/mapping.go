@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/baetyl/baetyl-go/v2/context"
 	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v2"
 
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	ServiceMappingFile = "var/lib/baetyl/run/services.yml"
+	ServiceMappingFile = "run/services.yml"
 )
 
 type ServiceMapping struct {
@@ -48,7 +49,11 @@ func NewServiceMapping() (*ServiceMapping, error) {
 	m := &ServiceMapping{
 		services: make(map[string]*serviceMappingInfo),
 	}
-	if !utils.FileExists(ServiceMappingFile) {
+	hostPath, err := context.HostPathLib()
+	if err != nil {
+		return nil, err
+	}
+	if !utils.FileExists(filepath.Join(hostPath, ServiceMappingFile)) {
 		err := m.save()
 		if err != nil {
 			return nil, err
@@ -58,10 +63,15 @@ func NewServiceMapping() (*ServiceMapping, error) {
 }
 
 func (s *ServiceMapping) load() error {
-	if !utils.FileExists(ServiceMappingFile) {
-		return errors.Errorf("services mapping file (%s) doesn't exist", ServiceMappingFile)
+	hostPath, err := context.HostPathLib()
+	if err != nil {
+		return err
 	}
-	data, err := ioutil.ReadFile(ServiceMappingFile)
+	mappingFile := filepath.Join(hostPath, ServiceMappingFile)
+	if !utils.FileExists(mappingFile) {
+		return errors.Errorf("services mapping file (%s) doesn't exist", mappingFile)
+	}
+	data, err := ioutil.ReadFile(mappingFile)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -73,17 +83,22 @@ func (s *ServiceMapping) load() error {
 }
 
 func (s *ServiceMapping) save() error {
+	hostPath, err := context.HostPathLib()
+	if err != nil {
+		return err
+	}
+	mappingFile := filepath.Join(hostPath, ServiceMappingFile)
 	data, err := yaml.Marshal(&s.services)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if !utils.PathExists(filepath.Dir(ServiceMappingFile)) {
-		err = os.MkdirAll(filepath.Dir(ServiceMappingFile), 0755)
+	if !utils.PathExists(filepath.Dir(mappingFile)) {
+		err = os.MkdirAll(filepath.Dir(mappingFile), 0755)
 		if err != nil {
 			return errors.Trace(err)
 		}
 	}
-	return ioutil.WriteFile(ServiceMappingFile, data, 0755)
+	return ioutil.WriteFile(mappingFile, data, 0755)
 }
 
 func (s *ServiceMapping) SetServicePorts(serviceName string, ports []int) error {
@@ -143,6 +158,11 @@ func (s *ServiceMapping) GetServiceNextPort(serviceName string) (int, error) {
 }
 
 func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
+	hostPath, err := context.HostPathLib()
+	if err != nil {
+		return err
+	}
+	mappingFile := filepath.Join(hostPath, ServiceMappingFile)
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return errors.Trace(err)
@@ -151,9 +171,9 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 	s.tomb.Go(func() error {
 		defer func() {
 			watcher.Close()
-			logger.Info("stop to watch services mapping file", log.Any("file", ServiceMappingFile))
+			logger.Info("stop to watch services mapping file", log.Any("file", mappingFile))
 		}()
-		logger.Info("start to watch services mapping file", log.Any("file", ServiceMappingFile))
+		logger.Info("start to watch services mapping file", log.Any("file", mappingFile))
 
 		for {
 			select {
@@ -191,7 +211,7 @@ func (s *ServiceMapping) WatchFile(logger *log.Logger) error {
 		}
 	})
 
-	err = watcher.Add(ServiceMappingFile)
+	err = watcher.Add(mappingFile)
 	if err != nil {
 		return errors.Trace(err)
 	}
