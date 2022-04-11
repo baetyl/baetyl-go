@@ -23,8 +23,9 @@ const (
 )
 
 const (
-	RunModeKube   = "kube"
-	RunModeNative = "native"
+	RunModeKube    = "kube"
+	RunModeNative  = "native"
+	RunModeAndroid = "android"
 )
 
 const (

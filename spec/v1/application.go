@@ -7,6 +7,7 @@ import (
 const (
 	AppTypeContainer = "container"
 	AppTypeFunction  = "function"
+	AppTypeAndroid   = "android"
 
 	WorkloadDeployment  = "deployment"
 	WorkloadStatefulSet = "statefulset"
@@ -45,6 +46,7 @@ type Application struct {
 	Replica           int               `json:"replica,omitempty" yaml:"replica,omitempty" default:"1"`
 	Workload          string            `json:"workload,omitempty" yaml:"workload,omitempty"` // deployment | daemonset | statefulset | job
 	JobConfig         *AppJobConfig     `json:"jobConfig,omitempty" yaml:"jobConfig,omitempty"`
+	Ota               OtaInfo           `json:"ota,omitempty" yaml:"ota,omitempty"`
 }
 
 // Service service config1ma1
