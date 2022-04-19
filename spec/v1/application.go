@@ -169,6 +169,8 @@ type VolumeMount struct {
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 	// specifies mount path of volume
 	MountPath string `json:"mountPath,omitempty" yaml:"mountPath,omitempty"`
+	// specifies sub mount path
+	SubPath string `json:"subPath,omitempty" yaml:"subPath,omitempty"`
 	// specifies if the volume is read-only
 	ReadOnly bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
 	// specifies if the volumeMount is immutable
