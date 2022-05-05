@@ -67,6 +67,8 @@ type Service struct {
 	Args []string `json:"args,omitempty" yaml:"args,omitempty"`
 	// specifies the commands of the service program
 	Command []string `json:"command,omitempty" yaml:"command,omitempty"`
+	// specifies the work dir in container
+	WorkingDir string `json:"workingDir,omitempty" yaml:"workingDir,omitempty"`
 	// specifies the environment variable of the service program
 	Env []Environment `json:"env,omitempty" yaml:"env,omitempty"`
 	// specifies resource limits for a single instance of the service,  only for Docker container mode
