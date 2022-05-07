@@ -10,13 +10,16 @@ import (
 	"github.com/baetyl/baetyl-go/v2/utils"
 )
 
+type ReconnectCallback func() error
+
 // Client auto reconnection client
 type Client struct {
-	ops   *ClientOptions
-	ids   *Counter
-	cache chan Packet
-	log   *log.Logger
-	tomb  utils.Tomb
+	ops      *ClientOptions
+	ids      *Counter
+	cache    chan Packet
+	log      *log.Logger
+	tomb     utils.Tomb
+	callback ReconnectCallback
 }
 
 // NewClient creates a new client
@@ -34,6 +37,16 @@ func (c *Client) Start(obs Observer) error {
 	return c.tomb.Go(func() error {
 		return c.connecting(obs)
 	})
+}
+
+func (c *Client) SetReconnectCallback(callback ReconnectCallback) {
+	c.callback = callback
+}
+
+func (c *Client) ResetClient(ops *ClientOptions) {
+	c.ops.ClientID = ops.ClientID
+	c.ops.Username = ops.Username
+	c.ops.Password = ops.Password
 }
 
 // Publish sends a publish packet
@@ -103,6 +116,12 @@ func (c *Client) connecting(obs Observer) error {
 		if !next.IsZero() {
 			timer.Reset(next.Sub(time.Now()))
 			c.log.Info("next reconnect", log.Any("at", next), log.Any("attempt", bf.Attempt()))
+			if c.callback != nil {
+				err = c.callback()
+				if err != nil {
+					c.log.Error("reconnect callback failed", log.Error(err))
+				}
+			}
 		}
 		if stream != nil {
 			stream.close()
