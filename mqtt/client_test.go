@@ -580,3 +580,69 @@ func TestMqttClientReconnect2(t *testing.T) {
 	assert.NoError(t, cli.Close())
 	safeReceive(done)
 }
+
+func TestMqttClientReconnect3(t *testing.T) {
+	cfg := log.Config{}
+	utils.SetDefaults(&cfg)
+	cfg.Level = "debug"
+	log.Init(cfg)
+
+	publish := NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+
+	connect := connectPacket()
+	connect.Username = "test"
+	connect.Password = "test"
+	connect.ClientID = "test"
+
+	connack := connackPacket()
+	connack.ReturnCode = BadUsernameOrPassword
+
+	broker1 := mock.NewFlow().Debug().
+		Receive(connect).
+		Send(connack).
+		End()
+
+	broker2 := mock.NewFlow().Debug().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(publish).
+		Send(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := initMockBroker(t, broker1, broker2)
+
+	ops := newClientOptions(t, port, nil)
+	ops.Timeout = time.Second
+	ops.ClientID = "test"
+	ops.Username = "test"
+	ops.Password = "test"
+	cli := NewClient(ops)
+	assert.NotNil(t, cli)
+	cli.SetReconnectCallback(func() error {
+		cli.ResetClient(&ClientOptions{
+			ClientID: "",
+			Username: "",
+			Password: "",
+		})
+		return nil
+	})
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
+
+	obs.assertErrs(errors.New("connection refused: bad user name or password"))
+
+	cli.Send(publish)
+	obs.assertPkts(publish)
+
+	assert.Equal(t, cli.ops.ClientID, "")
+	assert.Equal(t, cli.ops.Username, "")
+	assert.Equal(t, cli.ops.Password, "")
+
+	assert.NoError(t, cli.Close())
+	safeReceive(done)
+}
