@@ -10,5 +10,5 @@ const (
 	BaetylAgent       = "baetyl-agent"
 	BaetylLog         = "baetyl-log"
 	BaetylGPUMetrics  = "baetyl-accelerator-metrics"
-	BaetylRtspAgent   = "baetyl-rtsp-agent"
+	BaetylIpcAgent    = "baetyl-ipc-agent"
 )
