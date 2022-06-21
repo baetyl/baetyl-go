@@ -8,9 +8,16 @@ import (
 )
 
 type DeviceInfo struct {
-	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
-	Version string `yaml:"version,omitempty" json:"version,omitempty"`
-	Topic   `yaml:",inline" json:",inline"`
+	Name           string              `yaml:"name,omitempty" json:"name,omitempty"`
+	Version        string              `yaml:"version,omitempty" json:"version,omitempty"`
+	DeviceModel    string              `yaml:"deviceModel,omitempty" json:"deviceModel,omitempty"`
+	AccessTemplate string              `yaml:"accessTemplate,omitempty" json:"accessTemplate,omitempty"`
+	Topics         Topic               `yaml:"topics,omitempty" json:"topics,omitempty"`
+	Modbus         *ModbusConfig       `yaml:"modbus,omitempty" json:"modbus,omitempty"`
+	OpcUA          *OpcuaConfig        `yaml:"opcua,omitempty" json:"opcua,omitempty"`
+	Ipc            *IpcConfig          `yaml:"ipc,omitempty" json:"ipc,omitempty"`
+	Custom         *CustomDeviceConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
+	Driver         *AccessConfig       `yaml:"driver,omitempty" json:"driver,omitempty"`
 }
 
 type Topic struct {
@@ -21,38 +28,27 @@ type Topic struct {
 	GetResponse mqtt2.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
 }
 
-func (a *AccessConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var acc accessConfig
-	if err := unmarshal(&acc); err == nil {
-		a.Modbus = acc.Modbus
-		a.Opcua = acc.Opcua
-		a.Custom = acc.Custom
-		// for backward compatibility
-		if a.Modbus == nil && a.Opcua == nil && a.Custom == nil {
-			var modbus ModbusAccessConfig
-			if err = unmarshal(&modbus); err == nil {
-				a.Modbus = &modbus
-				return nil
-			}
-		}
-		return nil
-	}
-	// for backward compatibility
-	var custom CustomAccessConfig
-	if err := unmarshal(&custom); err != nil {
-		return err
-	}
-	a.Custom = &custom
-	return nil
+type ModbusConfig struct {
+	ChannelId string `yaml:"channelId,omitempty" json:"channelId,omitempty" validate:"required"`
+	SlaveId   byte   `yaml:"slaveId,omitempty" json:"slaveId,omitempty" validate:"required"`
+	Interval  int    `yaml:"interval,omitempty" json:"interval,omitempty"` // unit is second
 }
+
+type OpcuaConfig struct {
+	ChannelId string `yaml:"channelId,omitempty" json:"channelId,omitempty" validate:"required"`
+	Interval  int    `yaml:"interval" json:"interval,omitempty"`
+}
+
+type IpcConfig struct {
+	Name          string `yaml:"name,omitempty" json:"name,omitempty"`
+	StreamAddress string `yaml:"streamAddress,omitempty" json:"streamAddress,omitempty"`
+	ServiceName   string `yaml:"serviceName,omitempty" json:"serviceName,omitempty"`
+	ResultTopic   string `yaml:"resultTopic,omitempty" json:"resultTopic,omitempty"`
+}
+
+type CustomDeviceConfig string
 
 type AccessConfig struct {
-	Modbus *ModbusAccessConfig `yaml:"modbus,omitempty" json:"modbus,omitempty"`
-	Opcua  *OpcuaAccessConfig  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
-	Custom *CustomAccessConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
-}
-
-type accessConfig struct {
 	Modbus *ModbusAccessConfig `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	Opcua  *OpcuaAccessConfig  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	Custom *CustomAccessConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
@@ -109,8 +105,10 @@ type CustomAccessConfig string
 
 type DeviceProperty struct {
 	Name    string          `yaml:"name,omitempty" json:"name,omitempty"`
+	Id      string          `yaml:"id,omitempty" json:"id,omitempty"`
 	Type    string          `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
 	Mode    string          `yaml:"mode,omitempty" json:"mode,omitempty" validate:"regexp=^(ro|rw)?$"`
+	Unit    string          `yaml:"unit,omitempty" json:"unit,omitempty"`
 	Visitor PropertyVisitor `yaml:"visitor,omitempty" json:"visitor,omitempty"`
 }
 
@@ -137,6 +135,18 @@ type OpcuaVisitor struct {
 
 type CustomVisitor string
 
+type AccessTemplate struct {
+	Name       string           `yaml:"name,omitempty" json:"name,omitempty"`
+	Version    string           `yaml:"version,omitempty" json:"version,omitempty"`
+	Properties []DeviceProperty `yaml:"properties,omitempty" json:"properties,omitempty"`
+	Mappings   []ModelMapping   `yaml:"mappings,omitempty" json:"mappings,omitempty"`
+}
+
+type ModelMapping struct {
+	Attribute  string `yaml:"attribute,omitempty" json:"attribute,omitempty"`
+	Expression string `yaml:"expression,omitempty" json:"expression,omitempty"`
+}
+
 type Event struct {
 	Type    string      `yaml:"type,omitempty" json:"type,omitempty"`
 	Payload interface{} `yaml:"payload,omitempty" json:"payload,omitempty"`
@@ -146,9 +156,4 @@ type DeviceShadow struct {
 	Name   string    `yaml:"name,omitempty" json:"name,omitempty"`
 	Report v1.Report `yaml:"report,omitempty" json:"report,omitempty"`
 	Desire v1.Desire `yaml:"desire,omitempty" json:"desire,omitempty"`
-}
-
-type driverConfig struct {
-	Devices []DeviceInfo `yaml:"devices,omitempty" json:"devices,omitempty"`
-	Driver  string       `yaml:"driver,omitempty" json:"driver,omitempty"`
 }
