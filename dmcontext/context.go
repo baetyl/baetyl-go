@@ -19,21 +19,24 @@ import (
 )
 
 const (
-	DefaultAccessConf = "etc/baetyl/access.yml"
-	DefaultPropsConf  = "etc/baetyl/props.yml"
-	DefaultDriverConf = "etc/baetyl/conf.yml"
-	KeyDevice         = "device"
-	KeyStatus         = "status"
-	OnlineStatus      = "online"
-	OfflineStatus     = "offline"
-	TypeReportEvent   = "report"
+	DefaultSubDeviceConf      = "etc/baetyl/sub_devices.yml"
+	DefaultDeviceModelConf    = "etc/baetyl/models.yml"
+	DefaultAccessTemplateConf = "etc/baetyl/access_template.yml"
+	KeyDevice                 = "device"
+	KeyDeviceModel            = "deviceModel"
+	KeyAccessTemplate         = "accessTemplate"
+	KeyStatus                 = "status"
+	OnlineStatus              = "online"
+	OfflineStatus             = "offline"
+	TypeReportEvent           = "report"
 )
 
 var (
 	ErrInvalidMessage          = errors.New("invalid device message")
 	ErrInvalidChannel          = errors.New("invalid channel")
 	ErrResponseChannelNotExist = errors.New("response channel not exist")
-	ErrAccessConfigNotExist    = errors.New("access config not exist")
+	ErrDeviceModelNotExist     = errors.New("device model not exist")
+	ErrAccessTemplateNotExist  = errors.New("access template not exist")
 	ErrPropsConfigNotExist     = errors.New("properties config not exist")
 	ErrDeviceNotExist          = errors.New("device not exist")
 	ErrTypeNotSupported        = errors.New("type not supported")
@@ -62,27 +65,28 @@ type Context interface {
 	Online(device *DeviceInfo) error
 	Offline(device *DeviceInfo) error
 	GetDriverConfig() string
-	GetAccessConfig() map[string]AccessConfig
-	GetDeviceAccessConfig(device *DeviceInfo) (*AccessConfig, error)
-	GetPropertiesConfig() map[string][]DeviceProperty
-	GetDevicePropertiesConfig(device *DeviceInfo) ([]DeviceProperty, error)
+	GetDevice(device string) (*DeviceInfo, error)
+	GetDeviceModel(device *DeviceInfo) ([]DeviceProperty, error)
+	GetAllDeviceModels() map[string][]DeviceProperty
+	GetAccessTemplates(device *DeviceInfo) (*AccessTemplate, error)
+	GetAllAccessTemplates() map[string]AccessTemplate
 	Start()
 	io.Closer
 }
 
 type DmCtx struct {
 	context.Context
-	log          *log.Logger
-	mqtt         *mqtt2.Client
-	tomb         utils.Tomb
-	eventCb      EventCallback
-	deltaCb      DeltaCallback
-	response     sync.Map
-	devices      map[string]DeviceInfo
-	msgChs       map[string]chan *v1.Message
-	driverConfig string
-	propsConfig  map[string][]DeviceProperty
-	accessConfig map[string]AccessConfig
+	log             *log.Logger
+	mqtt            *mqtt2.Client
+	tomb            utils.Tomb
+	eventCb         EventCallback
+	deltaCb         DeltaCallback
+	response        sync.Map
+	devices         map[string]DeviceInfo
+	msgChs          map[string]chan *v1.Message
+	driverConfig    string
+	deviceModels    map[string][]DeviceProperty
+	accessTemplates map[string]AccessTemplate
 }
 
 func NewContext(confFile string) Context {
@@ -101,19 +105,23 @@ func NewContext(confFile string) Context {
 	}
 	c.log = log.With(lfs...)
 
-	if err := unmarshalYAML(DefaultAccessConf, &c.accessConfig); err != nil {
-		c.log.Error("failed to load access config, to use default config", log.Error(err))
-		utils.UnmarshalYAML(nil, &c.accessConfig)
+	if err := unmarshalYAML(DefaultDeviceModelConf, &c.deviceModels); err != nil {
+		c.log.Error("failed to load device model, to use default config", log.Error(err))
+		utils.UnmarshalYAML(nil, &c.deviceModels)
 	}
 
-	if err := unmarshalYAML(DefaultPropsConf, &c.propsConfig); err != nil {
-		c.log.Error("failed to load props config, to use default config", log.Error(err))
-		utils.UnmarshalYAML(nil, &c.propsConfig)
+	if err := unmarshalYAML(DefaultAccessTemplateConf, &c.accessTemplates); err != nil {
+		c.log.Error("failed to load access template, to use default config", log.Error(err))
+		utils.UnmarshalYAML(nil, &c.accessTemplates)
+	}
+	for name, tpl := range c.accessTemplates {
+		tpl.Name = name
+		c.accessTemplates[name] = tpl
 	}
 
 	var dCfg driverConfig
-	if err := unmarshalYAML(DefaultDriverConf, &dCfg); err != nil {
-		c.log.Error("failed to load driver config, to use default config", log.Error(err))
+	if err := unmarshalYAML(DefaultSubDeviceConf, &dCfg); err != nil {
+		c.log.Error("failed to load device config, to use default config", log.Error(err))
 		utils.UnmarshalYAML(nil, &dCfg)
 	}
 	c.driverConfig = dCfg.Driver
@@ -121,11 +129,11 @@ func NewContext(confFile string) Context {
 	devices := make(map[string]DeviceInfo)
 	var subs []mqtt2.QOSTopic
 	for _, dev := range dCfg.Devices {
-		subs = append(subs, dev.Delta, dev.Event, dev.GetResponse)
+		subs = append(subs, dev.Topics.Delta, dev.Topics.Event, dev.Topics.GetResponse)
 		devices[dev.Name] = dev
 	}
 	c.devices = devices
-	mqtt, err := c.Context.NewSystemBrokerClient(subs)
+	/*mqtt, err := c.Context.NewSystemBrokerClient(subs)
 	if err != nil {
 		c.log.Warn("fail to create system broker client", log.Any("error", err))
 	}
@@ -133,7 +141,7 @@ func NewContext(confFile string) Context {
 	c.msgChs = make(map[string]chan *v1.Message)
 	if err := c.mqtt.Start(newObserver(c.msgChs, c.log)); err != nil {
 		c.log.Warn("fail to start mqtt client", log.Any("error", err))
-	}
+	}*/
 	return c
 }
 
@@ -166,7 +174,7 @@ func (c *DmCtx) processDelta(msg *v1.Message) error {
 	if !ok {
 		return errors.Trace(ErrDeviceNotExist)
 	}
-	delta, err := c.parsePropertyValues(deviceName, delta)
+	delta, err := c.parsePropertyValues(&dev, delta)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -215,11 +223,12 @@ func (c *DmCtx) processResponse(msg *v1.Message) error {
 		return errors.Trace(ErrInvalidMessage)
 	}
 	var err error
-	shad.Report, err = c.parsePropertyValues(deviceName, shad.Report)
+	dev := c.devices[deviceName]
+	shad.Report, err = c.parsePropertyValues(&dev, shad.Report)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	shad.Desire, err = c.parsePropertyValues(deviceName, shad.Desire)
+	shad.Desire, err = c.parsePropertyValues(&dev, shad.Desire)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -271,18 +280,30 @@ func (c *DmCtx) GetAllDevices() []DeviceInfo {
 	return deviceList
 }
 
+func (c *DmCtx) GetDevice(device string) (*DeviceInfo, error) {
+	if deviceInfo, ok := c.devices[device]; ok {
+		return &deviceInfo, nil
+	}
+	return nil, ErrDeviceNotExist
+}
+
 func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error {
+	metadata := map[string]string{
+		KeyDevice:         info.Name,
+		KeyDeviceModel:    info.DeviceModel,
+		KeyAccessTemplate: info.AccessTemplate,
+	}
 	msg := &v1.Message{
 		Kind:     v1.MessageDeviceReport,
-		Metadata: map[string]string{KeyDevice: info.Name},
+		Metadata: metadata,
 		Content:  v1.LazyValue{Value: report},
 	}
 	pld, err := json.Marshal(msg)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Report.QOS),
-		info.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Report.QOS),
+		info.Topics.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -293,8 +314,8 @@ func (c *DmCtx) GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Get.QOS),
-		info.Get.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Get.QOS),
+		info.Topics.Get.Topic, pld, 0, false, false); err != nil {
 		return nil, err
 	}
 	timer := time.NewTimer(time.Second)
@@ -348,8 +369,8 @@ func (c *DmCtx) Online(info *DeviceInfo) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Report.QOS),
-		info.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Report.QOS),
+		info.Topics.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -366,8 +387,8 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Report.QOS),
-		info.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Report.QOS),
+		info.Topics.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -376,28 +397,27 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 func (c *DmCtx) GetDriverConfig() string {
 	return c.driverConfig
 }
-func (c *DmCtx) GetAccessConfig() map[string]AccessConfig {
-	return c.accessConfig
-}
 
-func (c *DmCtx) GetDeviceAccessConfig(device *DeviceInfo) (*AccessConfig, error) {
-	if cfg, ok := c.accessConfig[device.Name]; ok {
-		return &cfg, nil
-	} else {
-		return nil, ErrAccessConfigNotExist
+func (c *DmCtx) GetDeviceModel(device *DeviceInfo) ([]DeviceProperty, error) {
+	if devProp, ok := c.deviceModels[device.DeviceModel]; ok {
+		return devProp, nil
 	}
+	return nil, ErrDeviceModelNotExist
 }
 
-func (c *DmCtx) GetPropertiesConfig() map[string][]DeviceProperty {
-	return c.propsConfig
+func (c *DmCtx) GetAllDeviceModels() map[string][]DeviceProperty {
+	return c.deviceModels
 }
 
-func (c *DmCtx) GetDevicePropertiesConfig(device *DeviceInfo) ([]DeviceProperty, error) {
-	if cfg, ok := c.propsConfig[device.Name]; ok {
-		return cfg, nil
-	} else {
-		return nil, ErrPropsConfigNotExist
+func (c *DmCtx) GetAccessTemplates(device *DeviceInfo) (*AccessTemplate, error) {
+	if accessTemplate, ok := c.accessTemplates[device.AccessTemplate]; ok {
+		return &accessTemplate, nil
 	}
+	return nil, ErrAccessTemplateNotExist
+}
+
+func (c *DmCtx) GetAllAccessTemplates() map[string]AccessTemplate {
+	return c.accessTemplates
 }
 
 func unmarshalYAML(file string, out interface{}) error {
@@ -408,9 +428,9 @@ func unmarshalYAML(file string, out interface{}) error {
 	return yaml.Unmarshal(bs, out)
 }
 
-func (c *DmCtx) parsePropertyValues(devName string, props map[string]interface{}) (map[string]interface{}, error) {
+func (c *DmCtx) parsePropertyValues(device *DeviceInfo, props map[string]interface{}) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
-	vals, ok := c.propsConfig[devName]
+	vals, ok := c.deviceModels[device.DeviceModel]
 	if !ok {
 		return nil, errors.Trace(ErrDeviceNotExist)
 	}
