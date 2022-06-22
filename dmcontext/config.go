@@ -7,6 +7,12 @@ import (
 	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 )
 
+const (
+	MappingNone      = "none"
+	MappingValue     = "value"
+	MappingCalculate = "calculate"
+)
+
 type DeviceInfo struct {
 	Name           string        `yaml:"name,omitempty" json:"name,omitempty"`
 	Version        string        `yaml:"version,omitempty" json:"version,omitempty"`
@@ -130,6 +136,7 @@ type ModbusVisitor struct {
 	Address      string  `yaml:"address" json:"address"`
 	Quantity     uint16  `yaml:"quantity" json:"quantity"`
 	Type         string  `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
+	Unit         string  `yaml:"unit,omitempty" json:"unit,omitempty"`
 	Scale        float64 `yaml:"scale" json:"scale"`
 	SwapByte     bool    `yaml:"swapByte" json:"swapByte"`
 	SwapRegister bool    `yaml:"swapRegister" json:"swapRegister"`
