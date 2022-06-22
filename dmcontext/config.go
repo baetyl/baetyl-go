@@ -8,9 +8,12 @@ import (
 )
 
 type DeviceInfo struct {
-	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
-	Version string `yaml:"version,omitempty" json:"version,omitempty"`
-	Topic   `yaml:",inline" json:",inline"`
+	Name           string        `yaml:"name,omitempty" json:"name,omitempty"`
+	Version        string        `yaml:"version,omitempty" json:"version,omitempty"`
+	DeviceModel    string        `yaml:"deviceModel,omitempty" json:"deviceModel,omitempty"`
+	AccessTemplate string        `yaml:"accessTemplate,omitempty" json:"accessTemplate,omitempty"`
+	Topics         Topic         `yaml:"topics,omitempty" json:"topics,omitempty"`
+	AccessConfig   *AccessConfig `yaml:"accessConfig,omitempty" json:"accessConfig,omitempty"`
 }
 
 type Topic struct {
@@ -109,8 +112,10 @@ type CustomAccessConfig string
 
 type DeviceProperty struct {
 	Name    string          `yaml:"name,omitempty" json:"name,omitempty"`
+	Id      string          `yaml:"id,omitempty" json:"id,omitempty"`
 	Type    string          `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
 	Mode    string          `yaml:"mode,omitempty" json:"mode,omitempty" validate:"regexp=^(ro|rw)?$"`
+	Unit    string          `yaml:"unit,omitempty" json:"unit,omitempty"`
 	Visitor PropertyVisitor `yaml:"visitor,omitempty" json:"visitor,omitempty"`
 }
 
@@ -136,6 +141,19 @@ type OpcuaVisitor struct {
 }
 
 type CustomVisitor string
+
+type AccessTemplate struct {
+	Name       string           `yaml:"name,omitempty" json:"name,omitempty"`
+	Version    string           `yaml:"version,omitempty" json:"version,omitempty"`
+	Properties []DeviceProperty `yaml:"properties,omitempty" json:"properties,omitempty"`
+	Mappings   []ModelMapping   `yaml:"mappings,omitempty" json:"mappings,omitempty"`
+}
+
+type ModelMapping struct {
+	Attribute  string `yaml:"attribute,omitempty" json:"attribute,omitempty"`
+	Type       string `yaml:"type,omitempty" json:"type,omitempty"`
+	Expression string `yaml:"expression,omitempty" json:"expression,omitempty"`
+}
 
 type Event struct {
 	Type    string      `yaml:"type,omitempty" json:"type,omitempty"`
