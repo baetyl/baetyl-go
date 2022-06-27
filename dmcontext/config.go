@@ -14,8 +14,11 @@ const (
 )
 
 type DeviceInfo struct {
-	Name           string        `yaml:"name,omitempty" json:"name,omitempty"`
-	Version        string        `yaml:"version,omitempty" json:"version,omitempty"`
+	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
+	Version string `yaml:"version,omitempty" json:"version,omitempty"`
+	// Deprecated: Use Topics instead.
+	// Change from access template support
+	Topic          `yaml:",inline" json:",inline"`
 	DeviceModel    string        `yaml:"deviceModel,omitempty" json:"deviceModel,omitempty"`
 	AccessTemplate string        `yaml:"accessTemplate,omitempty" json:"accessTemplate,omitempty"`
 	Topics         Topic         `yaml:"topics,omitempty" json:"topics,omitempty"`
