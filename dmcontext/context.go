@@ -19,6 +19,9 @@ import (
 )
 
 const (
+	DefaultAccessConf         = "etc/baetyl/access.yml"
+	DefaultPropsConf          = "etc/baetyl/props.yml"
+	DefaultDriverConf         = "etc/baetyl/conf.yml"
 	DefaultSubDeviceConf      = "etc/baetyl/sub_devices.yml"
 	DefaultDeviceModelConf    = "etc/baetyl/models.yml"
 	DefaultAccessTemplateConf = "etc/baetyl/access_template.yml"
@@ -35,6 +38,7 @@ var (
 	ErrInvalidMessage          = errors.New("invalid device message")
 	ErrInvalidChannel          = errors.New("invalid channel")
 	ErrResponseChannelNotExist = errors.New("response channel not exist")
+	ErrAccessConfigNotExist    = errors.New("access config not exist")
 	ErrDeviceModelNotExist     = errors.New("device model not exist")
 	ErrAccessTemplateNotExist  = errors.New("access template not exist")
 	ErrPropsConfigNotExist     = errors.New("properties config not exist")
@@ -65,6 +69,10 @@ type Context interface {
 	Online(device *DeviceInfo) error
 	Offline(device *DeviceInfo) error
 	GetDriverConfig() string
+	GetAccessConfig() map[string]AccessConfig
+	GetDeviceAccessConfig(device *DeviceInfo) (*AccessConfig, error)
+	GetPropertiesConfig() map[string][]DeviceProperty
+	GetDevicePropertiesConfig(device *DeviceInfo) ([]DeviceProperty, error)
 	GetDevice(device string) (*DeviceInfo, error)
 	GetDeviceModel(device *DeviceInfo) ([]DeviceProperty, error)
 	GetAllDeviceModels() map[string][]DeviceProperty
@@ -85,6 +93,8 @@ type DmCtx struct {
 	devices         map[string]DeviceInfo
 	msgChs          map[string]chan *v1.Message
 	driverConfig    string
+	propsConfig     map[string][]DeviceProperty
+	accessConfig    map[string]AccessConfig
 	deviceModels    map[string][]DeviceProperty
 	accessTemplates map[string]AccessTemplate
 }
@@ -129,7 +139,7 @@ func NewContext(confFile string) Context {
 	devices := make(map[string]DeviceInfo)
 	var subs []mqtt2.QOSTopic
 	for _, dev := range dCfg.Devices {
-		subs = append(subs, dev.Topics.Delta, dev.Topics.Event, dev.Topics.GetResponse)
+		subs = append(subs, dev.DeviceTopic.Delta, dev.DeviceTopic.Event, dev.DeviceTopic.GetResponse)
 		devices[dev.Name] = dev
 	}
 	c.devices = devices
@@ -302,8 +312,8 @@ func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Report.QOS),
-		info.Topics.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
+		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -314,8 +324,8 @@ func (c *DmCtx) GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Get.QOS),
-		info.Topics.Get.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Get.QOS),
+		info.DeviceTopic.Get.Topic, pld, 0, false, false); err != nil {
 		return nil, err
 	}
 	timer := time.NewTimer(time.Second)
@@ -369,8 +379,8 @@ func (c *DmCtx) Online(info *DeviceInfo) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Report.QOS),
-		info.Topics.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
+		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -387,8 +397,8 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Report.QOS),
-		info.Topics.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
+		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -396,6 +406,38 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 
 func (c *DmCtx) GetDriverConfig() string {
 	return c.driverConfig
+}
+
+// Deprecated: Use GetAllDevices instead.
+// Change from access template support
+func (c *DmCtx) GetAccessConfig() map[string]AccessConfig {
+	return c.accessConfig
+}
+
+// Deprecated: Use GetDevice instead.
+// Change from access template support
+func (c *DmCtx) GetDeviceAccessConfig(device *DeviceInfo) (*AccessConfig, error) {
+	if cfg, ok := c.accessConfig[device.Name]; ok {
+		return &cfg, nil
+	} else {
+		return nil, ErrAccessConfigNotExist
+	}
+}
+
+// Deprecated: Use GetAllDeviceModels instead.
+// Change from access template support
+func (c *DmCtx) GetPropertiesConfig() map[string][]DeviceProperty {
+	return c.propsConfig
+}
+
+// Deprecated: Use GetDeviceModel instead.
+// Change from access template support
+func (c *DmCtx) GetDevicePropertiesConfig(device *DeviceInfo) ([]DeviceProperty, error) {
+	if cfg, ok := c.propsConfig[device.Name]; ok {
+		return cfg, nil
+	} else {
+		return nil, ErrPropsConfigNotExist
+	}
 }
 
 func (c *DmCtx) GetDeviceModel(device *DeviceInfo) ([]DeviceProperty, error) {

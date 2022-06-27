@@ -14,14 +14,27 @@ const (
 )
 
 type DeviceInfo struct {
-	Name           string        `yaml:"name,omitempty" json:"name,omitempty"`
-	Version        string        `yaml:"version,omitempty" json:"version,omitempty"`
+	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
+	Version string `yaml:"version,omitempty" json:"version,omitempty"`
+	// Deprecated: Use DeviceTopic instead.
+	// Change from access template support
+	Topic          `yaml:",inline" json:",inline"`
 	DeviceModel    string        `yaml:"deviceModel,omitempty" json:"deviceModel,omitempty"`
 	AccessTemplate string        `yaml:"accessTemplate,omitempty" json:"accessTemplate,omitempty"`
-	Topics         Topic         `yaml:"topics,omitempty" json:"topics,omitempty"`
+	DeviceTopic    DeviceTopic   `yaml:"deviceTopic,omitempty" json:"deviceTopic,omitempty"`
 	AccessConfig   *AccessConfig `yaml:"accessConfig,omitempty" json:"accessConfig,omitempty"`
 }
 
+type DeviceTopic struct {
+	Delta       mqtt2.QOSTopic `yaml:"delta,omitempty" json:"delta,omitempty"`
+	Report      mqtt2.QOSTopic `yaml:"report,omitempty" json:"report,omitempty"`
+	Event       mqtt2.QOSTopic `yaml:"event,omitempty" json:"event,omitempty"`
+	Get         mqtt2.QOSTopic `yaml:"get,omitempty" json:"get,omitempty"`
+	GetResponse mqtt2.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
+}
+
+// Deprecated: Use DeviceTopic instead.
+// Change from access template support
 type Topic struct {
 	Delta       mqtt2.QOSTopic `yaml:"delta,omitempty" json:"delta,omitempty"`
 	Report      mqtt2.QOSTopic `yaml:"report,omitempty" json:"report,omitempty"`
