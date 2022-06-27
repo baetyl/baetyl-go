@@ -139,7 +139,7 @@ func NewContext(confFile string) Context {
 	devices := make(map[string]DeviceInfo)
 	var subs []mqtt2.QOSTopic
 	for _, dev := range dCfg.Devices {
-		subs = append(subs, dev.Topics.Delta, dev.Topics.Event, dev.Topics.GetResponse)
+		subs = append(subs, dev.DeviceTopic.Delta, dev.DeviceTopic.Event, dev.DeviceTopic.GetResponse)
 		devices[dev.Name] = dev
 	}
 	c.devices = devices
@@ -312,8 +312,8 @@ func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Report.QOS),
-		info.Topics.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
+		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -324,8 +324,8 @@ func (c *DmCtx) GetDeviceProperties(info *DeviceInfo) (*DeviceShadow, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Get.QOS),
-		info.Topics.Get.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Get.QOS),
+		info.DeviceTopic.Get.Topic, pld, 0, false, false); err != nil {
 		return nil, err
 	}
 	timer := time.NewTimer(time.Second)
@@ -379,8 +379,8 @@ func (c *DmCtx) Online(info *DeviceInfo) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Report.QOS),
-		info.Topics.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
+		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -397,8 +397,8 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.Topics.Report.QOS),
-		info.Topics.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
+		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
