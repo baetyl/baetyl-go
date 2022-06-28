@@ -81,3 +81,39 @@ func TestExecExpression(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1.25, res)
 }
+
+func TestSolveExpression(t *testing.T) {
+	zero := float64(0)
+
+	res, err := SolveExpression("", 1)
+	assert.Error(t, err)
+	assert.Equal(t, zero, res)
+
+	res, err = SolveExpression("x1*2+x2*3", 1)
+	assert.Error(t, err)
+	assert.Equal(t, zero, res)
+
+	res, err = SolveExpression("(x1+2)*x1", 1)
+	assert.Error(t, err)
+	assert.Equal(t, zero, res)
+
+	res, err = SolveExpression("1/(x1+2)", 1)
+	assert.Error(t, err)
+	assert.Equal(t, zero, res)
+
+	res, err = SolveExpression("(x1+2)&x1", 1)
+	assert.Error(t, err)
+	assert.Equal(t, zero, res)
+
+	res, err = SolveExpression("x1*2-x1*2+1", 1)
+	assert.Error(t, err)
+	assert.Equal(t, zero, res)
+
+	res, err = SolveExpression("x1*2-11", 9)
+	assert.NoError(t, err)
+	assert.Equal(t, float64(10), res)
+
+	res, err = SolveExpression("(x1+1)*3+x1*2+1", 9)
+	assert.NoError(t, err)
+	assert.Equal(t, float64(1), res)
+}
