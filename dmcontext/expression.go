@@ -2,9 +2,14 @@ package dmcontext
 
 import (
 	"fmt"
-	"github.com/baetyl/baetyl-go/v2/errors"
-	"github.com/crsmithdev/goexpr"
+	"go/ast"
+	"go/token"
+	"reflect"
 	"strconv"
+
+	"github.com/crsmithdev/goexpr"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 var (
@@ -103,5 +108,84 @@ func parseValueToFloat64(v interface{}) (float64, error) {
 		return v.(float64), nil
 	default:
 		return 0, ErrUnsupportedValueType
+	}
+}
+
+// SolveExpression solve the expression with value
+// Note: currently only support the expression that can be simplified to ax+b
+// for example, input: ((x1+1)*3+x1*2+1, 9) which means (x1+1)*3+x1*2+1=9, output: 1 which means x1=1
+func SolveExpression(e string, value float64) (float64, error) {
+	// parse expression
+	expression, err := goexpr.Parse(e)
+	if err != nil {
+		return 0, errors.Trace(err)
+	}
+	// check the number of variables
+	set := map[string]interface{}{}
+	for _, v := range expression.Vars {
+		set[v] = nil
+	}
+	if len(set) != 1 {
+		return 0, errors.New("the number of variables in expression is not one")
+	}
+	// simple expression
+	slope, offset, err := simpleExpression(expression.Ast)
+	if err != nil {
+		return 0, errors.Trace(err)
+	}
+	// solve expression
+	if slope == 0 {
+		return 0, errors.New("the slope is zero after simple")
+	}
+	return (value - offset) / slope, nil
+}
+
+// simpleExpression simple node to slope and offset
+func simpleExpression(node ast.Node) (float64, float64, error) {
+	switch node.(type) {
+	case *ast.Ident:
+		return 1, 0, nil
+	case *ast.BinaryExpr:
+		return processBinaryExpr(node)
+	case *ast.ParenExpr:
+		return simpleExpression(node.(*ast.ParenExpr).X)
+	case *ast.BasicLit:
+		offset, err := strconv.ParseFloat(node.(*ast.BasicLit).Value, 64)
+		if err != nil {
+			return 0, 0, err
+		}
+		return 0, offset, nil
+	default:
+		return 0, 0, errors.Errorf("unsupported node %+v (type %+v)", node, reflect.TypeOf(node))
+	}
+}
+
+func processBinaryExpr(node ast.Node) (float64, float64, error) {
+	n := node.(*ast.BinaryExpr)
+	xa, xb, err := simpleExpression(n.X)
+	if err != nil {
+		return 0, 0, err
+	}
+	ya, yb, err := simpleExpression(n.Y)
+	if err != nil {
+		return 0, 0, err
+	}
+	switch n.Op {
+	case token.ADD:
+		return xa + ya, xb + yb, nil
+	case token.SUB:
+		return xa - ya, xb - yb, nil
+	case token.MUL:
+		if xa != 0 && ya != 0 {
+			return 0, 0, errors.New("only support linear equation")
+		}
+		return xa*yb + xb*ya, xb * yb, nil
+	case token.QUO:
+		if ya != 0 {
+			return 0, 0, errors.New("denominator can not have a variable")
+		}
+		return xa / yb, xb / yb, nil
+	default:
+		return 0, 0, errors.Errorf("unsupported binary operation: %s", n.Op)
 	}
 }
