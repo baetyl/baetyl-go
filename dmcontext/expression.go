@@ -2,12 +2,14 @@ package dmcontext
 
 import (
 	"fmt"
-	"github.com/baetyl/baetyl-go/v2/errors"
-	"github.com/crsmithdev/goexpr"
 	"go/ast"
 	"go/token"
 	"reflect"
 	"strconv"
+
+	"github.com/crsmithdev/goexpr"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 var (
@@ -154,7 +156,7 @@ func simpleExpression(node ast.Node) (float64, float64, error) {
 		}
 		return 0, offset, nil
 	default:
-		return 0, 0, errors.New(fmt.Sprintf("unsupported node %+v (type %+v)", node, reflect.TypeOf(node)))
+		return 0, 0, errors.Errorf("unsupported node %+v (type %+v)", node, reflect.TypeOf(node))
 	}
 }
 
@@ -184,6 +186,6 @@ func processBinaryExpr(node ast.Node) (float64, float64, error) {
 		}
 		return xa / yb, xb / yb, nil
 	default:
-		return 0, 0, errors.New(fmt.Sprintf("unsupported binary operation: %s", n.Op))
+		return 0, 0, errors.Errorf("unsupported binary operation: %s", n.Op)
 	}
 }
