@@ -1,7 +1,6 @@
 package dmcontext
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"reflect"
@@ -89,7 +88,7 @@ func processCalcMapping(e string, args map[string]interface{}) (interface{}, err
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	return strconv.ParseFloat(fmt.Sprintf("%.4f", res), 64)
+	return res, nil
 }
 
 func parseValueToFloat64(v interface{}) (float64, error) {
@@ -103,7 +102,8 @@ func parseValueToFloat64(v interface{}) (float64, error) {
 	case int64:
 		return float64(v.(int64)), nil
 	case float32:
-		return float64(v.(float32)), nil
+		s := strconv.FormatFloat(float64(v.(float32)), 'e', -1, 32)
+		return strconv.ParseFloat(s, 64)
 	case float64:
 		return v.(float64), nil
 	default:
