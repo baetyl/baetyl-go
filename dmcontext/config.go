@@ -11,6 +11,10 @@ const (
 	MappingNone      = "none"
 	MappingValue     = "value"
 	MappingCalculate = "calculate"
+	OpcuaIdTypeI     = "i"
+	OpcuaIdTypeS     = "s"
+	OpcuaIdTypeG     = "g"
+	OpcuaIdTypeB     = "b"
 )
 
 type DeviceInfo struct {
@@ -110,6 +114,8 @@ type OpcuaAccessConfig struct {
 	Security    OpcuaSecurity     `yaml:"security,omitempty" json:"security,omitempty"`
 	Auth        *OpcuaAuth        `yaml:"auth,omitempty" json:"auth,omitempty"`
 	Certificate *OpcuaCertificate `yaml:"certificate,omitempty" json:"certificate,omitempty"`
+	NsOffset    int               `yaml:"nsOffset,omitempty" json:"nsOffset,omitempty"`
+	IdOffset    int               `yaml:"idOffset,omitempty" json:"idOffset,omitempty"`
 }
 
 type OpcuaSecurity struct {
@@ -156,8 +162,13 @@ type ModbusVisitor struct {
 }
 
 type OpcuaVisitor struct {
+	// Deprecated: Use NsBase, IdBase, OpcuaAccessConfig.NsOffset, OpcuaAccessConfig.IdOffset instead.
+	// Change from access template support
 	NodeID string `yaml:"nodeid,omitempty" json:"nodeid,omitempty"`
 	Type   string `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
+	NsBase int    `yaml:"nsBase,omitempty" json:"nsBase,omitempty"`
+	IdBase string `yaml:"idBase,omitempty" json:"idBase,omitempty"`
+	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" validate:"regexp=^(i|s|g|b|)?$"`
 }
 
 type CustomVisitor string
