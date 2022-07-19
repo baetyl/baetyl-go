@@ -408,9 +408,7 @@ func (view *NodeView) populateNodeStats(timeout time.Duration) (err error) {
 				return errors.Trace(err)
 			}
 			if extension := s.Extension; extension != nil {
-				if IsLegalAcceleratorType(view.Accelerator) {
-					populateGPUStats(s, extension)
-				}
+				populateGPUStats(s, extension)
 				populateDiskNetStats(s, extension)
 			}
 		}
