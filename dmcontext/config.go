@@ -168,7 +168,7 @@ type OpcuaVisitor struct {
 	Type   string `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
 	NsBase int    `yaml:"nsBase,omitempty" json:"nsBase,omitempty"`
 	IdBase string `yaml:"idBase,omitempty" json:"idBase,omitempty"`
-	IdType string `yaml:"idType,omitempty" json:"idType,omitempty"`
+	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" validate:"regexp=^(i|s|g|b|)?$"`
 }
 
 type CustomVisitor string
