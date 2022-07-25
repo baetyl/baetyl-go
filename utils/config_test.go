@@ -39,11 +39,11 @@ modules:
 	cfg := testEncodeStruct{
 		Others: "others",
 		Modules: []testEncodeModule{
-			testEncodeModule{
+			{
 				Name:   "m1",
 				Params: []string{"-c", "conf.yml"},
 			},
-			testEncodeModule{
+			{
 				Name:   "m2",
 				Params: []string{"arg1", "arg2"},
 			},
@@ -156,11 +156,11 @@ func TestUnmarshalJSON(t *testing.T) {
 	cfg := testEncodeStruct{
 		Others: "others",
 		Modules: []testEncodeModule{
-			testEncodeModule{
+			{
 				Name:   "m1",
 				Params: []string{"-c", "conf.yml"},
 			},
-			testEncodeModule{
+			{
 				Name:   "m2",
 				Params: []string{"arg1", "arg2"},
 			},
@@ -218,11 +218,11 @@ modules:
 	cfg := testEncodeStruct{
 		Others: "others",
 		Modules: []testEncodeModule{
-			testEncodeModule{
+			{
 				Name:   "m1",
 				Params: []string{"-c", "conf.yml"},
 			},
-			testEncodeModule{
+			{
 				Name:   "m2",
 				Params: []string{"arg1", "arg2"},
 			},

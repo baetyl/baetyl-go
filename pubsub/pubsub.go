@@ -85,7 +85,7 @@ func (m *pubsub) Close() error {
 	m.chanLock.Lock()
 	defer m.chanLock.Unlock()
 	for topic, chs := range m.channels {
-		for k, _ := range chs {
+		for k := range chs {
 			delete(chs, k)
 		}
 		delete(m.channels, topic)

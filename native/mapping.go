@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/baetyl/baetyl-go/v2/context"
 	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v2"
+
+	"github.com/baetyl/baetyl-go/v2/context"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"

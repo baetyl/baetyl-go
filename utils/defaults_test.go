@@ -35,17 +35,17 @@ func TestSetDefaults(t *testing.T) {
 			args: &testDefaultsStruct{
 				Others: "others",
 				Modules: []testDefaultsModule{
-					testDefaultsModule{
+					{
 						Name: "m1",
 					},
-					testDefaultsModule{
+					{
 						Name:   "m2",
 						Params: []string{"arg1", "arg2"},
 					},
 				},
 				Services: map[string]testDefaultsModule{
-					"m1": testDefaultsModule{},
-					"m2": testDefaultsModule{
+					"m1": {},
+					"m2": {
 						Params: []string{"arg1", "arg2"},
 					},
 				},
@@ -54,20 +54,20 @@ func TestSetDefaults(t *testing.T) {
 				Others:  "others",
 				Timeout: time.Minute,
 				Modules: []testDefaultsModule{
-					testDefaultsModule{
+					{
 						Name:   "m1",
 						Params: []string{"-c", "conf.yml"},
 					},
-					testDefaultsModule{
+					{
 						Name:   "m2",
 						Params: []string{"arg1", "arg2"},
 					},
 				},
 				Services: map[string]testDefaultsModule{
-					"m1": testDefaultsModule{
+					"m1": {
 						Params: []string{"-c", "conf.yml"},
 					},
-					"m2": testDefaultsModule{
+					"m2": {
 						Params: []string{"arg1", "arg2"},
 					},
 				},
