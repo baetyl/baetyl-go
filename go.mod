@@ -1,6 +1,6 @@
 module github.com/baetyl/baetyl-go/v2
 
-go 1.13
+go 1.18
 
 require (
 	github.com/256dpi/gomqtt v0.14.3
@@ -9,30 +9,19 @@ require (
 	github.com/crsmithdev/goexpr v0.0.0-20150309021426-69a8c42346f1
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
-	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/evanphx/json-patch v4.5.0+incompatible
-	github.com/frankban/quicktest v1.10.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7
-	github.com/go-ozzo/ozzo-routing v2.1.4+incompatible // indirect
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.0.0
 	github.com/jinzhu/copier v0.1.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/mapstructure v0.0.0-20170523030023-d0303fe80992
-	github.com/nwaples/rardecode v1.1.0 // indirect
-	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1
-	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/qiangxue/fasthttp-routing v0.0.0-20160225050629-6ccdc2a18d87
-	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/stretchr/testify v1.5.1
-	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/valyala/fasthttp v1.9.0
-	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/zap v1.16.0
 	google.golang.org/grpc v1.25.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
@@ -42,4 +31,38 @@ require (
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.0.0-20190819141258-3544db3b9e44
 	k8s.io/apimachinery v0.0.0-20190817020851-f2f3a405f61d
+)
+
+require (
+	github.com/256dpi/mercury v0.2.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dsnet/compress v0.0.1 // indirect
+	github.com/frankban/quicktest v1.10.0 // indirect
+	github.com/go-ozzo/ozzo-routing v2.1.4+incompatible // indirect
+	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
+	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/golang/snappy v0.0.1 // indirect
+	github.com/google/go-cmp v0.4.0 // indirect
+	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
+	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/klauspost/compress v1.8.2 // indirect
+	github.com/klauspost/cpuid v1.2.1 // indirect
+	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
+	github.com/nwaples/rardecode v1.1.0 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/sirupsen/logrus v1.6.0 // indirect
+	github.com/ulikunitz/xz v0.5.7 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
+	go.uber.org/atomic v1.6.0 // indirect
+	go.uber.org/multierr v1.5.0 // indirect
+	golang.org/x/net v0.0.0-20200625001655-4c5254603344 // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/text v0.3.2 // indirect
+	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+	gopkg.in/inf.v0 v0.9.0 // indirect
+	k8s.io/klog v0.3.1 // indirect
 )

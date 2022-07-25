@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/context"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/baetyl/baetyl-go/v2/context"
 
 	"github.com/baetyl/baetyl-go/v2/log"
 )
