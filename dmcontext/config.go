@@ -182,7 +182,7 @@ type AccessTemplate struct {
 
 type ModelMapping struct {
 	Attribute  string `yaml:"attribute,omitempty" json:"attribute,omitempty"`
-	Type       string `yaml:"type,omitempty" json:"type,omitempty"`
+	Type       string `yaml:"type,omitempty" json:"type,omitempty" default:"none"`
 	Expression string `yaml:"expression,omitempty" json:"expression,omitempty"`
 }
 
