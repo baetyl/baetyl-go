@@ -26,8 +26,11 @@ const (
 	DefaultDeviceModelConf    = "etc/baetyl/models.yml"
 	DefaultAccessTemplateConf = "etc/baetyl/access_template.yml"
 	KeyDevice                 = "device"
-	KeyDeviceModel            = "deviceModel"
+	KeyDeviceProduct          = "deviceProduct"
 	KeyAccessTemplate         = "accessTemplate"
+	KeyNode                   = "node"
+	KeyNodeProduct            = "nodeProduct"
+	NodeProduct               = "BIE-Product"
 	KeyStatus                 = "status"
 	OnlineStatus              = "online"
 	OfflineStatus             = "offline"
@@ -300,8 +303,10 @@ func (c *DmCtx) GetDevice(device string) (*DeviceInfo, error) {
 func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error {
 	metadata := map[string]string{
 		KeyDevice:         info.Name,
-		KeyDeviceModel:    info.DeviceModel,
+		KeyDeviceProduct:  info.DeviceModel,
 		KeyAccessTemplate: info.AccessTemplate,
+		KeyNode:           c.NodeName(),
+		KeyNodeProduct:    NodeProduct,
 	}
 	msg := &v1.Message{
 		Kind:     v1.MessageDeviceReport,
