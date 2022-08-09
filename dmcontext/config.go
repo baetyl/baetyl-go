@@ -173,6 +173,36 @@ type OpcuaVisitor struct {
 
 type CustomVisitor string
 
+type IpcDeviceConfig struct {
+	Name          string `yaml:"name" json:"name"`
+	StreamAddress string `yaml:"streamAddress" json:"streamAddress"`
+	ServiceName   string `yaml:"serviceName" json:"serviceName"`
+	ResultTopic   string `yaml:"resultTopic" json:"resultTopic"`
+	AgentEnable   bool   `yaml:"agentEnable" json:"agentEnable"`                         // republish rtsp
+	System        bool   `yaml:"system" json:"system"`                                   // use baetyl-ipc-cloud or user self defined
+	RemoteAddress string `yaml:"remoteAddress,omitempty" json:"remoteAddress,omitempty"` // republish address
+}
+
+type IpcServiceConfig struct {
+	Name        string  `yaml:"name,omitempty" json:"name,omitempty"`
+	FPS         float64 `yaml:"fps,omitempty" json:"fps,omitempty"`
+	ImageFormat string  `yaml:"imageFormat,omitempty" json:"imageFormat,omitempty" default:"jpg"`
+	Scale       struct {
+		Enable bool `yaml:"enable,omitempty" json:"enable,omitempty"`
+		Height int  `yaml:"height,omitempty" json:"height,omitempty"`
+		Width  int  `yaml:"width,omitempty" json:"width,omitempty"`
+	} `yaml:"scale,omitempty" json:"scale,omitempty"`
+	Address string `yaml:"address,omitempty" json:"address,omitempty"`
+	Request struct {
+		Params map[string]string `yaml:"params,omitempty" json:"params,omitempty"`
+	} `yaml:"request,omitempty" json:"request,omitempty"`
+	Body struct {
+		ImageType string                 `yaml:"imageType,omitempty" json:"imageType,omitempty"`
+		ImageName string                 `yaml:"imageName,omitempty" json:"imageName,omitempty"`
+		Params    map[string]interface{} `yaml:"params,omitempty" json:"params,omitempty"`
+	} `yaml:"body,omitempty" json:"body,omitempty"`
+}
+
 type AccessTemplate struct {
 	Name       string           `yaml:"name,omitempty" json:"name,omitempty"`
 	Version    string           `yaml:"version,omitempty" json:"version,omitempty"`
