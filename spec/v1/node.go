@@ -61,6 +61,7 @@ const (
 	BaetylCoreFrequency = "BaetylCoreFrequency"
 	BaetylCoreAPIPort   = "BaetylCoreAPIPort"
 	BaetylCoreVersion   = "BaetylCoreVersion"
+	BaetylAgentPort     = "BaetylAgentPort"
 
 	NodeOffline   = 0
 	NodeOnline    = 1
