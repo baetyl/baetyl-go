@@ -63,9 +63,9 @@ const (
 	BaetylCoreVersion   = "BaetylCoreVersion"
 	BaetylAgentPort     = "BaetylAgentPort"
 
-	NodeOffline   = 0
+	NodeUninstall = 0
 	NodeOnline    = 1
-	NodeUninstall = 2
+	NodeOffline   = 2
 )
 
 var acceleratorMap = map[string]bool{
