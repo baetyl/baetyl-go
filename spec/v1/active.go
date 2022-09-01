@@ -17,4 +17,5 @@ type ActiveResponse struct {
 	NodeName    string            `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
 	Namespace   string            `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 	Certificate utils.Certificate `yaml:"certificate,omitempty" json:"certificate,omitempty"`
+	MqttCert    utils.Certificate `yaml:"mqttCert,omitempty" json:"mqttCert,omitempty"`
 }
