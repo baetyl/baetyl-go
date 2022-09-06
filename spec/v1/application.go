@@ -47,6 +47,7 @@ type Application struct {
 	Workload          string            `json:"workload,omitempty" yaml:"workload,omitempty"` // deployment | daemonset | statefulset | job
 	JobConfig         *AppJobConfig     `json:"jobConfig,omitempty" yaml:"jobConfig,omitempty"`
 	Ota               OtaInfo           `json:"ota,omitempty" yaml:"ota,omitempty"`
+	AutoScaleCfg      *AutoScaleCfg     `json:"autoScaleCfg,omitempty" yaml:"autoScaleCfg,omitempty"`
 }
 
 // Service service config1ma1
@@ -208,6 +209,27 @@ type AppJobConfig struct {
 	Parallelism   int    `json:"parallelism,omitempty" yaml:"parallelism,omitempty"`
 	BackoffLimit  int    `json:"backoffLimit,omitempty" yaml:"backoffLimit,omitempty"`
 	RestartPolicy string `json:"restartPolicy,omitempty" yaml:"restartPolicy,omitempty" default:"Never"`
+}
+
+type AutoScaleCfg struct {
+	MinReplicas int          `json:"minReplicas,omitempty" yaml:"minReplicas,omitempty"`
+	MaxReplicas int          `json:"maxReplicas,omitempty" yaml:"maxReplicas,omitempty"`
+	Metrics     []MetricSpec `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+}
+
+type MetricSpec struct {
+	Type     string          `json:"type,omitempty" yaml:"type,omitempty" default:"Resource"`
+	Resource *ResourceMetric `json:"resource,omitempty" yaml:"resource,omitempty"`
+}
+
+type ResourceMetric struct {
+	// name is the name of the resource, cpu / memory
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+	// type represents whether the metric type is Utilization, Value, or AverageValue
+	TargetType         string `json:"targetType,omitempty" yaml:"targetType,omitempty"`
+	Value              string `json:"value,omitempty" yaml:"value,omitempty"`
+	AverageValue       string `json:"averageValue,omitempty" yaml:"averageValue,omitempty"`
+	AverageUtilization int    `json:"averageUtilization,omitempty" yaml:"averageUtilization,omitempty"`
 }
 
 // Deprecated: Use AppJobConfig instead.
