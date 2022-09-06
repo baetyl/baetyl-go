@@ -3,6 +3,8 @@ package mqtt
 import (
 	"math/rand"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCheckTopic(t *testing.T) {
@@ -112,4 +114,25 @@ func genRandomString(n int) string {
 		b[i] = c[rand.Intn(len(c))]
 	}
 	return string(b)
+}
+
+func TestProcessTopic(t *testing.T) {
+	report := "bie/{{.Namespace}}/{{.NodeName}}/%s"
+	str, err := ProcessTopic(report, map[string]interface{}{
+		TopicNamespace: TopicWildcard,
+		TopicNodeName:  TopicWildcard,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, str, "bie/+/+/%s")
+
+	str, err = ProcessTopic(report, map[string]interface{}{
+		TopicNamespace: "ns",
+		TopicNodeName:  "node",
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, str, "bie/ns/node/%s")
+
+	report = `{{-if }}`
+	str, err = ProcessTopic(report, nil)
+	assert.NotNil(t, err)
 }
