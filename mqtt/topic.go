@@ -1,13 +1,36 @@
 package mqtt
 
 import (
+	"bytes"
 	"strings"
+	"text/template"
 )
 
 const (
 	maxTopicLevels = 9
 	maxTopicLength = 255
+
+	TopicNamespace      = "Namespace"
+	TopicNodeName       = "NodeName"
+	TopicReport         = "report"
+	TopicDesire         = "desire"
+	TopicDelta          = "delta"
+	TopicDesireResponse = "desireResponse"
+	TopicWildcard       = "+"
 )
+
+func ProcessTopic(topic string, vars interface{}) (string, error) {
+	tmpl, err := template.New("mqttTopic").Parse(topic)
+	if err != nil {
+		return "", err
+	}
+	var tmplBytes bytes.Buffer
+	err = tmpl.Execute(&tmplBytes, vars)
+	if err != nil {
+		return "", err
+	}
+	return tmplBytes.String(), nil
+}
 
 // CheckTopic check topic
 func CheckTopic(topic string, wildcard bool) bool {
