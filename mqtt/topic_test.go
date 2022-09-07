@@ -119,15 +119,15 @@ func genRandomString(n int) string {
 func TestProcessTopic(t *testing.T) {
 	report := "bie/{{.Namespace}}/{{.NodeName}}/%s"
 	str, err := ProcessTopic(report, map[string]interface{}{
-		TopicNamespace: TopicWildcard,
-		TopicNodeName:  TopicWildcard,
+		"Namespace": TopicWildcard,
+		"NodeName":  TopicWildcard,
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, str, "bie/+/+/%s")
 
 	str, err = ProcessTopic(report, map[string]interface{}{
-		TopicNamespace: "ns",
-		TopicNodeName:  "node",
+		"Namespace": "ns",
+		"NodeName":  "node",
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, str, "bie/ns/node/%s")

@@ -10,8 +10,8 @@ const (
 	maxTopicLevels = 9
 	maxTopicLength = 255
 
-	TopicNamespace      = "Namespace"
-	TopicNodeName       = "NodeName"
+	TopicNamespace      = "(.Namespace)"
+	TopicNodeName       = "(.NodeName)"
 	TopicReport         = "report"
 	TopicDesire         = "desire"
 	TopicDelta          = "delta"
