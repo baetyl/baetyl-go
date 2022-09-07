@@ -35,6 +35,8 @@ type DeviceTopic struct {
 	Event       mqtt2.QOSTopic `yaml:"event,omitempty" json:"event,omitempty"`
 	Get         mqtt2.QOSTopic `yaml:"get,omitempty" json:"get,omitempty"`
 	GetResponse mqtt2.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
+	EventReport mqtt2.QOSTopic `yaml:"eventReport,omitempty" json:"eventReport,omitempty"`
+	GetLatest   mqtt2.QOSTopic `yaml:"getLatest,omitempty" json:"getLatest,omitempty"`
 }
 
 // Deprecated: Use DeviceTopic instead.

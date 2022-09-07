@@ -140,6 +140,9 @@ type ReportView struct {
 // Report report data
 type Report map[string]interface{}
 
+// Report report event data
+type EventReport map[string]interface{}
+
 // Desire desire data
 type Desire map[string]interface{}
 

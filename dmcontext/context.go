@@ -61,14 +61,17 @@ const (
 
 type DeltaCallback func(*DeviceInfo, v1.Delta) error
 type EventCallback func(*DeviceInfo, *Event) error
+type GetLatestCallback func(*DeviceInfo) error
 
 type Context interface {
 	context.Context
 	GetAllDevices() []DeviceInfo
 	ReportDeviceProperties(*DeviceInfo, v1.Report) error
+	ReportDeviceEvents(*DeviceInfo, v1.EventReport) error
 	GetDeviceProperties(device *DeviceInfo) (*DeviceShadow, error)
 	RegisterDeltaCallback(cb DeltaCallback) error
 	RegisterEventCallback(cb EventCallback) error
+	RegisterGetLatestCallback(cb GetLatestCallback) error
 	Online(device *DeviceInfo) error
 	Offline(device *DeviceInfo) error
 	GetDriverConfig() string
@@ -92,6 +95,7 @@ type DmCtx struct {
 	tomb            utils.Tomb
 	eventCb         EventCallback
 	deltaCb         DeltaCallback
+	getLatestCb     GetLatestCallback
 	response        sync.Map
 	devices         map[string]DeviceInfo
 	msgChs          map[string]chan *v1.Message
@@ -142,7 +146,8 @@ func NewContext(confFile string) Context {
 	devices := make(map[string]DeviceInfo)
 	var subs []mqtt2.QOSTopic
 	for _, dev := range dCfg.Devices {
-		subs = append(subs, dev.DeviceTopic.Delta, dev.DeviceTopic.Event, dev.DeviceTopic.GetResponse)
+		subs = append(subs, dev.DeviceTopic.Delta, dev.DeviceTopic.Event,
+			dev.DeviceTopic.GetResponse, dev.DeviceTopic.GetLatest)
 		devices[dev.Name] = dev
 	}
 	c.devices = devices
@@ -179,10 +184,11 @@ func (c *DmCtx) processDelta(msg *v1.Message) error {
 		c.log.Debug("delta callback not set and message will not be process")
 		return nil
 	}
-	var delta v1.Delta
-	if err := msg.Content.ExactUnmarshal(&delta); err != nil {
+	var blinkContent BlinkContent
+	if err := msg.Content.Unmarshal(&blinkContent); err != nil {
 		return errors.Trace(err)
 	}
+	delta := blinkContent.Blink.Properties
 	dev, ok := c.devices[deviceName]
 	if !ok {
 		return errors.Trace(ErrDeviceNotExist)
@@ -213,6 +219,23 @@ func (c *DmCtx) processEvent(msg *v1.Message) error {
 		return nil
 	}
 	if err := c.eventCb(&dev, &event); err != nil {
+		return errors.Trace(err)
+	}
+	return nil
+}
+
+func (c *DmCtx) processGetLatest(msg *v1.Message) error {
+	deviceName := msg.Metadata[KeyDevice]
+	if c.getLatestCb == nil {
+		c.log.Debug("get latest callback not set and message will not be process")
+		return nil
+	}
+	dev, ok := c.devices[deviceName]
+	if !ok {
+		c.log.Warn("get latest callback can not find device", log.Any("device", deviceName))
+		return nil
+	}
+	if err := c.getLatestCb(&dev); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
@@ -278,6 +301,12 @@ func (c *DmCtx) processing(ch chan *v1.Message) {
 				} else {
 					c.log.Info("process response message successfully")
 				}
+			case v1.MessageDeviceLatestProperty:
+				if err := c.processGetLatest(msg); err != nil {
+					c.log.Error("failed to process get latest message", log.Error(err))
+				} else {
+					c.log.Info("process get latest message successfully")
+				}
 			default:
 				c.log.Error("device message type not supported yet")
 			}
@@ -311,7 +340,7 @@ func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error
 	msg := &v1.Message{
 		Kind:     v1.MessageDeviceReport,
 		Metadata: metadata,
-		Content:  v1.LazyValue{Value: report},
+		Content:  v1.LazyValue{Value: BlinkContent{Blink: GenPropertyReportBlinkData(report)}},
 	}
 	pld, err := json.Marshal(msg)
 	if err != nil {
@@ -319,6 +348,30 @@ func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error
 	}
 	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
 		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *DmCtx) ReportDeviceEvents(info *DeviceInfo, report v1.EventReport) error {
+	metadata := map[string]string{
+		KeyDevice:         info.Name,
+		KeyDeviceProduct:  info.DeviceModel,
+		KeyAccessTemplate: info.AccessTemplate,
+		KeyNode:           c.NodeName(),
+		KeyNodeProduct:    NodeProduct,
+	}
+	msg := &v1.Message{
+		Kind:     v1.MessageDeviceEventReport,
+		Metadata: metadata,
+		Content:  v1.LazyValue{Value: BlinkContent{Blink: GenEventReportBlinkData(report)}},
+	}
+	pld, err := json.Marshal(msg)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.EventReport.QOS),
+		info.DeviceTopic.EventReport.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -370,6 +423,15 @@ func (c *DmCtx) RegisterEventCallback(cb EventCallback) error {
 	}
 	c.eventCb = cb
 	c.log.Debug("register event callback successfully")
+	return nil
+}
+
+func (c *DmCtx) RegisterGetLatestCallback(cb GetLatestCallback) error {
+	if c.getLatestCb != nil {
+		return errors.New("get latest callback already registered")
+	}
+	c.getLatestCb = cb
+	c.log.Debug("register get latest callback successfully")
 	return nil
 }
 

@@ -34,6 +34,10 @@ const (
 	MessageDeviceDesire MessageKind = "deviceDesire"
 	// MessageDesire device delta message kind
 	MessageDeviceDelta MessageKind = "deviceDelta"
+	// MessageDeviceLatestProperty device latest property message kind
+	MessageDeviceLatestProperty MessageKind = "deviceLatestProperty"
+	// MessageReport device event report message kind
+	MessageDeviceEventReport MessageKind = "deviceEventReport"
 
 	// MessageCommandConnect start remote debug command
 	MessageCommandConnect = "connect"
