@@ -49,10 +49,10 @@ func GenPropertyReportBlinkData(properties map[string]interface{}) BlinkData {
 
 func GenEventReportBlinkData(events map[string]interface{}) BlinkData {
 	return BlinkData{
-		ReqId:      uuid.New().String(),
-		Method:     MethodEventReport,
-		Version:    DefaultVersion,
-		Timestamp:  time.Now().Unix() / 1e6,
-		Properties: events,
+		ReqId:     uuid.New().String(),
+		Method:    MethodEventReport,
+		Version:   DefaultVersion,
+		Timestamp: time.Now().Unix() / 1e6,
+		Events:    events,
 	}
 }
