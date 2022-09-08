@@ -23,7 +23,7 @@ type BlinkData struct {
 	Method     string                 `yaml:"method,omitempty" json:"method,omitempty"`
 	Version    string                 `yaml:"version,omitempty" json:"version,omitempty"`
 	Timestamp  int64                  `yaml:"timestamp,omitempty" json:"timestamp,omitempty"`
-	Properties map[string]interface{} `yaml:"properties,omitempty" json:"properties,omitempty"`
+	Properties interface{}            `yaml:"properties,omitempty" json:"properties,omitempty"`
 	Events     map[string]interface{} `yaml:"events,omitempty" json:"events,omitempty"`
 }
 
@@ -54,6 +54,16 @@ func GenEventReportBlinkData(events map[string]interface{}) BlinkData {
 		Version:   DefaultVersion,
 		Timestamp: getCurrentTimestamp(),
 		Events:    events,
+	}
+}
+
+func GenPropertyGetBlinkData(properties []string) BlinkData {
+	return BlinkData{
+		ReqId:      uuid.New().String(),
+		Method:     MethodPropertyGet,
+		Version:    DefaultVersion,
+		Timestamp:  getCurrentTimestamp(),
+		Properties: properties,
 	}
 }
 

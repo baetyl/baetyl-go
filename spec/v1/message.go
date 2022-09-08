@@ -34,8 +34,8 @@ const (
 	MessageDeviceDesire MessageKind = "deviceDesire"
 	// MessageDesire device delta message kind
 	MessageDeviceDelta MessageKind = "deviceDelta"
-	// MessageDeviceLatestProperty device latest property message kind
-	MessageDeviceLatestProperty MessageKind = "deviceLatestProperty"
+	// MessageDeviceLatestProperty device get property message kind
+	MessageDevicePropertyGet MessageKind = "devicePropertyGet"
 	// MessageReport device event report message kind
 	MessageDeviceEventReport MessageKind = "deviceEventReport"
 
