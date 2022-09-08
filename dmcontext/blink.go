@@ -32,7 +32,7 @@ func GenDeltaBlinkData(properties map[string]interface{}) BlinkData {
 		ReqId:      uuid.New().String(),
 		Method:     MethodPropertyInvoke,
 		Version:    DefaultVersion,
-		Timestamp:  time.Now().Unix() / 1e6,
+		Timestamp:  getCurrentTimestamp(),
 		Properties: properties,
 	}
 }
@@ -42,7 +42,7 @@ func GenPropertyReportBlinkData(properties map[string]interface{}) BlinkData {
 		ReqId:      uuid.New().String(),
 		Method:     MethodPropertyReport,
 		Version:    DefaultVersion,
-		Timestamp:  time.Now().Unix() / 1e6,
+		Timestamp:  getCurrentTimestamp(),
 		Properties: properties,
 	}
 }
@@ -52,7 +52,11 @@ func GenEventReportBlinkData(events map[string]interface{}) BlinkData {
 		ReqId:     uuid.New().String(),
 		Method:    MethodEventReport,
 		Version:   DefaultVersion,
-		Timestamp: time.Now().Unix() / 1e6,
+		Timestamp: getCurrentTimestamp(),
 		Events:    events,
 	}
+}
+
+func getCurrentTimestamp() int64 {
+	return time.Now().UnixNano() / 1e6
 }
