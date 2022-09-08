@@ -40,6 +40,8 @@ const (
 var (
 	ErrInvalidMessage          = errors.New("invalid device message")
 	ErrInvalidChannel          = errors.New("invalid channel")
+	ErrInvalidDelta            = errors.New("invalid delta")
+	ErrInvalidPropertyKey      = errors.New("invalid property key")
 	ErrResponseChannelNotExist = errors.New("response channel not exist")
 	ErrAccessConfigNotExist    = errors.New("access config not exist")
 	ErrDeviceModelNotExist     = errors.New("device model not exist")
@@ -61,7 +63,7 @@ const (
 
 type DeltaCallback func(*DeviceInfo, v1.Delta) error
 type EventCallback func(*DeviceInfo, *Event) error
-type GetLatestCallback func(*DeviceInfo) error
+type PropertyGetCallback func(*DeviceInfo, []string) error
 
 type Context interface {
 	context.Context
@@ -71,7 +73,7 @@ type Context interface {
 	GetDeviceProperties(device *DeviceInfo) (*DeviceShadow, error)
 	RegisterDeltaCallback(cb DeltaCallback) error
 	RegisterEventCallback(cb EventCallback) error
-	RegisterGetLatestCallback(cb GetLatestCallback) error
+	RegisterPropertyGetCallback(cb PropertyGetCallback) error
 	Online(device *DeviceInfo) error
 	Offline(device *DeviceInfo) error
 	GetDriverConfig() string
@@ -95,7 +97,7 @@ type DmCtx struct {
 	tomb            utils.Tomb
 	eventCb         EventCallback
 	deltaCb         DeltaCallback
-	getLatestCb     GetLatestCallback
+	propertyGetCb   PropertyGetCallback
 	response        sync.Map
 	devices         map[string]DeviceInfo
 	msgChs          map[string]chan *v1.Message
@@ -147,7 +149,7 @@ func NewContext(confFile string) Context {
 	var subs []mqtt2.QOSTopic
 	for _, dev := range dCfg.Devices {
 		subs = append(subs, dev.DeviceTopic.Delta, dev.DeviceTopic.Event,
-			dev.DeviceTopic.GetResponse, dev.DeviceTopic.GetLatest)
+			dev.DeviceTopic.GetResponse, dev.DeviceTopic.PropertyGet)
 		devices[dev.Name] = dev
 	}
 	c.devices = devices
@@ -188,7 +190,10 @@ func (c *DmCtx) processDelta(msg *v1.Message) error {
 	if err := msg.Content.Unmarshal(&blinkContent); err != nil {
 		return errors.Trace(err)
 	}
-	delta := blinkContent.Blink.Properties
+	delta, ok := blinkContent.Blink.Properties.(v1.Delta)
+	if !ok {
+		return errors.Trace(ErrInvalidDelta)
+	}
 	dev, ok := c.devices[deviceName]
 	if !ok {
 		return errors.Trace(ErrDeviceNotExist)
@@ -224,18 +229,26 @@ func (c *DmCtx) processEvent(msg *v1.Message) error {
 	return nil
 }
 
-func (c *DmCtx) processGetLatest(msg *v1.Message) error {
+func (c *DmCtx) processPropertyGet(msg *v1.Message) error {
 	deviceName := msg.Metadata[KeyDevice]
-	if c.getLatestCb == nil {
-		c.log.Debug("get latest callback not set and message will not be process")
+	if c.propertyGetCb == nil {
+		c.log.Debug("property get callback not set and message will not be process")
 		return nil
 	}
 	dev, ok := c.devices[deviceName]
 	if !ok {
-		c.log.Warn("get latest callback can not find device", log.Any("device", deviceName))
+		c.log.Warn("property get callback can not find device", log.Any("device", deviceName))
 		return nil
 	}
-	if err := c.getLatestCb(&dev); err != nil {
+	var blinkContent BlinkContent
+	if err := msg.Content.Unmarshal(&blinkContent); err != nil {
+		return errors.Trace(err)
+	}
+	properties, err := parsePropertyKeys(blinkContent.Blink.Properties)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	if err := c.propertyGetCb(&dev, properties); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
@@ -301,11 +314,11 @@ func (c *DmCtx) processing(ch chan *v1.Message) {
 				} else {
 					c.log.Info("process response message successfully")
 				}
-			case v1.MessageDeviceLatestProperty:
-				if err := c.processGetLatest(msg); err != nil {
-					c.log.Error("failed to process get latest message", log.Error(err))
+			case v1.MessageDevicePropertyGet:
+				if err := c.processPropertyGet(msg); err != nil {
+					c.log.Error("failed to process property get message", log.Error(err))
 				} else {
-					c.log.Info("process get latest message successfully")
+					c.log.Info("process property get message successfully")
 				}
 			default:
 				c.log.Error("device message type not supported yet")
@@ -426,12 +439,12 @@ func (c *DmCtx) RegisterEventCallback(cb EventCallback) error {
 	return nil
 }
 
-func (c *DmCtx) RegisterGetLatestCallback(cb GetLatestCallback) error {
-	if c.getLatestCb != nil {
-		return errors.New("get latest callback already registered")
+func (c *DmCtx) RegisterPropertyGetCallback(cb PropertyGetCallback) error {
+	if c.propertyGetCb != nil {
+		return errors.New("property get callback already registered")
 	}
-	c.getLatestCb = cb
-	c.log.Debug("register get latest callback successfully")
+	c.propertyGetCb = cb
+	c.log.Debug("register property get callback successfully")
 	return nil
 }
 
@@ -604,4 +617,20 @@ func parsePropertyValue(tpy string, val interface{}) (interface{}, error) {
 	default:
 		return nil, errors.Trace(ErrTypeNotSupported)
 	}
+}
+
+func parsePropertyKeys(v interface{}) ([]string, error) {
+	properties, ok := v.([]interface{})
+	if !ok {
+		return nil, ErrInvalidPropertyKey
+	}
+	var propertyKeys []string
+	for _, key := range properties {
+		propertyKey, ok := key.(string)
+		if !ok {
+			return nil, ErrInvalidPropertyKey
+		}
+		propertyKeys = append(propertyKeys, propertyKey)
+	}
+	return propertyKeys, nil
 }

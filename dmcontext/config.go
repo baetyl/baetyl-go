@@ -36,7 +36,7 @@ type DeviceTopic struct {
 	Get         mqtt2.QOSTopic `yaml:"get,omitempty" json:"get,omitempty"`
 	GetResponse mqtt2.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
 	EventReport mqtt2.QOSTopic `yaml:"eventReport,omitempty" json:"eventReport,omitempty"`
-	GetLatest   mqtt2.QOSTopic `yaml:"getLatest,omitempty" json:"getLatest,omitempty"`
+	PropertyGet mqtt2.QOSTopic `yaml:"propertyGet,omitempty" json:"propertyGet,omitempty"`
 }
 
 // Deprecated: Use DeviceTopic instead.
@@ -221,6 +221,10 @@ type ModelMapping struct {
 type Event struct {
 	Type    string      `yaml:"type,omitempty" json:"type,omitempty"`
 	Payload interface{} `yaml:"payload,omitempty" json:"payload,omitempty"`
+}
+
+type PropertyGet struct {
+	Properties []string `yaml:"properties,omitempty" json:"properties,omitempty"`
 }
 
 type DeviceShadow struct {
