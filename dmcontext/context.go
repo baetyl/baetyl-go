@@ -343,16 +343,9 @@ func (c *DmCtx) GetDevice(device string) (*DeviceInfo, error) {
 }
 
 func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error {
-	metadata := map[string]string{
-		KeyDevice:         info.Name,
-		KeyDeviceProduct:  info.DeviceModel,
-		KeyAccessTemplate: info.AccessTemplate,
-		KeyNode:           c.NodeName(),
-		KeyNodeProduct:    NodeProduct,
-	}
 	msg := &v1.Message{
 		Kind:     v1.MessageDeviceReport,
-		Metadata: metadata,
+		Metadata: c.genMetadata(info),
 		Content:  v1.LazyValue{Value: BlinkContent{Blink: GenPropertyReportBlinkData(report)}},
 	}
 	pld, err := json.Marshal(msg)
@@ -367,16 +360,9 @@ func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error
 }
 
 func (c *DmCtx) ReportDeviceEvents(info *DeviceInfo, report v1.EventReport) error {
-	metadata := map[string]string{
-		KeyDevice:         info.Name,
-		KeyDeviceProduct:  info.DeviceModel,
-		KeyAccessTemplate: info.AccessTemplate,
-		KeyNode:           c.NodeName(),
-		KeyNodeProduct:    NodeProduct,
-	}
 	msg := &v1.Message{
 		Kind:     v1.MessageDeviceEventReport,
-		Metadata: metadata,
+		Metadata: c.genMetadata(info),
 		Content:  v1.LazyValue{Value: BlinkContent{Blink: GenEventReportBlinkData(report)}},
 	}
 	pld, err := json.Marshal(msg)
@@ -449,36 +435,34 @@ func (c *DmCtx) RegisterPropertyGetCallback(cb PropertyGetCallback) error {
 }
 
 func (c *DmCtx) Online(info *DeviceInfo) error {
-	r := v1.Report{KeyStatus: OnlineStatus}
 	msg := &v1.Message{
-		Kind:     v1.MessageDeviceReport,
-		Metadata: map[string]string{KeyDevice: info.Name},
-		Content:  v1.LazyValue{Value: r},
+		Kind:     v1.MessageDeviceLifecycleReport,
+		Metadata: c.genMetadata(info),
+		Content:  v1.LazyValue{Value: BlinkContent{Blink: GenLifecycleReportBlinkData(true)}},
 	}
 	pld, err := json.Marshal(msg)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
-		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.LifecycleReport.QOS),
+		info.DeviceTopic.LifecycleReport.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (c *DmCtx) Offline(info *DeviceInfo) error {
-	r := v1.Report{KeyStatus: OfflineStatus}
 	msg := &v1.Message{
-		Kind:     v1.MessageDeviceReport,
-		Metadata: map[string]string{KeyDevice: info.Name},
-		Content:  v1.LazyValue{Value: r},
+		Kind:     v1.MessageDeviceLifecycleReport,
+		Metadata: c.genMetadata(info),
+		Content:  v1.LazyValue{Value: BlinkContent{Blink: GenLifecycleReportBlinkData(false)}},
 	}
 	pld, err := json.Marshal(msg)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
-		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
+	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.LifecycleReport.QOS),
+		info.DeviceTopic.LifecycleReport.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
 	return nil
@@ -633,4 +617,14 @@ func parsePropertyKeys(v interface{}) ([]string, error) {
 		propertyKeys = append(propertyKeys, propertyKey)
 	}
 	return propertyKeys, nil
+}
+
+func (c *DmCtx) genMetadata(info *DeviceInfo) map[string]string {
+	return map[string]string{
+		KeyDevice:         info.Name,
+		KeyDeviceProduct:  info.DeviceModel,
+		KeyAccessTemplate: info.AccessTemplate,
+		KeyNode:           c.NodeName(),
+		KeyNodeProduct:    NodeProduct,
+	}
 }
