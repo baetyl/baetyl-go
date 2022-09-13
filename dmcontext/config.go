@@ -30,13 +30,14 @@ type DeviceInfo struct {
 }
 
 type DeviceTopic struct {
-	Delta       mqtt2.QOSTopic `yaml:"delta,omitempty" json:"delta,omitempty"`
-	Report      mqtt2.QOSTopic `yaml:"report,omitempty" json:"report,omitempty"`
-	Event       mqtt2.QOSTopic `yaml:"event,omitempty" json:"event,omitempty"`
-	Get         mqtt2.QOSTopic `yaml:"get,omitempty" json:"get,omitempty"`
-	GetResponse mqtt2.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
-	EventReport mqtt2.QOSTopic `yaml:"eventReport,omitempty" json:"eventReport,omitempty"`
-	PropertyGet mqtt2.QOSTopic `yaml:"propertyGet,omitempty" json:"propertyGet,omitempty"`
+	Delta           mqtt2.QOSTopic `yaml:"delta,omitempty" json:"delta,omitempty"`
+	Report          mqtt2.QOSTopic `yaml:"report,omitempty" json:"report,omitempty"`
+	Event           mqtt2.QOSTopic `yaml:"event,omitempty" json:"event,omitempty"`
+	Get             mqtt2.QOSTopic `yaml:"get,omitempty" json:"get,omitempty"`
+	GetResponse     mqtt2.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
+	EventReport     mqtt2.QOSTopic `yaml:"eventReport,omitempty" json:"eventReport,omitempty"`
+	PropertyGet     mqtt2.QOSTopic `yaml:"propertyGet,omitempty" json:"propertyGet,omitempty"`
+	LifecycleReport mqtt2.QOSTopic `yaml:"lifecycleReport,omitempty" json:"lifecycleReport,omitempty"`
 }
 
 // Deprecated: Use DeviceTopic instead.

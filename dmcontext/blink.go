@@ -11,7 +11,9 @@ const (
 	MethodPropertyReport = "thing.property.post"
 	MethodEventReport    = "thing.event.post"
 	MethodPropertyGet    = "thing.property.get"
+	MethodLifecyclePost  = "thing.lifecycle.post"
 	DefaultVersion       = "1.0"
+	KeyOnlineState       = "online_state"
 )
 
 type BlinkContent struct {
@@ -25,6 +27,7 @@ type BlinkData struct {
 	Timestamp  int64                  `yaml:"timestamp,omitempty" json:"timestamp,omitempty"`
 	Properties interface{}            `yaml:"properties,omitempty" json:"properties,omitempty"`
 	Events     map[string]interface{} `yaml:"events,omitempty" json:"events,omitempty"`
+	Params     map[string]interface{} `yaml:"params,omitempty" json:"params,omitempty"`
 }
 
 func GenDeltaBlinkData(properties map[string]interface{}) BlinkData {
@@ -64,6 +67,16 @@ func GenPropertyGetBlinkData(properties []string) BlinkData {
 		Version:    DefaultVersion,
 		Timestamp:  getCurrentTimestamp(),
 		Properties: properties,
+	}
+}
+
+func GenLifecycleReportBlinkData(online bool) BlinkData {
+	return BlinkData{
+		ReqId:     uuid.New().String(),
+		Method:    MethodLifecyclePost,
+		Version:   DefaultVersion,
+		Timestamp: getCurrentTimestamp(),
+		Params:    map[string]interface{}{KeyOnlineState: online},
 	}
 }
 
