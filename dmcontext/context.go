@@ -190,7 +190,7 @@ func (c *DmCtx) processDelta(msg *v1.Message) error {
 	if err := msg.Content.Unmarshal(&blinkContent); err != nil {
 		return errors.Trace(err)
 	}
-	delta, ok := blinkContent.Blink.Properties.(v1.Delta)
+	delta, ok := blinkContent.Blink.Properties.(map[string]interface{})
 	if !ok {
 		return errors.Trace(ErrInvalidDelta)
 	}
