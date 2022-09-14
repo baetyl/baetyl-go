@@ -3,6 +3,7 @@ package dmcontext
 import (
 	"encoding/json"
 	"regexp"
+	"strings"
 
 	"github.com/256dpi/gomqtt/packet"
 
@@ -15,6 +16,7 @@ import (
 const (
 	DeviceTopicRe      = "\\$baetyl/device/(.+)/(.+)"
 	BlinkDeviceTopicRe = "thing/(.+)/(.+)/(.+)/(.+)"
+	BaetylTopicPrefix  = "$"
 )
 
 type observer struct {
@@ -27,11 +29,10 @@ func newObserver(msgChs map[string]chan *v1.Message, log *log.Logger) mqtt.Obser
 }
 
 func ParseDeviceTopic(topic string) (string, error) {
-	deviceName, err := ParseTopic(topic)
-	if err != nil {
-		return parseBlinkTopic(topic)
+	if strings.HasPrefix(topic, BaetylTopicPrefix) {
+		return ParseTopic(topic)
 	}
-	return deviceName, nil
+	return parseBlinkTopic(topic)
 }
 
 func ParseTopic(topic string) (string, error) {
