@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	DeviceTopicRe = "\\$baetyl/device/(.+)/(.+)"
+	DeviceTopicRe      = "\\$baetyl/device/(.+)/(.+)"
+	BlinkDeviceTopicRe = "thing/(.+)/(.+)/(.+)/(.+)"
 )
 
 type observer struct {
@@ -23,6 +24,14 @@ type observer struct {
 
 func newObserver(msgChs map[string]chan *v1.Message, log *log.Logger) mqtt.Observer {
 	return &observer{msgChs: msgChs, log: log}
+}
+
+func ParseDeviceTopic(topic string) (string, error) {
+	deviceName, err := ParseTopic(topic)
+	if err != nil {
+		return parseBlinkTopic(topic)
+	}
+	return deviceName, nil
 }
 
 func ParseTopic(topic string) (string, error) {
@@ -37,8 +46,20 @@ func ParseTopic(topic string) (string, error) {
 	return res[1], nil
 }
 
+func parseBlinkTopic(topic string) (string, error) {
+	r, err := regexp.Compile(BlinkDeviceTopicRe)
+	if err != nil {
+		return "", err
+	}
+	res := r.FindStringSubmatch(topic)
+	if len(res) != 5 {
+		return "", errors.New("illegal topic can not parse")
+	}
+	return res[2], nil
+}
+
 func (o *observer) OnPublish(pkt *packet.Publish) error {
-	device, err := ParseTopic(pkt.Message.Topic)
+	device, err := ParseDeviceTopic(pkt.Message.Topic)
 	if err != nil {
 		o.log.Error("parse topic failed", log.Any("topic", pkt.Message.Topic))
 		return nil
