@@ -270,7 +270,7 @@ func (c *ctx) NewSystemBrokerClientConfig() (mqtt.ClientConfig, error) {
 		return mqtt.ClientConfig{}, errors.Trace(err)
 	}
 	config := c.SystemConfig().Broker
-
+	config.CleanSession = true
 	config.Subscriptions = make([]mqtt.QOSTopic, 0)
 	copy(config.Subscriptions, c.SystemConfig().Broker.Subscriptions)
 
