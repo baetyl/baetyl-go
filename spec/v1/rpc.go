@@ -14,3 +14,9 @@ type RPCResponse struct {
 	Header     map[string][]string `json:"header,omitempty"`
 	Body       []byte              `json:"body,omitempty"`
 }
+
+type RPCMqttMessage struct {
+	QoS     uint32      `json:"qos,omitempty"`
+	Topic   string      `json:"topic,omitempty"`
+	Content interface{} `json:"content,omitempty"`
+}

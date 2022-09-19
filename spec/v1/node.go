@@ -140,7 +140,7 @@ type ReportView struct {
 // Report report data
 type Report map[string]interface{}
 
-// Report report event data
+// EventReport report event data
 type EventReport map[string]interface{}
 
 // Desire desire data
@@ -165,7 +165,7 @@ func (d Desire) Diff(reported Report) (Desire, error) {
 	return res, errors.Trace(err)
 }
 
-// Diff desire diff with report data, return the delta for desire
+// DiffWithNil desire diff with report data, return the delta for desire
 // and do not clean nil in delta
 func (d Desire) DiffWithNil(report Report) (Delta, error) {
 	res, err := diff(d, report, false)

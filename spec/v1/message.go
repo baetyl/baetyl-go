@@ -55,6 +55,8 @@ const (
 	MessageRPC = "rpc"
 	// MessageAgent get or set agent stat
 	MessageAgent = "agent"
+	// MessageRPCMqtt push message to broker
+	MessageRPCMqtt = "rpcMqtt"
 )
 
 // Message general structure for http and ws sync
