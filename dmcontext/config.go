@@ -168,7 +168,7 @@ type PropertyVisitor struct {
 }
 
 type IEC104Visitor struct {
-	PointNum  uint   `yaml:"pointNum,omitempty" json:"pointNum,omitempty"`
+	PointNum  uint   `yaml:"pointNum" json:"pointNum"`
 	PointType string `yaml:"pointType,omitempty" json:"pointType,omitempty"`
 	Type      string `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(float32|bool)?$"`
 }
