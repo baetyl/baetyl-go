@@ -110,16 +110,16 @@ type IEC104AccessConfig struct {
 }
 
 type TcpConfig struct {
-	Address string `yaml:"address,omitempty" json:"address,omitempty" validate:"required"`
-	Port    uint16 `yaml:"port,omitempty" json:"port,omitempty" validate:"required"`
+	Address string `yaml:"address,omitempty" json:"address,omitempty" binding:"required"`
+	Port    uint16 `yaml:"port,omitempty" json:"port,omitempty" binding:"required"`
 }
 
 type RtuConfig struct {
-	Port     string `yaml:"port,omitempty" json:"port,omitempty" validate:"required"`
+	Port     string `yaml:"port,omitempty" json:"port,omitempty" binding:"required"`
 	BaudRate int    `yaml:"baudrate,omitempty" json:"baudrate,omitempty" default:"19200"`
-	Parity   string `yaml:"parity,omitempty" json:"parity,omitempty" default:"E" validate:"regexp=^(E|N|O)?$"`
-	DataBit  int    `yaml:"databit,omitempty" json:"databit,omitempty" default:"8" validate:"min=5, max=8"`
-	StopBit  int    `yaml:"stopbit,omitempty" json:"stopbit,omitempty" default:"1" validate:"min=1, max=2"`
+	Parity   string `yaml:"parity,omitempty" json:"parity,omitempty" default:"E" binding:"regexp=^(E|N|O)?$"`
+	DataBit  int    `yaml:"databit,omitempty" json:"databit,omitempty" default:"8" binding:"min=5, max=8"`
+	StopBit  int    `yaml:"stopbit,omitempty" json:"stopbit,omitempty" default:"1" binding:"min=1, max=2"`
 }
 
 type OpcuaAccessConfig struct {
@@ -154,8 +154,8 @@ type CustomAccessConfig string
 type DeviceProperty struct {
 	Name    string          `yaml:"name,omitempty" json:"name,omitempty"`
 	Id      string          `yaml:"id,omitempty" json:"id,omitempty"`
-	Type    string          `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
-	Mode    string          `yaml:"mode,omitempty" json:"mode,omitempty" validate:"regexp=^(ro|rw)?$"`
+	Type    string          `yaml:"type,omitempty" json:"type,omitempty" binding:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
+	Mode    string          `yaml:"mode,omitempty" json:"mode,omitempty" binding:"regexp=^(ro|rw)?$"`
 	Unit    string          `yaml:"unit,omitempty" json:"unit,omitempty"`
 	Visitor PropertyVisitor `yaml:"visitor,omitempty" json:"visitor,omitempty"`
 }
@@ -170,14 +170,14 @@ type PropertyVisitor struct {
 type IEC104Visitor struct {
 	PointNum  uint   `yaml:"pointNum" json:"pointNum"`
 	PointType string `yaml:"pointType,omitempty" json:"pointType,omitempty"`
-	Type      string `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(float32|bool)?$"`
+	Type      string `yaml:"type,omitempty" json:"type,omitempty" binding:"regexp=^(float32|bool)?$"`
 }
 
 type ModbusVisitor struct {
-	Function     byte    `yaml:"function" json:"function" validate:"min=1,max=4"`
+	Function     byte    `yaml:"function" json:"function" binding:"min=1,max=4"`
 	Address      string  `yaml:"address" json:"address"`
 	Quantity     uint16  `yaml:"quantity" json:"quantity"`
-	Type         string  `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
+	Type         string  `yaml:"type,omitempty" json:"type,omitempty" binding:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
 	Unit         string  `yaml:"unit,omitempty" json:"unit,omitempty"`
 	Scale        float64 `yaml:"scale" json:"scale"`
 	SwapByte     bool    `yaml:"swapByte" json:"swapByte"`
@@ -188,10 +188,10 @@ type OpcuaVisitor struct {
 	// Deprecated: Use NsBase, IdBase, OpcuaAccessConfig.NsOffset, OpcuaAccessConfig.IdOffset instead.
 	// Change from access template support
 	NodeID string `yaml:"nodeid,omitempty" json:"nodeid,omitempty"`
-	Type   string `yaml:"type,omitempty" json:"type,omitempty" validate:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
+	Type   string `yaml:"type,omitempty" json:"type,omitempty" binding:"regexp=^(int16|int32|int64|float32|float64|string|bool)?$"`
 	NsBase int    `yaml:"nsBase,omitempty" json:"nsBase,omitempty"`
 	IdBase string `yaml:"idBase,omitempty" json:"idBase,omitempty"`
-	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" validate:"regexp=^(i|s|g|b|)?$"`
+	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" binding:"regexp=^(i|s|g|b|)?$"`
 }
 
 type CustomVisitor string
