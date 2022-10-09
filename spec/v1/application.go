@@ -25,7 +25,7 @@ const (
 
 // Application application info
 type Application struct {
-	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName"`
+	Name              string            `json:"name,omitempty" yaml:"name,omitempty" binding:"resourceName"`
 	Type              string            `json:"type,omitempty" yaml:"type,omitempty" default:"container"` // container | function
 	Mode              string            `json:"mode,omitempty" yaml:"mode,omitempty" default:"kube"`      // kube | native
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
@@ -34,9 +34,9 @@ type Application struct {
 	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
 	Selector          string            `json:"selector,omitempty" yaml:"selector,omitempty"`
 	NodeSelector      string            `json:"nodeSelector,omitempty" yaml:"nodeSelector,omitempty"`
-	InitServices      []Service         `json:"initServices,omitempty" yaml:"initServices,omitempty" validate:"dive"`
-	Services          []Service         `json:"services,omitempty" yaml:"services,omitempty" validate:"dive"`
-	Volumes           []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty" validate:"dive"`
+	InitServices      []Service         `json:"initServices,omitempty" yaml:"initServices,omitempty" binding:"dive"`
+	Services          []Service         `json:"services,omitempty" yaml:"services,omitempty" binding:"dive"`
+	Volumes           []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty" binding:"dive"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	System            bool              `json:"system,omitempty" yaml:"system,omitempty"`
 	CronStatus        CronStatusCode    `json:"cronStatus,omitempty" yaml:"cronStatus,omitempty" default:"0"`
@@ -53,7 +53,7 @@ type Application struct {
 // Service service config1ma1
 type Service struct {
 	// specifies the unique name of the service
-	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" validate:"serviceName"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" binding:"serviceName"`
 	// specifies the hostname of the service
 	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 	// specifies the image of the service, usually using the Docker image name
@@ -136,7 +136,7 @@ type ContainerPort struct {
 // Volume volume config
 type Volume struct {
 	// specified name of the volume
-	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" validate:"resourceName"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" binding:"resourceName"`
 	// specified driver for the storage volume
 	VolumeSource `json:",inline" yaml:",inline"`
 }
@@ -194,7 +194,7 @@ type Resources struct {
 }
 
 type ServiceFunctionConfig struct {
-	Name    string `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName"`
+	Name    string `json:"name,omitempty" yaml:"name,omitempty" binding:"resourceName"`
 	Runtime string `json:"runtime,omitempty" yaml:"runtime,omitempty"`
 }
 

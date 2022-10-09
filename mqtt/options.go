@@ -38,8 +38,8 @@ func NewClientOptions() *ClientOptions {
 
 // QOSTopic topic and qos
 type QOSTopic struct {
-	QOS   uint32 `yaml:"qos" json:"qos" validate:"min=0, max=1"`
-	Topic string `yaml:"topic" json:"topic" validate:"nonzero"`
+	QOS   uint32 `yaml:"qos" json:"qos" binding:"min=0, max=1"`
+	Topic string `yaml:"topic" json:"topic" binding:"nonzero"`
 }
 
 // ClientConfig client config

@@ -9,7 +9,7 @@ const PrefixConfigObject = "_object_"
 
 // Configuration config info
 type Configuration struct {
-	Name              string            `json:"name,omitempty" yaml:"name,omitempty" validate:"resourceName"`
+	Name              string            `json:"name,omitempty" yaml:"name,omitempty" binding:"resourceName"`
 	Namespace         string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Data              map[string]string `json:"data,omitempty" yaml:"data,omitempty" default:"{}" binding:"required"`
