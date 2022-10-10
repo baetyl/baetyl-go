@@ -11,8 +11,8 @@ import (
 
 // Config for logging
 type Config struct {
-	Level       string `yaml:"level" json:"level" default:"info" binding:"regexp=^(fatal|panic|error|warn|info|debug)$"`
-	Encoding    string `yaml:"encoding" json:"encoding" default:"json" binding:"regexp=^(json|console)$"`
+	Level       string `yaml:"level" json:"level" default:"info" binding:"oneof=fatal panic error warn info debug"`
+	Encoding    string `yaml:"encoding" json:"encoding" default:"json" binding:"oneof=json console"`
 	Filename    string `yaml:"filename" json:"filename"`
 	Compress    bool   `yaml:"compress" json:"compress"`
 	MaxAge      int    `yaml:"maxAge" json:"maxAge" default:"15" binding:"min=1"`   // days
