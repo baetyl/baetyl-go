@@ -220,10 +220,15 @@ type IpcServiceConfig struct {
 		Params map[string]string `yaml:"params,omitempty" json:"params,omitempty"`
 	} `yaml:"request,omitempty" json:"request,omitempty"`
 	Body struct {
+		Content   string                 `yaml:"content,omitempty" json:"content,omitempty"`
 		ImageType string                 `yaml:"imageType,omitempty" json:"imageType,omitempty"`
 		ImageName string                 `yaml:"imageName,omitempty" json:"imageName,omitempty"`
 		Params    map[string]interface{} `yaml:"params,omitempty" json:"params,omitempty"`
 	} `yaml:"body,omitempty" json:"body,omitempty"`
+	Upload    bool   `yaml:"upload,omitempty" json:"upload,omitempty"`
+	Cache     bool   `yaml:"cache,omitempty" json:"cache,omitempty"`
+	CachePath string `yaml:"cachePath,omitempty" json:"cachePath,omitempty" default:"var/lib/baetyl/images"`
+	CacheTime int    `yaml:"cacheTime,omitempty" json:"cacheTime,omitempty" default:"3" binding:"omitempty, min=3, max=180"` // 图片清理时间，默认3min
 }
 
 type AccessTemplate struct {
