@@ -118,8 +118,8 @@ type RtuConfig struct {
 	Port     string `yaml:"port,omitempty" json:"port,omitempty" binding:"required"`
 	BaudRate int    `yaml:"baudrate,omitempty" json:"baudrate,omitempty" default:"19200"`
 	Parity   string `yaml:"parity,omitempty" json:"parity,omitempty" default:"E" binding:"oneof=E N O"`
-	DataBit  int    `yaml:"databit,omitempty" json:"databit,omitempty" default:"8" binding:"min=5, max=8"`
-	StopBit  int    `yaml:"stopbit,omitempty" json:"stopbit,omitempty" default:"1" binding:"min=1, max=2"`
+	DataBit  int    `yaml:"databit,omitempty" json:"databit,omitempty" default:"8" binding:"min=5,max=8"`
+	StopBit  int    `yaml:"stopbit,omitempty" json:"stopbit,omitempty" default:"1" binding:"min=1,max=2"`
 }
 
 type OpcuaAccessConfig struct {
@@ -228,7 +228,7 @@ type IpcServiceConfig struct {
 	Upload    bool   `yaml:"upload,omitempty" json:"upload,omitempty"`
 	Cache     bool   `yaml:"cache,omitempty" json:"cache,omitempty"`
 	CachePath string `yaml:"cachePath,omitempty" json:"cachePath,omitempty" default:"var/lib/baetyl/images"`
-	CacheTime int    `yaml:"cacheTime,omitempty" json:"cacheTime,omitempty" default:"3" binding:"omitempty, min=3, max=180"` // 图片清理时间，默认3min
+	CacheTime int    `yaml:"cacheTime,omitempty" json:"cacheTime,omitempty" default:"3" binding:"omitempty,min=3,max=180"` // 图片清理时间，默认3min
 }
 
 type AccessTemplate struct {
