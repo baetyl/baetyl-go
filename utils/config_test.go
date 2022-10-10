@@ -20,7 +20,7 @@ type testEncodeStruct struct {
 }
 
 type testEncodeModule struct {
-	Name   string   `yaml:"name" json:"name"  validate:"oneof=m1 m2"`
+	Name   string   `yaml:"name" json:"name"  validate:"regexp=^(m1|m2)$"`
 	Params []string `yaml:"params" json:"params" default:"[\"-c\", \"conf.yml\"]"`
 }
 
