@@ -65,6 +65,8 @@ type DeltaCallback func(*DeviceInfo, v1.Delta) error
 type EventCallback func(*DeviceInfo, *Event) error
 type PropertyGetCallback func(*DeviceInfo, []string) error
 
+var oldData = make(map[string]PointClean)
+
 type Context interface {
 	context.Context
 	GetAllDevices() []DeviceInfo
@@ -74,6 +76,7 @@ type Context interface {
 	RegisterDeltaCallback(cb DeltaCallback) error
 	RegisterEventCallback(cb EventCallback) error
 	RegisterPropertyGetCallback(cb PropertyGetCallback) error
+	DataClean(device *DeviceInfo, report v1.Report) (convertReport v1.Report, err error)
 	Online(device *DeviceInfo) error
 	Offline(device *DeviceInfo) error
 	GetDriverConfig() string
@@ -340,6 +343,53 @@ func (c *DmCtx) GetDevice(device string) (*DeviceInfo, error) {
 		return &deviceInfo, nil
 	}
 	return nil, ErrDeviceNotExist
+}
+
+// 静默窗口（SilentWin）: 静默时间窗口、偏差（Deviation）: 震荡的偏差区间值
+func (c *DmCtx) DataClean(device *DeviceInfo, report v1.Report) (convertReport v1.Report, err error) {
+	//条件1：当前上报值与前一次上报值的差值超过偏差的区间
+	//条件2：当前上报与上一次上报的时间差，超过静默时间窗
+	reportData := make(map[string]interface{})
+	mappData := make(map[string]PointClean)
+
+	accessTemplates, err := c.GetAccessTemplates(device)
+	if err != nil {
+		return nil, err
+	}
+	for _, mapping := range accessTemplates.Mappings {
+		mappData[mapping.Attribute] = PointClean{SilentWin: mapping.SilentWin, Deviation: mapping.Deviation}
+	}
+
+	for key, value := range report {
+		_, ok := oldData[key]
+		if !ok {
+			reportData[key] = value
+			oldData[key] = PointClean{SilentWin: time.Now().Unix()}
+		}
+
+		var postValue float64
+		switch value.(type) {
+		case bool:
+			reportData[key] = value
+		case string:
+			reportData[key] = value
+		case float64:
+			postValue = value.(float64)
+		default:
+			return nil, ErrUnsupportedValueType
+		}
+
+		clean, isExist := mappData[key]
+		if isExist {
+			if postValue-oldData[key].Deviation > clean.Deviation || time.Now().Unix()-oldData[key].SilentWin > clean.SilentWin {
+				reportData[key] = value
+				oldData[key] = PointClean{SilentWin: time.Now().Unix()}
+			}
+			oldData[key] = PointClean{Deviation: clean.Deviation}
+		}
+	}
+
+	return reportData, nil
 }
 
 func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error {

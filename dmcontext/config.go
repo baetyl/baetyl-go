@@ -8,13 +8,15 @@ import (
 )
 
 const (
-	MappingNone      = "none"
-	MappingValue     = "value"
-	MappingCalculate = "calculate"
-	OpcuaIdTypeI     = "i"
-	OpcuaIdTypeS     = "s"
-	OpcuaIdTypeG     = "g"
-	OpcuaIdTypeB     = "b"
+	MappingNone              = "none"
+	MappingValue             = "value"
+	MappingCalculate         = "calculate"
+	MappingValueAccuracy     = "valueAccuracy"
+	MappingCalculateAccuracy = "calculateAccuracy"
+	OpcuaIdTypeI             = "i"
+	OpcuaIdTypeS             = "s"
+	OpcuaIdTypeG             = "g"
+	OpcuaIdTypeB             = "b"
 )
 
 type DeviceInfo struct {
@@ -239,9 +241,16 @@ type AccessTemplate struct {
 }
 
 type ModelMapping struct {
-	Attribute  string `yaml:"attribute,omitempty" json:"attribute,omitempty"`
-	Type       string `yaml:"type,omitempty" json:"type,omitempty" default:"none"`
-	Expression string `yaml:"expression,omitempty" json:"expression,omitempty"`
+	Attribute  string  `yaml:"attribute,omitempty" json:"attribute,omitempty"`
+	Type       string  `yaml:"type,omitempty" json:"type,omitempty" default:"none"`
+	Expression string  `yaml:"expression,omitempty" json:"expression,omitempty"`
+	Deviation  float64 `yaml:"deviation,omitempty" json:"deviation,omitempty"`
+	SilentWin  int64   `yaml:"silentWin,omitempty" json:"silentWin,omitempty"`
+}
+
+type PointClean struct {
+	SilentWin int64   `yaml:"silentWin,omitempty" json:"silentWin,omitempty"`
+	Deviation float64 `yaml:"deviation,omitempty" json:"deviation,omitempty"`
 }
 
 type Event struct {
