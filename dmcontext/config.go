@@ -152,12 +152,41 @@ type OpcuaCertificate struct {
 type CustomAccessConfig string
 
 type DeviceProperty struct {
-	Name    string          `yaml:"name,omitempty" json:"name,omitempty"`
-	Id      string          `yaml:"id,omitempty" json:"id,omitempty"`
-	Type    string          `yaml:"type,omitempty" json:"type,omitempty" binding:"oneof=int16 int32 int64 float32 float64 string bool"`
-	Mode    string          `yaml:"mode,omitempty" json:"mode,omitempty" binding:"oneof=ro rw"`
-	Unit    string          `yaml:"unit,omitempty" json:"unit,omitempty"`
-	Visitor PropertyVisitor `yaml:"visitor,omitempty" json:"visitor,omitempty"`
+	Name           string                `yaml:"name,omitempty" json:"name,omitempty"`
+	Id             string                `yaml:"id,omitempty" json:"id,omitempty"`
+	Type           string                `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
+	Mode           string                `yaml:"mode,omitempty" json:"mode,omitempty" binding:"oneof=ro rw"`
+	Unit           string                `yaml:"unit,omitempty" json:"unit,omitempty"`
+	Format         string                `json:"format,omitempty"`                    // 当 Type 为 date/time 时使用
+	EnumType       EnumType              `json:"enumType,omitempty" binding:"dive"`   // 当 Type 为 enum 时使用
+	ArrayType      ArrayType             `json:"arrayType,omitempty" binding:"dive"`  // 当 Type 为 array 时使用
+	ObjectType     map[string]ObjectType `json:"objectType,omitempty" binding:"dive"` // 当 Type 为 object 时使用
+	ObjectRequired []string              `json:"objectRequired,omitempty"`            // 当 Type 为 object 时, 记录必填字段
+	Visitor        PropertyVisitor       `yaml:"visitor,omitempty" json:"visitor,omitempty"`
+}
+
+type EnumType struct {
+	Type   string      `json:"type,omitempty" binding:"enum_type"`
+	Values []EnumValue `json:"values,omitempty" binding:"lte=20"`
+}
+
+type EnumValue struct {
+	Name        string `json:"name,omitempty"`
+	Value       string `json:"value,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
+}
+
+type ArrayType struct {
+	Type   string `json:"type,omitempty" binding:"data_type"`
+	Min    int    `json:"min,omitempty" binding:"gte=0"`
+	Max    int    `json:"max,omitempty" binding:"lte=20"`
+	Format string `json:"format,omitempty"` // 当 Type 为 date/time 时使用
+}
+
+type ObjectType struct {
+	DisplayName string `json:"displayName,omitempty"`
+	Type        string `json:"type,omitempty" binding:"date_type"`
+	Format      string `json:"format,omitempty"` // 当 Type 为 date/time 时使用
 }
 
 type PropertyVisitor struct {
@@ -177,7 +206,7 @@ type ModbusVisitor struct {
 	Function     byte    `yaml:"function" json:"function" binding:"min=1,max=4"`
 	Address      string  `yaml:"address" json:"address"`
 	Quantity     uint16  `yaml:"quantity" json:"quantity"`
-	Type         string  `yaml:"type,omitempty" json:"type,omitempty" binding:"oneof=int16 int32 int64 float32 float64 string bool"`
+	Type         string  `yaml:"type,omitempty" json:"type,omitempty" binding:"date_type"`
 	Unit         string  `yaml:"unit,omitempty" json:"unit,omitempty"`
 	Scale        float64 `yaml:"scale" json:"scale"`
 	SwapByte     bool    `yaml:"swapByte" json:"swapByte"`
@@ -188,7 +217,7 @@ type OpcuaVisitor struct {
 	// Deprecated: Use NsBase, IdBase, OpcuaAccessConfig.NsOffset, OpcuaAccessConfig.IdOffset instead.
 	// Change from access template support
 	NodeID string `yaml:"nodeid,omitempty" json:"nodeid,omitempty"`
-	Type   string `yaml:"type,omitempty" json:"type,omitempty" binding:"oneof=int16 int32 int64 float32 float64 string bool"`
+	Type   string `yaml:"type,omitempty" json:"type,omitempty" binding:"date_type"`
 	NsBase int    `yaml:"nsBase,omitempty" json:"nsBase,omitempty"`
 	IdBase string `yaml:"idBase,omitempty" json:"idBase,omitempty"`
 	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" binding:"oneof=i s g b"`
