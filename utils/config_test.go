@@ -16,11 +16,11 @@ import (
 
 type testEncodeStruct struct {
 	Others  string             `yaml:"others" json:"others"`
-	Modules []testEncodeModule `yaml:"modules" json:"modules" default:"[]"`
+	Modules []testEncodeModule `yaml:"modules" json:"modules" default:"[]" validate:"dive"`
 }
 
 type testEncodeModule struct {
-	Name   string   `yaml:"name" json:"name"  validate:"regexp=^(m1|m2)$"`
+	Name   string   `yaml:"name" json:"name"  validate:"oneof=m1 m2"`
 	Params []string `yaml:"params" json:"params" default:"[\"-c\", \"conf.yml\"]"`
 }
 

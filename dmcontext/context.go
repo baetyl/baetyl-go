@@ -59,6 +59,14 @@ const (
 	TypeFloat64 = "float64"
 	TypeBool    = "bool"
 	TypeString  = "string"
+	TypeTime    = "time"
+	TypeDate    = "date"
+	TypeArray   = "array"
+	TypeEnum    = "enum"
+	TypeObject  = "object"
+
+	ModeReadWriteProperty = "rw"
+	ModeReadOnlyProperty  = "ro"
 )
 
 type DeltaCallback func(*DeviceInfo, v1.Delta) error

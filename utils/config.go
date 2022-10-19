@@ -11,7 +11,7 @@ import (
 	"text/template"
 
 	"github.com/docker/go-units"
-	"gopkg.in/validator.v2"
+	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
@@ -62,7 +62,7 @@ func UnmarshalYAML(in []byte, out interface{}) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	err = validator.Validate(out)
+	err = validator.New().Struct(out)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -79,14 +79,14 @@ func UnmarshalJSON(in []byte, out interface{}) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	err = validator.Validate(out)
+	err = validator.New().Struct(out)
 	if err != nil {
 		return errors.Trace(err)
 	}
 	return nil
 }
 
-// Size size
+// Size int64
 type Size int64
 
 // MarshalYAML customizes marshal
@@ -140,7 +140,7 @@ func (s *Size) UnmarshalJSON(data []byte) error {
 */
 var decimapAbbrs = []string{"", "k", "m", "g", "t", "p"}
 
-// Length length
+// Length int64
 // ! Length is deprecated, please to use Size
 type Length struct {
 	Max int64 `yaml:"max" json:"max"`

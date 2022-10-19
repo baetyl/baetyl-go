@@ -25,7 +25,7 @@ const (
 
 // Application application info
 type Application struct {
-	Name              string            `json:"name,omitempty" yaml:"name,omitempty" binding:"resourceName"`
+	Name              string            `json:"name,omitempty" yaml:"name,omitempty" binding:"res_name"`
 	Type              string            `json:"type,omitempty" yaml:"type,omitempty" default:"container"` // container | function
 	Mode              string            `json:"mode,omitempty" yaml:"mode,omitempty" default:"kube"`      // kube | native
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
@@ -53,7 +53,7 @@ type Application struct {
 // Service service config1ma1
 type Service struct {
 	// specifies the unique name of the service
-	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" binding:"serviceName"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" binding:"svc_name"`
 	// specifies the hostname of the service
 	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 	// specifies the image of the service, usually using the Docker image name
@@ -136,7 +136,7 @@ type ContainerPort struct {
 // Volume volume config
 type Volume struct {
 	// specified name of the volume
-	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" binding:"resourceName"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty" binding:"required" binding:"res_name"`
 	// specified driver for the storage volume
 	VolumeSource `json:",inline" yaml:",inline"`
 }
@@ -194,7 +194,7 @@ type Resources struct {
 }
 
 type ServiceFunctionConfig struct {
-	Name    string `json:"name,omitempty" yaml:"name,omitempty" binding:"resourceName"`
+	Name    string `json:"name,omitempty" yaml:"name,omitempty" binding:"res_name"`
 	Runtime string `json:"runtime,omitempty" yaml:"runtime,omitempty"`
 }
 

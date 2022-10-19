@@ -34,7 +34,7 @@ type NodeInfo struct {
 	Variant          string            `yaml:"variant,omitempty" json:"variant,omitempty"`
 	HostID           string            `yaml:"hostID,omitempty" json:"hostID,omitempty"`
 	Role             string            `yaml:"role,omitempty" json:"role,omitempty"`
-	Labels           map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"  binding:"omitempty,validLabels"`
+	Labels           map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"  binding:"omitempty,label"`
 	ClientIP         string            `yaml:"clientIP,omitempty" json:"clientIP,omitempty"`
 }
 
