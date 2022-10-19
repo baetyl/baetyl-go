@@ -8,15 +8,13 @@ import (
 )
 
 const (
-	MappingNone              = "none"
-	MappingValue             = "value"
-	MappingCalculate         = "calculate"
-	MappingValueAccuracy     = "valueAccuracy"
-	MappingCalculateAccuracy = "calculateAccuracy"
-	OpcuaIdTypeI             = "i"
-	OpcuaIdTypeS             = "s"
-	OpcuaIdTypeG             = "g"
-	OpcuaIdTypeB             = "b"
+	MappingNone      = "none"
+	MappingValue     = "value"
+	MappingCalculate = "calculate"
+	OpcuaIdTypeI     = "i"
+	OpcuaIdTypeS     = "s"
+	OpcuaIdTypeG     = "g"
+	OpcuaIdTypeB     = "b"
 )
 
 type DeviceInfo struct {
