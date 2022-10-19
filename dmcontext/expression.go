@@ -36,41 +36,28 @@ func ParseExpression(e string) ([]string, error) {
 
 // ExecExpression execute expression with args and mappingType
 // for example, input: ("x1+x2", '{"x1":1,"x2":2}', "calc"), output: 3
-func ExecExpression(e string, args map[string]interface{}, mappingType string, accuracy int) (interface{}, error) {
+func ExecExpression(e string, args map[string]interface{}, mappingType string) (interface{}, error) {
+	return ExecExpressionWithPrecision(e, args, mappingType, -1)
+}
+
+func ExecExpressionWithPrecision(e string, args map[string]interface{}, mappingType string, precision int) (interface{}, error) {
 	switch mappingType {
 	case MappingNone:
 		return nil, nil
 	case MappingValue:
-		return processValueMapping(e, args)
+		return processValueMappingWithPrecision(e, args, precision)
 	case MappingCalculate:
-		return processCalcMapping(e, args)
-	case MappingValueAccuracy:
-		return processValueMappingAccuracy(e, args, accuracy)
-	case MappingCalculateAccuracy:
-		return processCalcMappingAccuracy(e, args, accuracy)
+		return processCalcMappingWithPrecision(e, args, precision)
 	default:
 		return nil, ErrUnknownMappingType
 	}
 }
 
 func processValueMapping(e string, args map[string]interface{}) (interface{}, error) {
-	// parse expression
-	expression, err := goexpr.Parse(e)
-	if err != nil {
-		return nil, errors.Trace(err)
-	}
-	// check the number of variables
-	if len(expression.Vars) != 1 {
-		return nil, errors.New("mapping type equal can only have one variable")
-	}
-	// check variable exist
-	if val, ok := args[expression.Vars[0]]; ok {
-		return val, nil
-	}
-	return nil, errors.New("missing argument:" + expression.Vars[0])
+	return processValueMappingWithPrecision(e, args, -1)
 }
 
-func processValueMappingAccuracy(e string, args map[string]interface{}, accuracy int) (interface{}, error) {
+func processValueMappingWithPrecision(e string, args map[string]interface{}, precision int) (interface{}, error) {
 	// parse expression
 	expression, err := goexpr.Parse(e)
 	if err != nil {
@@ -82,20 +69,23 @@ func processValueMappingAccuracy(e string, args map[string]interface{}, accuracy
 	}
 	// check variable exist
 	if val, ok := args[expression.Vars[0]]; ok {
-		beforeAccuracy, err := parseValueToFloat64(val)
+		if precision <= 0 {
+			return val, nil
+		}
+		originValue, err := parseValueToFloat64(val)
 		if err != nil {
 			return nil, err
 		}
-		accuracyValue, err := strconv.ParseFloat(fmt.Sprintf("%."+strconv.Itoa(accuracy)+"f", beforeAccuracy), 64)
-		if err != nil {
-			return nil, err
-		}
-		return accuracyValue, nil
+		return strconv.ParseFloat(fmt.Sprintf("%."+strconv.Itoa(precision)+"f", originValue), 64)
 	}
 	return nil, errors.New("missing argument:" + expression.Vars[0])
 }
 
 func processCalcMapping(e string, args map[string]interface{}) (interface{}, error) {
+	return processCalcMappingWithPrecision(e, args, -1)
+}
+
+func processCalcMappingWithPrecision(e string, args map[string]interface{}, precision int) (interface{}, error) {
 	// parse expression
 	expression, err := goexpr.Parse(e)
 	if err != nil {
@@ -118,35 +108,9 @@ func processCalcMapping(e string, args map[string]interface{}) (interface{}, err
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	return res, nil
-}
-
-func processCalcMappingAccuracy(e string, args map[string]interface{}, accuracy int) (interface{}, error) {
-	// parse expression
-	expression, err := goexpr.Parse(e)
-	if err != nil {
-		return nil, errors.Trace(err)
-	}
-	// parse variable to float64
-	parseArgs := map[string]float64{}
-	for _, v := range expression.Vars {
-		if _, ok := args[v]; !ok {
-			return nil, errors.New("missing variable:" + v)
-		}
-		val, err := parseValueToFloat64(args[v])
-		if err != nil {
-			return nil, err
-		}
-		accuracyValue, err := strconv.ParseFloat(fmt.Sprintf("%."+strconv.Itoa(accuracy)+"f", val), 64)
-		if err != nil {
-			return nil, err
-		}
-		parseArgs[v] = accuracyValue
-	}
-	// calculate result
-	res, err := goexpr.Evaluate(expression, parseArgs)
-	if err != nil {
-		return nil, errors.Trace(err)
+	// format value precision
+	if precision > 0 {
+		return strconv.ParseFloat(fmt.Sprintf("%."+strconv.Itoa(precision)+"f", res), 64)
 	}
 	return res, nil
 }

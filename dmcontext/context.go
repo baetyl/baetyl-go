@@ -65,18 +65,16 @@ type DeltaCallback func(*DeviceInfo, v1.Delta) error
 type EventCallback func(*DeviceInfo, *Event) error
 type PropertyGetCallback func(*DeviceInfo, []string) error
 
-var oldData = make(map[string]PointClean)
-
 type Context interface {
 	context.Context
 	GetAllDevices() []DeviceInfo
 	ReportDeviceProperties(*DeviceInfo, v1.Report) error
+	ReportDevicePropertiesWithFilter(device *DeviceInfo, report v1.Report) error
 	ReportDeviceEvents(*DeviceInfo, v1.EventReport) error
 	GetDeviceProperties(device *DeviceInfo) (*DeviceShadow, error)
 	RegisterDeltaCallback(cb DeltaCallback) error
 	RegisterEventCallback(cb EventCallback) error
 	RegisterPropertyGetCallback(cb PropertyGetCallback) error
-	DataClean(device *DeviceInfo, report v1.Report) (convertReport v1.Report, err error)
 	Online(device *DeviceInfo) error
 	Offline(device *DeviceInfo) error
 	GetDriverConfig() string
@@ -95,20 +93,21 @@ type Context interface {
 
 type DmCtx struct {
 	context.Context
-	log             *log.Logger
-	mqtt            *mqtt2.Client
-	tomb            utils.Tomb
-	eventCb         EventCallback
-	deltaCb         DeltaCallback
-	propertyGetCb   PropertyGetCallback
-	response        sync.Map
-	devices         map[string]DeviceInfo
-	msgChs          map[string]chan *v1.Message
-	driverConfig    string
-	propsConfig     map[string][]DeviceProperty
-	accessConfig    map[string]AccessConfig
-	deviceModels    map[string][]DeviceProperty
-	accessTemplates map[string]AccessTemplate
+	log                  *log.Logger
+	mqtt                 *mqtt2.Client
+	tomb                 utils.Tomb
+	eventCb              EventCallback
+	deltaCb              DeltaCallback
+	propertyGetCb        PropertyGetCallback
+	response             sync.Map
+	devices              map[string]DeviceInfo
+	msgChs               map[string]chan *v1.Message
+	driverConfig         string
+	propsConfig          map[string][]DeviceProperty
+	accessConfig         map[string]AccessConfig
+	deviceModels         map[string][]DeviceProperty
+	accessTemplates      map[string]AccessTemplate
+	lastReportProperties map[string]ReportProperty
 }
 
 func NewContext(confFile string) Context {
@@ -345,53 +344,6 @@ func (c *DmCtx) GetDevice(device string) (*DeviceInfo, error) {
 	return nil, ErrDeviceNotExist
 }
 
-// 静默窗口（SilentWin）: 静默时间窗口、偏差（Deviation）: 震荡的偏差区间值
-func (c *DmCtx) DataClean(device *DeviceInfo, report v1.Report) (convertReport v1.Report, err error) {
-	//条件1：当前上报值与前一次上报值的差值超过偏差的区间
-	//条件2：当前上报与上一次上报的时间差，超过静默时间窗
-	reportData := make(map[string]interface{})
-	mappData := make(map[string]PointClean)
-
-	accessTemplates, err := c.GetAccessTemplates(device)
-	if err != nil {
-		return nil, err
-	}
-	for _, mapping := range accessTemplates.Mappings {
-		mappData[mapping.Attribute] = PointClean{SilentWin: mapping.SilentWin, Deviation: mapping.Deviation}
-	}
-
-	for key, value := range report {
-		_, ok := oldData[key]
-		if !ok {
-			reportData[key] = value
-			oldData[key] = PointClean{SilentWin: time.Now().Unix()}
-		}
-
-		var postValue float64
-		switch value.(type) {
-		case bool:
-			reportData[key] = value
-		case string:
-			reportData[key] = value
-		case float64:
-			postValue = value.(float64)
-		default:
-			return nil, ErrUnsupportedValueType
-		}
-
-		clean, isExist := mappData[key]
-		if isExist {
-			if postValue-oldData[key].Deviation > clean.Deviation || time.Now().Unix()-oldData[key].SilentWin > clean.SilentWin {
-				reportData[key] = value
-				oldData[key] = PointClean{SilentWin: time.Now().Unix()}
-			}
-			oldData[key] = PointClean{Deviation: clean.Deviation}
-		}
-	}
-
-	return reportData, nil
-}
-
 func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error {
 	msg := &v1.Message{
 		Kind:     v1.MessageDeviceReport,
@@ -407,6 +359,50 @@ func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error
 		return err
 	}
 	return nil
+}
+
+func (c *DmCtx) ReportDevicePropertiesWithFilter(device *DeviceInfo, report v1.Report) error {
+	filterReport := make(map[string]interface{})
+	propMapping := make(map[string]ModelMapping)
+
+	// get device templates properties
+	accessTemplates, err := c.GetAccessTemplates(device)
+	if err != nil {
+		return err
+	}
+	// generate propMapping, key=propName, value=ModelMapping
+	for _, mapping := range accessTemplates.Mappings {
+		propMapping[mapping.Attribute] = mapping
+	}
+	// filter report
+	for key, value := range report {
+		mapping, isExist := propMapping[key]
+		if !isExist {
+			continue
+		}
+		// first report or out of silentWin
+		if _, ok := c.lastReportProperties[key]; !ok ||
+			time.Now().Sub(c.lastReportProperties[key].Time) > time.Duration(mapping.SilentWin)*time.Second {
+			filterReport[key] = value
+			c.lastReportProperties[key] = ReportProperty{Time: time.Now(), Value: value}
+		}
+		// greater than deviation
+		if isCalculable(value) {
+			parseVal, err := parseValueToFloat64(value)
+			if err != nil {
+				continue
+			}
+			lastVal, err := parseValueToFloat64(c.lastReportProperties[key].Value)
+			if err != nil {
+				continue
+			}
+			if parseVal-lastVal >= lastVal*mapping.Deviation/100 {
+				filterReport[key] = value
+				c.lastReportProperties[key] = ReportProperty{Time: time.Now(), Value: value}
+			}
+		}
+	}
+	return c.ReportDeviceProperties(device, filterReport)
 }
 
 func (c *DmCtx) ReportDeviceEvents(info *DeviceInfo, report v1.EventReport) error {
@@ -667,6 +663,15 @@ func parsePropertyKeys(v interface{}) ([]string, error) {
 		propertyKeys = append(propertyKeys, propertyKey)
 	}
 	return propertyKeys, nil
+}
+
+func isCalculable(v interface{}) bool {
+	switch v.(type) {
+	case int, int16, int32, int64, float32, float64:
+		return true
+	default:
+		return false
+	}
 }
 
 func (c *DmCtx) genMetadata(info *DeviceInfo) map[string]string {
