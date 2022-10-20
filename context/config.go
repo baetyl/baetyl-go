@@ -18,6 +18,7 @@ const (
 type SystemConfig struct {
 	Certificate utils.Certificate `yaml:"cert,omitempty" json:"cert,omitempty" default:"{\"ca\":\"var/lib/baetyl/system/certs/ca.pem\",\"key\":\"var/lib/baetyl/system/certs/key.pem\",\"cert\":\"var/lib/baetyl/system/certs/crt.pem\"}"`
 	Function    http.ClientConfig `yaml:"function,omitempty" json:"function,omitempty"`
+	Core        http.ClientConfig `yaml:"core,omitempty" json:"core,omitempty"`
 	Broker      mqtt.ClientConfig `yaml:"broker,omitempty" json:"broker,omitempty"`
 	Logger      log.Config        `yaml:"logger,omitempty" json:"logger,omitempty"`
 }

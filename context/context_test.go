@@ -41,6 +41,22 @@ func TestContext(t *testing.T) {
 				ClientAuthType:     0,
 			},
 		},
+		Core: http.ClientConfig{
+			Address:               "https://baetyl-core.baetyl-edge-system:" + baetylCoreKubeSystemPort,
+			Timeout:               30000000000,
+			KeepAlive:             30000000000,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90000000000,
+			TLSHandshakeTimeout:   10000000000,
+			ExpectContinueTimeout: 1000000000,
+			Certificate: utils.Certificate{
+				CA:                 "var/lib/baetyl/system/certs/ca.pem",
+				Key:                "var/lib/baetyl/system/certs/key.pem",
+				Cert:               "var/lib/baetyl/system/certs/crt.pem",
+				InsecureSkipVerify: false,
+				ClientAuthType:     0,
+			},
+		},
 		Broker: mqtt.ClientConfig{
 			Address:              "ssl://baetyl-broker.baetyl-edge-system:" + baetylBrokerSystemPort,
 			Username:             "",
@@ -110,6 +126,9 @@ func TestContext(t *testing.T) {
 	expected.Function.CA = expected.Certificate.CA
 	expected.Function.Key = expected.Certificate.Key
 	expected.Function.Cert = expected.Certificate.Cert
+	expected.Core.CA = expected.Certificate.CA
+	expected.Core.Key = expected.Certificate.Key
+	expected.Core.Cert = expected.Certificate.Cert
 	expected.Broker.Address = "ssl://baetyl-broker:8883"
 	expected.Broker.CA = expected.Certificate.CA
 	expected.Broker.Key = expected.Certificate.Key
