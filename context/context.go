@@ -125,6 +125,19 @@ func NewContext(confFile string) Context {
 		sc.Function.Cert = sc.Certificate.Cert
 	}
 
+	if sc.Core.Address == "" {
+		sc.Core.Address = getCoreAddress()
+	}
+	if sc.Core.CA == "" {
+		sc.Core.CA = sc.Certificate.CA
+	}
+	if sc.Core.Key == "" {
+		sc.Core.Key = sc.Certificate.Key
+	}
+	if sc.Core.Cert == "" {
+		sc.Core.Cert = sc.Certificate.Cert
+	}
+
 	if sc.Broker.Address == "" {
 		sc.Broker.Address = getBrokerAddress()
 	}
@@ -298,4 +311,16 @@ func (c *ctx) NewSystemBrokerClient(subTopics []mqtt.QOSTopic) (*mqtt.Client, er
 		return nil, err
 	}
 	return client, nil
+}
+
+func (c *ctx) NewCoreHttpClient() (*http.Client, error) {
+	err := c.CheckSystemCert()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	ops, err := c.SystemConfig().Core.ToClientOptions()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	return http.NewClient(ops), nil
 }

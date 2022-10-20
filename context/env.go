@@ -29,8 +29,11 @@ const (
 )
 
 const (
+	localHost                    = "127.0.0.1"
 	baetylEdgeNamespace          = "baetyl-edge"
 	baetylEdgeSystemNamespace    = "baetyl-edge-system"
+	baetylCoreNativeSystemPort   = "443"
+	baetylCoreKubeSystemPort     = "8443"
 	baetylBrokerSystemPort       = "50010"
 	baetylFunctionSystemHttpPort = "50011"
 	baetylFunctionSystemGrpcPort = "50012"
@@ -81,23 +84,38 @@ func BrokerPort() string {
 	return baetylBrokerSystemPort
 }
 
-// FunctionPort return http port of function.
+// FunctionHttpPort return http port of function.
 func FunctionHttpPort() string {
 	return baetylFunctionSystemHttpPort
+}
+
+func CoreHttpPort() string {
+	if RunMode() == RunModeNative {
+		return baetylCoreNativeSystemPort
+	}
+	return baetylCoreKubeSystemPort
 }
 
 // BrokerHost return broker host.
 func BrokerHost() string {
 	if RunMode() == RunModeNative {
-		return "127.0.0.1"
+		return localHost
 	}
 	return fmt.Sprintf("%s.%s", "baetyl-broker", baetylEdgeSystemNamespace)
+}
+
+// CoreHost return cpre host.
+func CoreHost() string {
+	if RunMode() == RunModeNative {
+		return localHost
+	}
+	return fmt.Sprintf("%s.%s", "baetyl-core", baetylEdgeSystemNamespace)
 }
 
 // FunctionHost return function host.
 func FunctionHost() string {
 	if RunMode() == RunModeNative {
-		return "127.0.0.1"
+		return localHost
 	}
 	return fmt.Sprintf("%s.%s", "baetyl-function", baetylEdgeSystemNamespace)
 }
@@ -108,4 +126,8 @@ func getBrokerAddress() string {
 
 func getFunctionAddress() string {
 	return fmt.Sprintf("%s://%s:%s", "https", FunctionHost(), FunctionHttpPort())
+}
+
+func getCoreAddress() string {
+	return fmt.Sprintf("%s://%s:%s", "https", CoreHost(), CoreHttpPort())
 }
