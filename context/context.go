@@ -64,6 +64,8 @@ type Context interface {
 	LoadCustomConfig(cfg interface{}, files ...string) error
 	// NewFunctionHttpClient creates a new function http client.
 	NewFunctionHttpClient() (*http.Client, error)
+	// NewCoreHttpClient creates a new core http client.
+	NewCoreHttpClient() (*http.Client, error)
 	// NewSystemBrokerClientConfig creates the system config of broker
 	NewSystemBrokerClientConfig() (mqtt.ClientConfig, error)
 	// NewBrokerClient creates a new broker client.
