@@ -21,6 +21,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/qiangxue/fasthttp-routing v0.0.0-20160225050629-6ccdc2a18d87
+	github.com/spf13/cast v1.1.0
 	github.com/stretchr/testify v1.7.0
 	github.com/valyala/fasthttp v1.9.0
 	go.uber.org/zap v1.16.0
