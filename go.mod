@@ -11,6 +11,7 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/evanphx/json-patch v4.5.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.7
+	github.com/go-playground/validator/v10 v10.11.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/uuid v1.0.0
 	github.com/jinzhu/copier v0.1.0
@@ -20,13 +21,12 @@ require (
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/qiangxue/fasthttp-routing v0.0.0-20160225050629-6ccdc2a18d87
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	github.com/valyala/fasthttp v1.9.0
 	go.uber.org/zap v1.16.0
 	google.golang.org/grpc v1.25.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
-	gopkg.in/validator.v2 v2.0.0-20191107172027-c3144fdedc21
 	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.0.0-20190819141258-3544db3b9e44
@@ -39,6 +39,8 @@ require (
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/frankban/quicktest v1.10.0 // indirect
 	github.com/go-ozzo/ozzo-routing v2.1.4+incompatible // indirect
+	github.com/go-playground/locales v0.14.0 // indirect
+	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
@@ -48,6 +50,7 @@ require (
 	github.com/klauspost/compress v1.8.2 // indirect
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
+	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
@@ -58,11 +61,12 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
-	golang.org/x/net v0.0.0-20200625001655-4c5254603344 // indirect
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
-	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/inf.v0 v0.9.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	k8s.io/klog v0.3.1 // indirect
 )
