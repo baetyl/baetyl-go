@@ -52,6 +52,7 @@ var (
 )
 
 const (
+	TypeInt     = "int"
 	TypeInt16   = "int16"
 	TypeInt32   = "int32"
 	TypeInt64   = "int64"
