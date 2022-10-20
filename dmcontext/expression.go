@@ -1,6 +1,7 @@
 package dmcontext
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"reflect"
@@ -36,19 +37,27 @@ func ParseExpression(e string) ([]string, error) {
 // ExecExpression execute expression with args and mappingType
 // for example, input: ("x1+x2", '{"x1":1,"x2":2}', "calc"), output: 3
 func ExecExpression(e string, args map[string]interface{}, mappingType string) (interface{}, error) {
+	return ExecExpressionWithPrecision(e, args, mappingType, -1)
+}
+
+func ExecExpressionWithPrecision(e string, args map[string]interface{}, mappingType string, precision int) (interface{}, error) {
 	switch mappingType {
 	case MappingNone:
 		return nil, nil
 	case MappingValue:
-		return processValueMapping(e, args)
+		return processValueMappingWithPrecision(e, args, precision)
 	case MappingCalculate:
-		return processCalcMapping(e, args)
+		return processCalcMappingWithPrecision(e, args, precision)
 	default:
 		return nil, ErrUnknownMappingType
 	}
 }
 
 func processValueMapping(e string, args map[string]interface{}) (interface{}, error) {
+	return processValueMappingWithPrecision(e, args, -1)
+}
+
+func processValueMappingWithPrecision(e string, args map[string]interface{}, precision int) (interface{}, error) {
 	// parse expression
 	expression, err := goexpr.Parse(e)
 	if err != nil {
@@ -60,12 +69,23 @@ func processValueMapping(e string, args map[string]interface{}) (interface{}, er
 	}
 	// check variable exist
 	if val, ok := args[expression.Vars[0]]; ok {
-		return val, nil
+		if precision <= 0 {
+			return val, nil
+		}
+		originValue, err := parseValueToFloat64(val)
+		if err != nil {
+			return nil, err
+		}
+		return strconv.ParseFloat(fmt.Sprintf("%."+strconv.Itoa(precision)+"f", originValue), 64)
 	}
 	return nil, errors.New("missing argument:" + expression.Vars[0])
 }
 
 func processCalcMapping(e string, args map[string]interface{}) (interface{}, error) {
+	return processCalcMappingWithPrecision(e, args, -1)
+}
+
+func processCalcMappingWithPrecision(e string, args map[string]interface{}, precision int) (interface{}, error) {
 	// parse expression
 	expression, err := goexpr.Parse(e)
 	if err != nil {
@@ -87,6 +107,10 @@ func processCalcMapping(e string, args map[string]interface{}) (interface{}, err
 	res, err := goexpr.Evaluate(expression, parseArgs)
 	if err != nil {
 		return nil, errors.Trace(err)
+	}
+	// format value precision
+	if precision > 0 {
+		return strconv.ParseFloat(fmt.Sprintf("%."+strconv.Itoa(precision)+"f", res), 64)
 	}
 	return res, nil
 }

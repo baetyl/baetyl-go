@@ -268,9 +268,17 @@ type AccessTemplate struct {
 }
 
 type ModelMapping struct {
-	Attribute  string `yaml:"attribute,omitempty" json:"attribute,omitempty"`
-	Type       string `yaml:"type,omitempty" json:"type,omitempty" default:"none"`
-	Expression string `yaml:"expression,omitempty" json:"expression,omitempty"`
+	Attribute  string  `yaml:"attribute,omitempty" json:"attribute,omitempty"`
+	Type       string  `yaml:"type,omitempty" json:"type,omitempty" default:"none"`
+	Expression string  `yaml:"expression,omitempty" json:"expression,omitempty"`
+	Precision  int     `yaml:"precision" json:"precision" default:"2"`
+	Deviation  float64 `yaml:"deviation" json:"deviation"`
+	SilentWin  int     `yaml:"silentWin" json:"silentWin"`
+}
+
+type ReportProperty struct {
+	Time  time.Time   `yaml:"time,omitempty" json:"time,omitempty"`
+	Value interface{} `yaml:"value,omitempty" json:"value,omitempty"`
 }
 
 type Event struct {
