@@ -41,6 +41,20 @@ var regexps = map[string]string{
 	dateEnumType:    "^(int16|int32|int64|string)?$",
 	datePlusType:    "^(int16|int32|int64|float32|float64|string|time|date|bool|array|enum|object)?$",
 }
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
+	RegisterValidate(validate)
+}
+
+func GetValidator() *validator.Validate {
+	return validate
+}
+
+func RegisterValidation(key string, fn validator.Func) {
+	GetValidator().RegisterValidation(key, fn)
+}
 
 func RegisterValidate(v *validator.Validate) {
 	if v != nil {

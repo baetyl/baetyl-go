@@ -29,6 +29,30 @@ type testValidate struct {
 	Req string      `json:"req" validate:"required"`
 }
 
+type customValidate struct {
+	Custom string `json:"custom" validate:"custom"`
+}
+
+func TestGetValidator(t *testing.T) {
+	v := GetValidator()
+	assert.NotNil(t, v)
+}
+
+func TestRegisterValidation(t *testing.T) {
+	RegisterValidation("custom", func(fl validator.FieldLevel) bool {
+		s := fl.Field().Interface().(string)
+		return len(s) < 5
+	})
+
+	c := customValidate{Custom: "test"}
+	err := GetValidator().Struct(c)
+	assert.NoError(t, err)
+
+	c.Custom = "test1"
+	err = GetValidator().Struct(c)
+	assert.Error(t, err)
+}
+
 func TestRegisterValidate(t *testing.T) {
 	v := validator.New()
 	RegisterValidate(v)

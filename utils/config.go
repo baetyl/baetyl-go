@@ -11,7 +11,6 @@ import (
 	"text/template"
 
 	"github.com/docker/go-units"
-	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
@@ -62,9 +61,7 @@ func UnmarshalYAML(in []byte, out interface{}) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	v := validator.New()
-	RegisterValidate(v)
-	err = v.Struct(out)
+	err = GetValidator().Struct(out)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -81,9 +78,7 @@ func UnmarshalJSON(in []byte, out interface{}) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	v := validator.New()
-	RegisterValidate(v)
-	err = v.Struct(out)
+	err = GetValidator().Struct(out)
 	if err != nil {
 		return errors.Trace(err)
 	}
