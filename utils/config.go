@@ -61,8 +61,7 @@ func UnmarshalYAML(in []byte, out interface{}) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	v := GetValidator()
-	err = v.Struct(out)
+	err = GetValidator().Struct(out)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -79,8 +78,7 @@ func UnmarshalJSON(in []byte, out interface{}) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	v := GetValidator()
-	err = v.Struct(out)
+	err = GetValidator().Struct(out)
 	if err != nil {
 		return errors.Trace(err)
 	}
