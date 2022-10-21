@@ -67,6 +67,10 @@ func TestRegisterValidate(t *testing.T) {
 	err = v.Struct(c)
 	assert.Error(t, err)
 
+	c.Res = "QWE"
+	err = v.Struct(c)
+	assert.Error(t, err)
+
 	c.Res = "0123456789012345678901234567890123456789012345678901234567890123" // len=64
 	err = v.Struct(c)
 	assert.Error(t, err)
@@ -80,6 +84,10 @@ func TestRegisterValidate(t *testing.T) {
 	assert.Error(t, err)
 
 	c.Svc = ""
+	err = v.Struct(c)
+	assert.Error(t, err)
+
+	c.Svc = "QWE"
 	err = v.Struct(c)
 	assert.Error(t, err)
 
