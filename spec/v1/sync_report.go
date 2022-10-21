@@ -91,6 +91,8 @@ type InstanceStats struct {
 	Cause          string            `yaml:"cause,omitempty" json:"cause,omitempty"`
 	IP             string            `yaml:"ip,omitempty" json:"ip,omitempty"`
 	NodeName       string            `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
+	Pid            int32             `yaml:"pid,omitempty" json:"pid,omitempty"`
+	PPid           int32             `yaml:"ppid,omitempty" json:"ppid,omitempty"`
 	CreateTime     time.Time         `yaml:"createTime,omitempty" json:"createTime,omitempty"`
 	Containers     []ContainerInfo   `yaml:"containers,omitempty" json:"containers,omitempty"`
 	InitContainers []ContainerInfo   `yaml:"initContainers,omitempty" json:"initContainers,omitempty"`
