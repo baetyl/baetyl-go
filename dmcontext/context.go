@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"strconv"
 	"sync"
 	"time"
 
@@ -587,91 +586,6 @@ func unmarshalYAML(file string, out interface{}) error {
 		return err
 	}
 	return yaml.Unmarshal(bs, out)
-}
-
-func (c *DmCtx) parsePropertyValues(device *DeviceInfo, props map[string]interface{}) (map[string]interface{}, error) {
-	res := make(map[string]interface{})
-	vals, ok := c.deviceModels[device.DeviceModel]
-	if !ok {
-		return nil, errors.Trace(ErrDeviceNotExist)
-	}
-	cfgs := make(map[string]DeviceProperty)
-	for _, val := range vals {
-		cfgs[val.Name] = val
-	}
-	for key, val := range props {
-		if cfg, ok := cfgs[key]; ok {
-			pVal, err := parsePropertyValue(cfg.Type, val)
-			if err != nil {
-				return nil, errors.Trace(err)
-			}
-			res[key] = pVal
-		} else {
-			return nil, errors.Trace(ErrPropsConfigNotExist)
-		}
-	}
-	return res, nil
-}
-
-func parsePropertyValue(tpy string, val interface{}) (interface{}, error) {
-	// it is json.Number (string actually) when val is number
-	switch tpy {
-	case TypeInt16:
-		num, _ := val.(json.Number)
-		i, err := strconv.ParseInt(num.String(), 10, 16)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-		return int16(i), nil
-	case TypeInt32:
-		num, _ := val.(json.Number)
-		i, err := strconv.ParseInt(num.String(), 10, 32)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-		return int32(i), nil
-	case TypeInt64:
-		num, _ := val.(json.Number)
-		i, err := strconv.ParseInt(num.String(), 10, 64)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-		return i, nil
-	case TypeFloat32:
-		num, _ := val.(json.Number)
-		f, err := strconv.ParseFloat(num.String(), 32)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-		return float32(f), nil
-	case TypeFloat64:
-		num, _ := val.(json.Number)
-		f, err := strconv.ParseFloat(num.String(), 64)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-		return f, nil
-	case TypeBool, TypeString:
-		return val, nil
-	default:
-		return nil, errors.Trace(ErrTypeNotSupported)
-	}
-}
-
-func parsePropertyKeys(v interface{}) ([]string, error) {
-	properties, ok := v.([]interface{})
-	if !ok {
-		return nil, ErrInvalidPropertyKey
-	}
-	var propertyKeys []string
-	for _, key := range properties {
-		propertyKey, ok := key.(string)
-		if !ok {
-			return nil, ErrInvalidPropertyKey
-		}
-		propertyKeys = append(propertyKeys, propertyKey)
-	}
-	return propertyKeys, nil
 }
 
 func isCalculable(v interface{}) bool {
