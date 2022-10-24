@@ -137,6 +137,27 @@ type ReportView struct {
 	ModeInfo    string                `yaml:"modeinfo,omitempty" json:"modeinfo,omitempty"`
 }
 
+// NodeProperty report for other system
+type NodeProperty struct {
+	HostName     string `json:"hostName"`
+	Address      string `json:"address"`
+	Arch         string `json:"arch"`
+	OS           string `json:"os"`
+	SystemUUID   string `json:"systemUUID"`
+	NodeMode     string `json:"nodeMode"`
+	NetBytesRecv string `json:"netBytesRecv"`
+	NetBytesSent string `json:"netBytesSent"`
+	NetPackRecv  string `json:"netPackRecv"`
+	NetPackSent  string `json:"netPackSent"`
+	DiskUse      string `json:"diskUse"`
+	DistCap      string `json:"distCap"`
+	MemoryUse    string `json:"memoryUse"`
+	MemoryCap    string `json:"memoryCap"`
+	CpuUse       string `json:"cpuUse"`
+	CpuCap       string `json:"cpuCap"`
+	State        string `json:"state" default:"online"`
+}
+
 // Report report data
 type Report map[string]interface{}
 
