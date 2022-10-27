@@ -60,27 +60,27 @@ type Event struct {
 }
 
 type EnumType struct {
-	Type   string      `json:"type,omitempty" binding:"enum_type"`
-	Values []EnumValue `json:"values,omitempty" binding:"lte=20"`
+	Type   string      `yaml:"type,omitempty" json:"type,omitempty" binding:"enum_type"`
+	Values []EnumValue `yaml:"values,omitempty" json:"values,omitempty" binding:"lte=20"`
 }
 
 type EnumValue struct {
-	Name        string `json:"name,omitempty"`
-	Value       string `json:"value,omitempty"`
-	DisplayName string `json:"displayName,omitempty"`
+	Name        string `yaml:"name,omitempty" json:"name,omitempty"`
+	Value       string `yaml:"value,omitempty" json:"value,omitempty"`
+	DisplayName string `yaml:"displayName,omitempty" json:"displayName,omitempty"`
 }
 
 type ArrayType struct {
-	Type   string `json:"type,omitempty" binding:"data_type"`
-	Min    int    `json:"min,omitempty" binding:"gte=0"`
-	Max    int    `json:"max,omitempty" binding:"lte=20"`
-	Format string `json:"format,omitempty"` // 当 Type 为 date/time 时使用
+	Type   string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
+	Min    int    `yaml:"min,omitempty" json:"min,omitempty" binding:"gte=0"`
+	Max    int    `yaml:"max,omitempty" json:"max,omitempty" binding:"lte=20"`
+	Format string `yaml:"format,omitempty" json:"format,omitempty"` // 当 Type 为 date/time 时使用
 }
 
 type ObjectType struct {
-	DisplayName string `json:"displayName,omitempty"`
-	Type        string `json:"type,omitempty" binding:"data_type"`
-	Format      string `json:"format,omitempty"` // 当 Type 为 date/time 时使用
+	DisplayName string `yaml:"displayName,omitempty" json:"displayName,omitempty"`
+	Type        string `yaml:"type,omitempty" json:"type,omitempty" binding:"date_type"`
+	Format      string `yaml:"format,omitempty" json:"format,omitempty"` // 当 Type 为 date/time 时使用
 }
 
 type PropertyVisitor struct {
