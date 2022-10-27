@@ -122,11 +122,11 @@ type DeviceProperty struct {
 	Mode           string                `yaml:"mode,omitempty" json:"mode,omitempty" binding:"oneof=ro rw"`
 	Unit           string                `yaml:"unit,omitempty" json:"unit,omitempty"`
 	Visitor        PropertyVisitor       `yaml:"visitor,omitempty" json:"visitor,omitempty"`
-	Format         string                `json:"format,omitempty"`                    // 当 Type 为 date/time 时使用
-	EnumType       EnumType              `json:"enumType,omitempty" binding:"dive"`   // 当 Type 为 enum 时使用
-	ArrayType      ArrayType             `json:"arrayType,omitempty" binding:"dive"`  // 当 Type 为 array 时使用
-	ObjectType     map[string]ObjectType `json:"objectType,omitempty" binding:"dive"` // 当 Type 为 object 时使用
-	ObjectRequired []string              `json:"objectRequired,omitempty"`            // 当 Type 为 object 时, 记录必填字段
+	Format         string                `yaml:"format,omitempty" json:"format,omitempty"`                        // 当 Type 为 date/time 时使用
+	EnumType       EnumType              `yaml:"enumType,omitempty" json:"enumType,omitempty" binding:"dive"`     // 当 Type 为 enum 时使用
+	ArrayType      ArrayType             `yaml:"arrayType,omitempty" json:"arrayType,omitempty" binding:"dive"`   // 当 Type 为 array 时使用
+	ObjectType     map[string]ObjectType `yaml:"objectType,omitempty" json:"objectType,omitempty" binding:"dive"` // 当 Type 为 object 时使用
+	ObjectRequired []string              `yaml:"objectRequired,omitempty" json:"objectRequired,omitempty"`        // 当 Type 为 object 时, 记录必填字段
 	Current        interface{}           `yaml:"current" json:"current"`
 	Expect         interface{}           `yaml:"expect" json:"expect"`
 }
@@ -138,11 +138,11 @@ type deviceProperty struct {
 	Mode           string                `yaml:"mode,omitempty" json:"mode,omitempty" binding:"oneof=ro rw"`
 	Unit           string                `yaml:"unit,omitempty" json:"unit,omitempty"`
 	Visitor        PropertyVisitor       `yaml:"visitor,omitempty" json:"visitor,omitempty"`
-	Format         string                `json:"format,omitempty"`                    // 当 Type 为 date/time 时使用
-	EnumType       EnumType              `json:"enumType,omitempty" binding:"dive"`   // 当 Type 为 enum 时使用
-	ArrayType      ArrayType             `json:"arrayType,omitempty" binding:"dive"`  // 当 Type 为 array 时使用
-	ObjectType     map[string]ObjectType `json:"objectType,omitempty" binding:"dive"` // 当 Type 为 object 时使用
-	ObjectRequired []string              `json:"objectRequired,omitempty"`            // 当 Type 为 object 时, 记录必填字段
+	Format         string                `yaml:"format,omitempty" json:"format,omitempty"`                        // 当 Type 为 date/time 时使用
+	EnumType       EnumType              `yaml:"enumType,omitempty" json:"enumType,omitempty" binding:"dive"`     // 当 Type 为 enum 时使用
+	ArrayType      ArrayType             `yaml:"arrayType,omitempty" json:"arrayType,omitempty" binding:"dive"`   // 当 Type 为 array 时使用
+	ObjectType     map[string]ObjectType `yaml:"objectType,omitempty" json:"objectType,omitempty" binding:"dive"` // 当 Type 为 object 时使用
+	ObjectRequired []string              `yaml:"objectRequired,omitempty" json:"objectRequired,omitempty"`        // 当 Type 为 object 时, 记录必填字段
 	Current        interface{}           `yaml:"current" json:"current"`
 	Expect         interface{}           `yaml:"expect" json:"expect"`
 }
