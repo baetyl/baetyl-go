@@ -45,7 +45,7 @@ type IpcServiceConfig struct {
 	} `yaml:"body,omitempty" json:"body,omitempty"`
 	Upload    bool   `yaml:"upload,omitempty" json:"upload,omitempty"`
 	Cache     bool   `yaml:"cache,omitempty" json:"cache,omitempty"`
-	CachePath string `yaml:"cachePath,omitempty" json:"cachePath,omitempty" default:"var/lib/baetyl/images"`
+	CachePath string `yaml:"cachePath,omitempty" json:"cachePath,omitempty" default:"var/lib/baetyl/image"`
 	CacheTime int    `yaml:"cacheTime,omitempty" json:"cacheTime,omitempty" default:"3" binding:"omitempty,min=3,max=180"` // 图片清理时间，默认3min
 }
 
