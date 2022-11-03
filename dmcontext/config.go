@@ -79,7 +79,7 @@ type ArrayType struct {
 
 type ObjectType struct {
 	DisplayName string `yaml:"displayName,omitempty" json:"displayName,omitempty"`
-	Type        string `yaml:"type,omitempty" json:"type,omitempty" binding:"date_type"`
+	Type        string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
 	Format      string `yaml:"format,omitempty" json:"format,omitempty"` // 当 Type 为 date/time 时使用
 }
 
