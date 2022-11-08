@@ -86,6 +86,7 @@ type ObjectType struct {
 type PropertyVisitor struct {
 	Modbus *ModbusVisitor `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	Opcua  *OpcuaVisitor  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
+	Opcda  *OpcdaVisitor  `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 	IEC104 *IEC104Visitor `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Custom *CustomVisitor `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
@@ -115,6 +116,11 @@ type OpcuaVisitor struct {
 	NsBase int    `yaml:"nsBase,omitempty" json:"nsBase,omitempty"`
 	IdBase string `yaml:"idBase,omitempty" json:"idBase,omitempty"`
 	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" binding:"oneof=i s g b"`
+}
+
+type OpcdaVisitor struct {
+	Datapath string `yaml:"datapath,omitempty" json:"datapath,omitempty"`
+	Type     string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
 }
 
 type CustomVisitor string

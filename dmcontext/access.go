@@ -23,6 +23,7 @@ type ModelMapping struct {
 type AccessConfig struct {
 	Modbus *ModbusAccessConfig `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	Opcua  *OpcuaAccessConfig  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
+	Opcda  *OpcdaAccessConfig  `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 	IEC104 *IEC104AccessConfig `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Custom *CustomAccessConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
@@ -30,6 +31,7 @@ type AccessConfig struct {
 type accessConfig struct {
 	Modbus *ModbusAccessConfig `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	Opcua  *OpcuaAccessConfig  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
+	Opcda  *OpcdaAccessConfig  `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 	IEC104 *IEC104AccessConfig `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Custom *CustomAccessConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
@@ -78,6 +80,13 @@ type OpcuaAccessConfig struct {
 	IdOffset    int               `yaml:"idOffset,omitempty" json:"idOffset,omitempty"`
 }
 
+type OpcdaAccessConfig struct {
+	Server   string        `yaml:"server" json:"server"`
+	Host     string        `yaml:"host" json:"host"`
+	Group    string        `yaml:"group" json:"group"`
+	Interval time.Duration `yaml:"interval,omitempty" json:"interval,omitempty"`
+}
+
 type OpcuaSecurity struct {
 	Policy string `yaml:"policy,omitempty" json:"policy,omitempty"`
 	Mode   string `yaml:"mode,omitempty" json:"mode,omitempty"`
@@ -98,10 +107,11 @@ func (a *AccessConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&acc); err == nil {
 		a.Modbus = acc.Modbus
 		a.Opcua = acc.Opcua
+		a.Opcda = acc.Opcda
 		a.IEC104 = acc.IEC104
 		a.Custom = acc.Custom
 		// for backward compatibility
-		if a.Modbus == nil && a.Opcua == nil && a.Custom == nil && a.IEC104 == nil {
+		if a.Modbus == nil && a.Opcua == nil && a.Custom == nil && a.IEC104 == nil && a.Opcda == nil {
 			var modbus ModbusAccessConfig
 			if err = unmarshal(&modbus); err == nil {
 				a.Modbus = &modbus
