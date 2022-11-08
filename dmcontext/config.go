@@ -79,13 +79,14 @@ type ArrayType struct {
 
 type ObjectType struct {
 	DisplayName string `yaml:"displayName,omitempty" json:"displayName,omitempty"`
-	Type        string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
+	Type        string `yaml:"type,omitempty" json:"type,omitempty" binding:"date_type"`
 	Format      string `yaml:"format,omitempty" json:"format,omitempty"` // 当 Type 为 date/time 时使用
 }
 
 type PropertyVisitor struct {
 	Modbus *ModbusVisitor `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	Opcua  *OpcuaVisitor  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
+	Opcda  *OpcdaVisitor  `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 	IEC104 *IEC104Visitor `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Custom *CustomVisitor `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
@@ -115,6 +116,11 @@ type OpcuaVisitor struct {
 	NsBase int    `yaml:"nsBase,omitempty" json:"nsBase,omitempty"`
 	IdBase string `yaml:"idBase,omitempty" json:"idBase,omitempty"`
 	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" binding:"oneof=i s g b"`
+}
+
+type OpcdaVisitor struct {
+	Datapath string `yaml:"datapath,omitempty" json:"datapath,omitempty"`
+	Type     string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
 }
 
 type CustomVisitor string
