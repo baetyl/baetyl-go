@@ -172,6 +172,7 @@ func NewContext(confFile string) Context {
 	if err := c.mqtt.Start(newObserver(c.msgChs, c.log)); err != nil {
 		c.log.Warn("fail to start mqtt client", log.Any("error", err))
 	}
+	c.lastReportProperties = make(map[string]ReportProperty)
 	return c
 }
 
