@@ -74,6 +74,9 @@ func processValueMappingWithPrecision(e string, args map[string]interface{}, pre
 		}
 		originValue, err := parseValueToFloat64(val)
 		if err != nil {
+			if err == ErrUnsupportedValueType {
+				return val, nil
+			}
 			return nil, err
 		}
 		return strconv.ParseFloat(fmt.Sprintf("%."+strconv.Itoa(precision)+"f", originValue), 64)
