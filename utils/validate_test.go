@@ -27,6 +27,7 @@ type testValidate struct {
 	It  interface{} `json:"it" validate:"nonnil"`
 	Om  string      `json:"om" validate:"omitempty"`
 	Req string      `json:"req" validate:"required"`
+	Of  string      `yaml:"of,omitempty" json:"of,omitempty" validate:"omitempty,oneof=i s g b"`
 }
 
 type customValidate struct {
