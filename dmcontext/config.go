@@ -115,7 +115,7 @@ type OpcuaVisitor struct {
 	Type   string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
 	NsBase int    `yaml:"nsBase,omitempty" json:"nsBase,omitempty"`
 	IdBase string `yaml:"idBase,omitempty" json:"idBase,omitempty"`
-	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" binding:"oneof=i s g b"`
+	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" binding:"omitempty,oneof=i s g b"`
 }
 
 type OpcdaVisitor struct {
