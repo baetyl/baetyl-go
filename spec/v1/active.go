@@ -9,6 +9,7 @@ type ActiveRequest struct {
 	FingerprintValue string            `yaml:"fingerprintValue,omitempty" json:"fingerprintValue,omitempty"`
 	SecurityType     string            `yaml:"securityType,omitempty" json:"securityType,omitempty"`
 	SecurityValue    string            `yaml:"securityValue,omitempty" json:"securityValue,omitempty"`
+	Mode             string            `yaml:"mode,omitempty" json:"mode,omitempty" default:"kube"`
 	PenetrateData    map[string]string `yaml:"penetrateData,omitempty" json:"penetrateData,omitempty"`
 }
 
