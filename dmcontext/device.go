@@ -188,6 +188,7 @@ type DeviceConfig struct {
 	Modbus *ModbusConfig       `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	OpcUA  *OpcuaConfig        `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	IEC104 *IEC104Config       `yaml:"iec104,omitempty" json:"iec104,omitempty"`
+	Opcda  *OpcdaConfig        `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 	Ipc    *IpcDeviceConfig    `yaml:"ipc,omitempty" json:"ipc,omitempty"`
 	Custom *CustomDeviceConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
@@ -210,6 +211,7 @@ type ChannelConfig struct {
 	Modbus    *ModbusChannel `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	OpcUA     *OpcuaChannel  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	IEC104    *IEC104Channel `yaml:"iec104,omitempty" json:"iec104,omitempty"`
+	Opcda     *OpcdaChannel  `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 }
 
 type ModbusConfig struct {
@@ -240,6 +242,12 @@ type IEC104Config struct {
 	PIOffset  int    `yaml:"piOffset" json:"piOffset"`
 }
 
+type OpcdaConfig struct {
+	ChannelId string `yaml:"channelId,omitempty" json:"channelId,omitempty" binding:"required"`
+	Interval  int    `yaml:"interval" json:"interval,omitempty"`
+	Group     string `yaml:"group,omitempty" json:"group,omitempty"`
+}
+
 type ModbusChannel struct {
 	Tcp *TcpConfig `yaml:"tcp,omitempty" json:"tcp,omitempty"`
 	Rtu *RtuConfig `yaml:"rtu,omitempty" json:"rtu,omitempty"`
@@ -258,6 +266,11 @@ type IEC104Channel struct {
 	Protocol string `yaml:"protocol,omitempty" json:"protocol,omitempty"`
 	Address  string `yaml:"address,omitempty" json:"address,omitempty" binding:"required"`
 	Port     uint16 `yaml:"port,omitempty" json:"port,omitempty" binding:"required"`
+}
+
+type OpcdaChannel struct {
+	Server string `yaml:"server,omitempty" json:"server,omitempty" binding:"required"`
+	Host   string `yaml:"host,omitempty" json:"host,omitempty" binding:"required"`
 }
 
 type CustomChannel string
