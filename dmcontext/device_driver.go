@@ -66,4 +66,5 @@ type DeviceDriverCsv struct {
 	OpcUA          *OpcuaConfig
 	Ipc            *IpcDeviceConfig
 	IEC104         *IEC104Config
+	Opcda          *OpcdaConfig
 }
