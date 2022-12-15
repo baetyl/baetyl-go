@@ -24,6 +24,7 @@ type AccessConfig struct {
 	Modbus *ModbusAccessConfig `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	Opcua  *OpcuaAccessConfig  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	Opcda  *OpcdaAccessConfig  `yaml:"opcda,omitempty" json:"opcda,omitempty"`
+	Bacnet *BacnetAccessConfig `yaml:"bacnet,omitempty" json:"bacnet,omitempty"`
 	IEC104 *IEC104AccessConfig `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Custom *CustomAccessConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
@@ -32,6 +33,7 @@ type accessConfig struct {
 	Modbus *ModbusAccessConfig `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	Opcua  *OpcuaAccessConfig  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	Opcda  *OpcdaAccessConfig  `yaml:"opcda,omitempty" json:"opcda,omitempty"`
+	Bacnet *BacnetAccessConfig `yaml:"bacnet,omitempty" json:"bacnet,omitempty"`
 	IEC104 *IEC104AccessConfig `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Custom *CustomAccessConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
@@ -87,6 +89,15 @@ type OpcdaAccessConfig struct {
 	Interval time.Duration `yaml:"interval,omitempty" json:"interval,omitempty"`
 }
 
+type BacnetAccessConfig struct {
+	Id            byte          `yaml:"id,omitempty" json:"id,omitempty"`
+	Interval      time.Duration `yaml:"interval,omitempty" json:"interval,omitempty"`
+	DeviceId      uint32        `yaml:"deviceId,omitempty" json:"deviceId,omitempty"`
+	AddressOffset uint          `yaml:"addressOffset,omitempty" json:"addressOffset,omitempty"`
+	Address       string        `yaml:"address,omitempty" json:"address,omitempty"`
+	Port          int           `yaml:"port,omitempty" json:"port,omitempty"`
+}
+
 type OpcuaSecurity struct {
 	Policy string `yaml:"policy,omitempty" json:"policy,omitempty"`
 	Mode   string `yaml:"mode,omitempty" json:"mode,omitempty"`
@@ -108,10 +119,11 @@ func (a *AccessConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		a.Modbus = acc.Modbus
 		a.Opcua = acc.Opcua
 		a.Opcda = acc.Opcda
+		a.Bacnet = acc.Bacnet
 		a.IEC104 = acc.IEC104
 		a.Custom = acc.Custom
 		// for backward compatibility
-		if a.Modbus == nil && a.Opcua == nil && a.Custom == nil && a.IEC104 == nil && a.Opcda == nil {
+		if a.Modbus == nil && a.Opcua == nil && a.Custom == nil && a.IEC104 == nil && a.Opcda == nil && a.Bacnet == nil {
 			var modbus ModbusAccessConfig
 			if err = unmarshal(&modbus); err == nil {
 				a.Modbus = &modbus
