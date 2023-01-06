@@ -39,78 +39,52 @@ Context  api：
 // Baetyl runtime context
 type Context interface {
    // NodeName returns node name from data.
-   // 返回当前模块所属的云端节点资源的名称
    NodeName() string
    // AppName returns app name from data.
-   // 返回当前模块所属的云端应用资源的名称
    AppName() string
    // AppVersion returns application version from data.
-   // 返回当前模块所属的云端应用资源的版本
    AppVersion() string
    // ServiceName returns service name from data.
-   // 返回当前模块对应的 Service 的名称
    ServiceName() string
    // ConfFile returns config file from data.
-   // 返回当前使用的配置文件的路径
-   // 如果启动时未指定配置文件路径，则使用默认路径：etc/baetyl/conf.yml
    ConfFile() string
 
    // SystemConfig returns the config of baetyl system from data.
-   // 返回系统配置数据
-   // Certificate: 系统证书，包含baetyl边缘侧证书，证书用于边缘侧模块间通信。即可以作为客户端证书连接broker模块、function模块等；也可以作为服务端证书启动服务，向其他模块提供服务；证书默认放置路径：var/lib/baetyl/system/certs
-   // Function: function 模块的客户端连接信息
-   // Broker: broker 模块的客户端连接信息
    SystemConfig() *SystemConfig
 
    // Log returns logger interface.
-   // 返回日志接口
    Log() *log.Logger
 
    // Wait waits until exit, receiving SIGTERM and SIGINT signals.
-   // 等待退出，接收 SIGTERM 和 SIGINT 信号
    Wait()
    // WaitChan returns wait channel.
-   // 返回等待退出的 Channel
    WaitChan() <-chan os.Signal
 
-   // 以下 Load、Store、LoadOrStore、Delete 等同于 golang 中 sync.Map 的用法
    // Load returns the value stored in the map for a key, or nil if no value is present.
    // The ok result indicates whether value was found in the map.
-   // Load 方法返回 map 中指定键对应的值，如果键存在则 ok 为 true，否则为 false，为 true 的时候 value 为对应的值
    Load(key interface{}) (value interface{}, ok bool)
    // Store sets the value for a key.
-   // Store 方法向 map 中存储一组键值对
    Store(key, value interface{})
    // LoadOrStore returns the existing value for the key if present.
    // Otherwise, it stores and returns the given value.
    // The loaded result is true if the value was loaded, false if stored.
-   // LoadOrStore 如果指定的键在 map 中已存在，则返回已存在的值，此时 loaded 为 true
-   // 如果指定的键在 map 中不存在，则向 map 中存储一组键值对，并返回值，此时 loaded 为 false
    LoadOrStore(key, value interface{}) (actual interface{}, loaded bool)
    // Delete deletes the value for a key.
-   // Delete 删除 map 中的指定键的数据
    Delete(key interface{})
 
    // CheckSystemCert checks system certificate, if certificate is not found or invalid, returns an error.
-   // 系统证书检查接口，如果系统证书不存在或者解析无效会返回错误信息
    CheckSystemCert() error
    // LoadCustomConfig loads custom config.
    // If 'files' is empty, will load config from default path,
    // else the first file path will be used to load config from.
-   // 用于从文件加载配置信息，如果 files 字段为空，则从默认路径加载配置信息，默认路径为: etc/baetyl/conf.yml
-   // 若传入多个配置文件路径信息，系统将依次尝试去进行加载，第一个成功加载的作为生效配置
    LoadCustomConfig(cfg interface{}, files ...string) error
    // NewFunctionHttpClient creates a new function http client.
-   // 生成并返回 function 模块的 http 客户端，可以用来和 function 模块进行通信
    NewFunctionHttpClient() (*http.Client, error)
    // NewSystemBrokerClientConfig creates the system config of broker
-   // 生成并返回 broker 的客户端连接信息
    NewSystemBrokerClientConfig() (mqtt.ClientConfig, error)
    // NewBrokerClient creates a new broker client.
-   // 根据传入的配置信息生成并返回 broker 模块的 mqtt 客户端，可以用来和 broker 模块进行通信
    NewBrokerClient(mqtt.ClientConfig) (*mqtt.Client, error)
    // NewSystemBrokerClient creates a new system broker client.
-   // 根据 NewSystemBrokerClientConfig 返回的客户端连接信息生成并返回一个 broker 模块的 mqtt客户端
    NewSystemBrokerClient([]mqtt.QOSTopic) (*mqtt.Client, error)
 }
 ```
