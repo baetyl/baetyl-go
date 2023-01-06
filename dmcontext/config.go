@@ -87,7 +87,7 @@ type PropertyVisitor struct {
 	Modbus *ModbusVisitor `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	Opcua  *OpcuaVisitor  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	Opcda  *OpcdaVisitor  `yaml:"opcda,omitempty" json:"opcda,omitempty"`
-	Bacnet *BacnetVisitor  `yaml:"bacnet,omitempty" json:"bacnet,omitempty"`
+	Bacnet *BacnetVisitor `yaml:"bacnet,omitempty" json:"bacnet,omitempty"`
 	IEC104 *IEC104Visitor `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Custom *CustomVisitor `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
