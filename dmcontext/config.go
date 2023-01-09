@@ -22,6 +22,10 @@ type IpcDeviceConfig struct {
 	AgentEnable   bool   `yaml:"agentEnable" json:"agentEnable"`                         // republish rtsp
 	System        bool   `yaml:"system" json:"system"`                                   // use baetyl-ipc-cloud or user self defined
 	RemoteAddress string `yaml:"remoteAddress,omitempty" json:"remoteAddress,omitempty"` // republish address
+	IP            string `yaml:"ip" json:"ip"`                                           // onvif config
+	Port          int32  `yaml:"port" json:"port" default:"80"`
+	Username      string `yaml:"username" json:"username"`
+	Password      string `yaml:"password" json:"password"`
 }
 
 type IpcServiceConfig struct {
