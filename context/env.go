@@ -131,3 +131,7 @@ func getFunctionAddress() string {
 func getCoreAddress() string {
 	return fmt.Sprintf("%s://%s:%s", "https", CoreHost(), CoreHttpPort())
 }
+
+func getCoreInscureAdddress() string {
+	return fmt.Sprintf("%s://%s:%s", "http", CoreHost(), CoreHttpPort())
+}

@@ -177,6 +177,14 @@ func TestContext_CheckSystemCert(t *testing.T) {
 	bsc, err := ctx.NewSystemBrokerClient(nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, bsc)
+
+	cc, err := ctx.NewCoreHttpClient()
+	assert.NoError(t, err)
+	assert.NotNil(t, cc)
+
+	cc, err = ctx.NewCoreHttpsClient()
+	assert.NoError(t, err)
+	assert.NotNil(t, cc)
 }
 
 func initCert(t *testing.T) string {

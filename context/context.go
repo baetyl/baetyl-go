@@ -66,6 +66,8 @@ type Context interface {
 	NewFunctionHttpClient() (*http.Client, error)
 	// NewCoreHttpClient creates a new core http client.
 	NewCoreHttpClient() (*http.Client, error)
+	// NewCoreHttpsClient creates a new core https client.
+	NewCoreHttpsClient() (*http.Client, error)
 	// NewSystemBrokerClientConfig creates the system config of broker
 	NewSystemBrokerClientConfig() (mqtt.ClientConfig, error)
 	// NewBrokerClient creates a new broker client.
@@ -315,7 +317,7 @@ func (c *ctx) NewSystemBrokerClient(subTopics []mqtt.QOSTopic) (*mqtt.Client, er
 	return client, nil
 }
 
-func (c *ctx) NewCoreHttpClient() (*http.Client, error) {
+func (c *ctx) NewCoreHttpsClient() (*http.Client, error) {
 	err := c.CheckSystemCert()
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -324,5 +326,11 @@ func (c *ctx) NewCoreHttpClient() (*http.Client, error) {
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
+	return http.NewClient(ops), nil
+}
+
+func (c *ctx) NewCoreHttpClient() (*http.Client, error) {
+	ops := http.NewClientOptions()
+	ops.Address = getCoreInscureAdddress()
 	return http.NewClient(ops), nil
 }
