@@ -200,9 +200,10 @@ type FullDeviceConfig struct {
 
 type DeviceConfigView struct {
 	Modbus *ModbusConfig       `yaml:"modbus,omitempty" json:"modbus,omitempty"`
-	OpcUA  *OpcuaConfig        `yaml:"opcua,omitempty" json:"opcua,omitempty"`
+	Opcua  *OpcuaConfig        `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	Ipc    *IpcDeviceConfig    `yaml:"ipc,omitempty" json:"ipc,omitempty"`
 	IEC104 *IEC104Config       `yaml:"iec104,omitempty" json:"iec104,omitempty"`
+	Opcda  *OpcdaConfig        `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 	Custom *CustomDeviceConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
 
