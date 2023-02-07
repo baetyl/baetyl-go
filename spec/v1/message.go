@@ -40,6 +40,8 @@ const (
 	MessageDeviceEventReport MessageKind = "thing.event.post"
 	// MessageReport device lifecycle report message kind
 	MessageDeviceLifecycleReport MessageKind = "thing.lifecycle.post"
+	// MessageMC get/send mc info
+	MessageMC MessageKind = "mc"
 
 	// MessageCommandConnect start remote debug command
 	MessageCommandConnect = "connect"
@@ -57,6 +59,10 @@ const (
 	MessageAgent = "agent"
 	// MessageRPCMqtt push message to broker
 	MessageRPCMqtt = "rpcMqtt"
+	// MessageMCAppList get mc app list
+	MessageMCAppList = "mcAppList"
+	// MessageMCAppInfo get mc app info
+	MessageMCAppInfo = "mcAppInfo"
 )
 
 // Message general structure for http and ws sync
