@@ -16,7 +16,7 @@ type DriverRef struct {
 }
 
 func EqualDeviceDriver(old, new *DeviceDriver) bool {
-	if old.NodeName != new.NodeName || old.DriverName != new.DriverName || old.Protocol != new.Protocol {
+	if old.NodeName != new.NodeName || old.DriverName != new.DriverName || old.DriverInstName != new.DriverInstName || old.Protocol != new.Protocol {
 		return false
 	}
 	if !reflect.DeepEqual(old.Application, new.Application) || !reflect.DeepEqual(old.Configuration, new.Configuration) ||
@@ -27,26 +27,28 @@ func EqualDeviceDriver(old, new *DeviceDriver) bool {
 }
 
 type DeviceDriver struct {
-	NodeName      string              `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
-	DriverName    string              `yaml:"driverName,omitempty" json:"driverName,omitempty"`
-	Namespace     string              `yaml:"namespace,omitempty" json:"namespace,omitempty"`
-	Version       string              `yaml:"version,omitempty" json:"version,omitempty"`
-	Protocol      string              `yaml:"protocol,omitempty" json:"protocol,omitempty"`
-	Application   *v1.ObjectReference `yaml:"application,omitempty" json:"application,omitempty"`
-	Configuration *v1.ObjectReference `yaml:"configuration,omitempty" json:"configuration,omitempty"`
-	DriverConfig  *DriverConfig       `yaml:"driverConfig,omitempty" json:"driverConfig,omitempty"`
-	CreateTime    time.Time           `yaml:"createTime,omitempty" json:"createTime,omitempty"`
-	UpdateTime    time.Time           `yaml:"updateTime,omitempty" json:"updateTime,omitempty"`
+	NodeName       string              `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
+	DriverName     string              `yaml:"driverName,omitempty" json:"driverName,omitempty"`
+	DriverInstName string              `yaml:"driverInstName,omitempty" json:"driverInstName,omitempty"`
+	Namespace      string              `yaml:"namespace,omitempty" json:"namespace,omitempty"`
+	Version        string              `yaml:"version,omitempty" json:"version,omitempty"`
+	Protocol       string              `yaml:"protocol,omitempty" json:"protocol,omitempty"`
+	Application    *v1.ObjectReference `yaml:"application,omitempty" json:"application,omitempty"`
+	Configuration  *v1.ObjectReference `yaml:"configuration,omitempty" json:"configuration,omitempty"`
+	DriverConfig   *DriverConfig       `yaml:"driverConfig,omitempty" json:"driverConfig,omitempty"`
+	CreateTime     time.Time           `yaml:"createTime,omitempty" json:"createTime,omitempty"`
+	UpdateTime     time.Time           `yaml:"updateTime,omitempty" json:"updateTime,omitempty"`
 }
 
 type DeviceDriverView struct {
-	NodeName     string        `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
-	DriverName   string        `yaml:"driverName,omitempty" json:"driverName,omitempty"`
-	Version      string        `yaml:"version,omitempty" json:"version,omitempty"`
-	Protocol     string        `yaml:"protocol,omitempty" json:"protocol,omitempty"`
-	DriverConfig *DriverConfig `yaml:"driverConfig,omitempty" json:"driverConfig,omitempty"`
-	CreateTime   time.Time     `yaml:"createTime,omitempty" json:"createTime,omitempty"`
-	UpdateTime   time.Time     `yaml:"updateTime,omitempty" json:"updateTime,omitempty"`
+	NodeName       string        `yaml:"nodeName,omitempty" json:"nodeName,omitempty"`
+	DriverName     string        `yaml:"driverName,omitempty" json:"driverName,omitempty"`
+	DriverInstName string        `yaml:"driverInstName,omitempty" json:"driverInstName,omitempty"`
+	Version        string        `yaml:"version,omitempty" json:"version,omitempty"`
+	Protocol       string        `yaml:"protocol,omitempty" json:"protocol,omitempty"`
+	DriverConfig   *DriverConfig `yaml:"driverConfig,omitempty" json:"driverConfig,omitempty"`
+	CreateTime     time.Time     `yaml:"createTime,omitempty" json:"createTime,omitempty"`
+	UpdateTime     time.Time     `yaml:"updateTime,omitempty" json:"updateTime,omitempty"`
 }
 
 type DriverConfig struct {
