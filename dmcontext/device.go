@@ -189,6 +189,7 @@ type DeviceConfig struct {
 	OpcUA  *OpcuaConfig        `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	IEC104 *IEC104Config       `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Opcda  *OpcdaConfig        `yaml:"opcda,omitempty" json:"opcda,omitempty"`
+	Bacnet *BacnetConfig       `yaml:"bacnet,omitempty" json:"bacnet,omitempty"`
 	Ipc    *IpcDeviceConfig    `yaml:"ipc,omitempty" json:"ipc,omitempty"`
 	Custom *CustomDeviceConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
@@ -213,6 +214,7 @@ type ChannelConfig struct {
 	OpcUA     *OpcuaChannel  `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	IEC104    *IEC104Channel `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Opcda     *OpcdaChannel  `yaml:"opcda,omitempty" json:"opcda,omitempty"`
+	Bacnet    *BacnetChannel `yaml:"bacnet,omitempty" json:"bacnet,omitempty"`
 }
 
 type ModbusConfig struct {
@@ -249,6 +251,13 @@ type OpcdaConfig struct {
 	Group     string `yaml:"group,omitempty" json:"group,omitempty"`
 }
 
+type BacnetConfig struct {
+	ChannelId     string `yaml:"channelId,omitempty" json:"channelId,omitempty" binding:"required"`
+	Interval      int    `yaml:"interval,omitempty" json:"interval,omitempty"`
+	DeviceId      uint32 `yaml:"deviceId,omitempty" json:"deviceId,omitempty"`
+	AddressOffset uint   `yaml:"addressOffset,omitempty" json:"addressOffset,omitempty"`
+}
+
 type ModbusChannel struct {
 	Tcp *TcpConfig `yaml:"tcp,omitempty" json:"tcp,omitempty"`
 	Rtu *RtuConfig `yaml:"rtu,omitempty" json:"rtu,omitempty"`
@@ -272,6 +281,11 @@ type IEC104Channel struct {
 type OpcdaChannel struct {
 	Server string `yaml:"server,omitempty" json:"server,omitempty" binding:"required"`
 	Host   string `yaml:"host,omitempty" json:"host,omitempty" binding:"required"`
+}
+
+type BacnetChannel struct {
+	Address string `yaml:"address,omitempty" json:"address,omitempty"`
+	Port    int    `yaml:"port,omitempty" json:"port,omitempty"`
 }
 
 type CustomChannel string

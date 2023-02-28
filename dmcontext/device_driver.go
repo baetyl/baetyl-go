@@ -69,4 +69,5 @@ type DeviceDriverCsv struct {
 	Ipc            *IpcDeviceConfig
 	IEC104         *IEC104Config
 	Opcda          *OpcdaConfig
+	Bacnet         *BacnetConfig
 }
