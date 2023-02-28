@@ -129,9 +129,10 @@ type OpcdaVisitor struct {
 }
 
 type BacnetVisitor struct {
-	Type          string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
-	BacnetType    uint   `yaml:"bacnetType,omitempty" json:"bacnetType,omitempty"`
-	BacnetAddress uint   `yaml:"bacnetAddress,omitempty" json:"bacnetAddress,omitempty"`
+	Type                 string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
+	BacnetType           uint   `yaml:"bacnetType,omitempty" json:"bacnetType,omitempty"`
+	BacnetAddress        uint   `yaml:"bacnetAddress,omitempty" json:"bacnetAddress,omitempty"`
+	ApplicationTagNumber byte   `yaml:"applicationTagNumber" json:"applicationTagNumber"`
 }
 
 type CustomVisitor string
