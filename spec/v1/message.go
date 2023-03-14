@@ -42,6 +42,8 @@ const (
 	MessageDeviceLifecycleReport MessageKind = "thing.lifecycle.post"
 	// MessageMC get/send mc info
 	MessageMC MessageKind = "mc"
+	// MessageSTS get/send s3 sts info
+	MessageSTS MessageKind = "sts"
 
 	// MessageCommandConnect start remote debug command
 	MessageCommandConnect = "connect"
