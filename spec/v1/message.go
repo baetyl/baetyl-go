@@ -65,6 +65,8 @@ const (
 	MessageMCAppList = "mcAppList"
 	// MessageMCAppInfo get mc app info
 	MessageMCAppInfo = "mcAppInfo"
+	// MessageSTSTypeMinio get minio sts
+	MessageSTSTypeMinio = "minio"
 )
 
 // Message general structure for http and ws sync
