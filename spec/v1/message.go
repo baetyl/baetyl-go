@@ -55,6 +55,8 @@ const (
 	MessageCommandNodeLabel = "nodeLabel"
 	// MessageCommandMultiNodeLabels label multiple nodes
 	MessageCommandMultiNodeLabels = "multiNodeLabels"
+	// MessageCommandDescribe describe
+	MessageCommandDescribe = "describe"
 	// MessageRPC call edge app
 	MessageRPC = "rpc"
 	// MessageAgent get or set agent stat
@@ -67,8 +69,6 @@ const (
 	MessageMCAppInfo = "mcAppInfo"
 	// MessageSTSTypeMinio get minio sts
 	MessageSTSTypeMinio = "minio"
-	// MessageDescribePod describe pod
-	MessageDescribePod = "describePod"
 )
 
 // Message general structure for http and ws sync
