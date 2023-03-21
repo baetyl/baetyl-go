@@ -67,6 +67,8 @@ const (
 	MessageMCAppInfo = "mcAppInfo"
 	// MessageSTSTypeMinio get minio sts
 	MessageSTSTypeMinio = "minio"
+	// MessageDescribePod describe pod
+	MessageDescribePod = "describePod"
 )
 
 // Message general structure for http and ws sync
