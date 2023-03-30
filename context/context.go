@@ -151,7 +151,7 @@ func NewContext(confFile string) Context {
 	}
 	if c.ServiceName() != "" {
 		if sc.Broker.ClientID == "" {
-			sc.Broker.ClientID = "baetyl-link-" + c.ServiceName()
+			sc.Broker.ClientID = "baetyl-link-" + c.AppName()
 		}
 		sc.Broker.Subscriptions = append(sc.Broker.Subscriptions, mqtt.QOSTopic{QOS: 1, Topic: "$link/" + c.ServiceName()})
 	}

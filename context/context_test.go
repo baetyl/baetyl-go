@@ -109,7 +109,7 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, "v1", ctx.AppVersion())
 	assert.Equal(t, "service", ctx.ServiceName())
 	assert.Equal(t, "file", ctx.ConfFile())
-	expected.Broker.ClientID = "baetyl-link-service"
+	expected.Broker.ClientID = "baetyl-link-app"
 	expected.Broker.Subscriptions = append(expected.Broker.Subscriptions, mqtt.QOSTopic{QOS: 1, Topic: "$link/service"})
 	assert.Equal(t, expected, ctx.SystemConfig())
 
