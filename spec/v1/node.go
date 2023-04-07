@@ -119,7 +119,7 @@ type NodeView struct {
 	Cluster           bool              `json:"cluster" yaml:"cluster"`
 	Ready             int               `json:"ready"`
 	Mode              SyncMode          `json:"mode"`
-	NodeMode          string            `json:"nodeMode,omitempty" yaml:"nodeMode,omitempty"`
+	NodeMode          string            `json:"nodeMode,omitempty" yaml:"nodeMode,omitempty" validate:"oneof=kube native android"`
 	Link              string            `json:"link,omitempty" yaml:"link,omitempty"`
 	CoreId            string            `json:"coreId,omitempty" yaml:"coreId,omitempty"`
 }
