@@ -16,7 +16,6 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/uuid v1.2.0
-	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/jinzhu/copier v0.1.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -24,6 +23,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/errors v0.9.1
 	github.com/qiangxue/fasthttp-routing v0.0.0-20160225050629-6ccdc2a18d87
+	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62
 	github.com/spf13/cast v1.3.0
 	github.com/stretchr/testify v1.8.1
 	github.com/valyala/fasthttp v1.34.0
@@ -83,6 +83,7 @@ require (
 	go.uber.org/multierr v1.5.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
+	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect

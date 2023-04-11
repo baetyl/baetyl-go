@@ -6,7 +6,10 @@ import (
 )
 
 // ErrCacheMiss represent the cache key does not exist in the store
-var ErrCacheMiss = errors.New("persist cache miss error")
+var (
+	ErrCacheMiss = errors.New("cache: key not found")
+	ErrNotStored = errors.New("cache: not stored")
+)
 
 // CacheStore is the interface of a Cache backend
 type CacheStore interface {

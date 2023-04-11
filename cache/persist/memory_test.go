@@ -10,7 +10,7 @@ import (
 )
 
 func TestMemoryStore(t *testing.T) {
-	memoryStore := NewMemoryStore(1 * time.Minute)
+	memoryStore := NewInMemoryStore(1 * time.Minute)
 
 	expectVal := "123"
 	require.Nil(t, memoryStore.Set("test", expectVal, 1*time.Second))

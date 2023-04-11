@@ -1,49 +1,48 @@
 package persist
 
 import (
-	"errors"
 	"reflect"
 	"time"
 
-	"github.com/jellydator/ttlcache/v2"
+	"github.com/robfig/go-cache"
 )
 
-// MemoryStore local memory cache store
-type MemoryStore struct {
-	Cache *ttlcache.Cache
+// InMemoryStore represents the cache with memory persistence
+type InMemoryStore struct {
+	cache.Cache
 }
 
-// NewMemoryStore allocate a local memory store with default expiration
-func NewMemoryStore(defaultExpiration time.Duration) *MemoryStore {
-	cacheStore := ttlcache.NewCache()
-	_ = cacheStore.SetTTL(defaultExpiration)
-
-	// disable SkipTTLExtensionOnHit default
-	cacheStore.SkipTTLExtensionOnHit(true)
-
-	return &MemoryStore{
-		Cache: cacheStore,
-	}
+// NewInMemoryStore returns a InMemoryStore
+func NewInMemoryStore(defaultExpiration time.Duration) *InMemoryStore {
+	return &InMemoryStore{*cache.New(defaultExpiration, time.Minute)}
 }
 
-// Set put key value pair to memory store, and expire after expireDuration
-func (c *MemoryStore) Set(key string, value interface{}, expireDuration time.Duration) error {
-	return c.Cache.SetWithTTL(key, value, expireDuration)
-}
-
-// Delete remove key in memory store, do nothing if key doesn't exist
-func (c *MemoryStore) Delete(key string) error {
-	return c.Cache.Remove(key)
-}
-
-// Get get key in memory store, if key doesn't exist, return ErrCacheMiss
-func (c *MemoryStore) Get(key string, value interface{}) error {
-	val, err := c.Cache.Get(key)
-	if errors.Is(err, ttlcache.ErrNotFound) {
+// Get (see CacheStore interface)
+func (c *InMemoryStore) Get(key string, value interface{}) error {
+	val, found := c.Cache.Get(key)
+	if !found {
 		return ErrCacheMiss
 	}
 
 	v := reflect.ValueOf(value)
-	v.Elem().Set(reflect.ValueOf(val))
+	if v.Type().Kind() == reflect.Ptr && v.Elem().CanSet() {
+		v.Elem().Set(reflect.ValueOf(val))
+		return nil
+	}
+	return ErrNotStored
+}
+
+// Set (see CacheStore interface)
+func (c *InMemoryStore) Set(key string, value interface{}, expires time.Duration) error {
+	// NOTE: go-cache understands the values of DEFAULT and FOREVER
+	c.Cache.Set(key, value, expires)
+	return nil
+}
+
+// Delete (see CacheStore interface)
+func (c *InMemoryStore) Delete(key string) error {
+	if found := c.Cache.Delete(key); !found {
+		return ErrCacheMiss
+	}
 	return nil
 }
