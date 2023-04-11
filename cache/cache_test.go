@@ -42,7 +42,7 @@ func mockHttpRequest(middleware gin.HandlerFunc, url string, withRand bool) *htt
 }
 
 func TestCacheByRequestPath(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cachePathMiddleware := MCacheByRequestPath(memoryStore, 3*time.Second)
 
 	w1 := mockHttpRequest(cachePathMiddleware, "/cache?uid=u1", true)
@@ -57,7 +57,7 @@ func TestCacheByRequestPath(t *testing.T) {
 
 func TestCacheHitMissCallback(t *testing.T) {
 	var cacheHitCount, cacheMissCount int32
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cachePathMiddleware := MCacheByRequestPath(memoryStore, 3*time.Second,
 		WithOnHitCache(func(c *gin.Context) {
 			atomic.AddInt32(&cacheHitCount, 1)
@@ -76,7 +76,7 @@ func TestCacheHitMissCallback(t *testing.T) {
 }
 
 func TestCacheDuration(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cacheURIMiddleware := MCacheByRequestURI(memoryStore, 3*time.Second)
 
 	w1 := mockHttpRequest(cacheURIMiddleware, "/cache?uid=u1", true)
@@ -92,7 +92,7 @@ func TestCacheDuration(t *testing.T) {
 }
 
 func TestCacheByRequestURI(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cacheURIMiddleware := MCacheByRequestURI(memoryStore, 3*time.Second)
 
 	w1 := mockHttpRequest(cacheURIMiddleware, "/cache?uid=u1", true)
@@ -113,7 +113,7 @@ func TestHeader(t *testing.T) {
 
 	_, engine := gin.CreateTestContext(testWriter)
 
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cacheURIMiddleware := MCacheByRequestURI(memoryStore, 3*time.Second)
 
 	engine.Use(func(c *gin.Context) {
@@ -146,7 +146,7 @@ func TestHeader(t *testing.T) {
 }
 
 func TestConcurrentRequest(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cacheURIMiddleware := MCacheByRequestURI(memoryStore, 1*time.Second)
 
 	wg := sync.WaitGroup{}
@@ -168,7 +168,7 @@ func TestConcurrentRequest(t *testing.T) {
 }
 
 func TestWriteHeader(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cacheURIMiddleware := MCacheByRequestURI(memoryStore, 1*time.Second)
 
 	testWriter := httptest.NewRecorder()
@@ -204,7 +204,7 @@ func TestGetRequestUriIgnoreQueryOrder(t *testing.T) {
 }
 
 func TestCacheByRequestURIIgnoreOrder(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cacheURIMiddleware := MCacheByRequestURI(memoryStore, 3*time.Second, IgnoreQueryOrder())
 
 	w1 := mockHttpRequest(cacheURIMiddleware, "/cache?uid=u1&a=2", true)
@@ -233,7 +233,7 @@ const (
 )
 
 func TestPrefixKey(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cacheURIMiddleware := MCacheByRequestPath(
 		memoryStore,
 		3*time.Second,
@@ -276,7 +276,7 @@ func mockWrapperHttpRequest(wrapper func(gin.HandlerFunc) gin.HandlerFunc, url s
 }
 
 func TestGinContext(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cacheURIWrapper := func(handlerFunc gin.HandlerFunc) gin.HandlerFunc {
 		return WCacheByRequestPath(
 			memoryStore,
@@ -298,7 +298,7 @@ func TestGinContext(t *testing.T) {
 }
 
 func TestWithoutHeader(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 	cacheURIWrapper := func(handlerFunc gin.HandlerFunc) gin.HandlerFunc {
 		return WCacheByRequestPath(
 			memoryStore,
@@ -330,7 +330,7 @@ func TestWithoutHeader(t *testing.T) {
 }
 
 func TestWrapper(t *testing.T) {
-	memoryStore := persist.NewMemoryStore(1 * time.Minute)
+	memoryStore := persist.NewInMemoryStore(1 * time.Minute)
 
 	// WCacheByRequestPath
 	cachePathWrapper := func(handlerFunc gin.HandlerFunc) gin.HandlerFunc {
