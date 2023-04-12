@@ -129,13 +129,13 @@ func (s *Size) UnmarshalJSON(data []byte) error {
 }
 
 /*
-  "b" represents for "B"
-  "k" represents for "KB" or "KiB"
-  "m" represents for "MB" or "MiB"
-  "g" represents for "GB" or "GiB"
-  "t" represents for "TB" or "TiB"
-  "p" represents for "PB" or "PiB"
-  maxValue is (2 >> 63 -1).
+"b" represents for "B"
+"k" represents for "KB" or "KiB"
+"m" represents for "MB" or "MiB"
+"g" represents for "GB" or "GiB"
+"t" represents for "TB" or "TiB"
+"p" represents for "PB" or "PiB"
+maxValue is (2 >> 63 -1).
 */
 var decimapAbbrs = []string{"", "k", "m", "g", "t", "p"}
 

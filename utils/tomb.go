@@ -12,7 +12,7 @@ const (
 	gos = int32(1)
 )
 
-//  all errors
+// all errors
 var (
 	ErrStillAlive = tb.ErrStillAlive
 	ErrDying      = tb.ErrDying
