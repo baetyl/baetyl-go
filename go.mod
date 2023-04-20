@@ -18,6 +18,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/jinzhu/copier v0.1.0
 	github.com/jpillora/backoff v1.0.0
+	github.com/json-iterator/go v1.1.12
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/opencontainers/image-spec v1.0.2
@@ -61,7 +62,6 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
