@@ -95,6 +95,7 @@ type Context interface {
 	GetAllDeviceModels() map[string][]DeviceProperty
 	GetAccessTemplates(device *DeviceInfo) (*AccessTemplate, error)
 	GetAllAccessTemplates() map[string]AccessTemplate
+	ReportCustomMsg(topic mqtt2.QOSTopic, data []byte) error
 	Start()
 	io.Closer
 }
@@ -363,7 +364,7 @@ func (c *DmCtx) ReportDeviceProperties(info *DeviceInfo, report v1.Report) error
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
+	if err = c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.Report.QOS),
 		info.DeviceTopic.Report.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
@@ -424,7 +425,7 @@ func (c *DmCtx) ReportDeviceEvents(info *DeviceInfo, report v1.EventReport) erro
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.EventReport.QOS),
+	if err = c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.EventReport.QOS),
 		info.DeviceTopic.EventReport.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
@@ -499,7 +500,7 @@ func (c *DmCtx) Online(info *DeviceInfo) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.LifecycleReport.QOS),
+	if err = c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.LifecycleReport.QOS),
 		info.DeviceTopic.LifecycleReport.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
@@ -516,7 +517,7 @@ func (c *DmCtx) Offline(info *DeviceInfo) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.LifecycleReport.QOS),
+	if err = c.mqtt.Publish(mqtt2.QOS(info.DeviceTopic.LifecycleReport.QOS),
 		info.DeviceTopic.LifecycleReport.Topic, pld, 0, false, false); err != nil {
 		return err
 	}
@@ -579,6 +580,10 @@ func (c *DmCtx) GetAccessTemplates(device *DeviceInfo) (*AccessTemplate, error) 
 
 func (c *DmCtx) GetAllAccessTemplates() map[string]AccessTemplate {
 	return c.accessTemplates
+}
+
+func (c *DmCtx) ReportCustomMsg(topic mqtt2.QOSTopic, data []byte) error {
+	return c.mqtt.Publish(mqtt2.QOS(topic.QOS), topic.Topic, data, 0, false, false)
 }
 
 func unmarshalYAML(file string, out interface{}) error {
