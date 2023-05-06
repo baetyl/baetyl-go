@@ -102,7 +102,67 @@ type Service struct {
 	// Deprecated: Use Application.Workload instead.
 	// Change from one workload for each service to one workload for one app, and each service as a container
 	Type string `json:"type,omitempty" yaml:"type,omitempty" default:"deployment"`
+	//Probe describes a health check to be performed against a container to
+	//determine whether it is alive or ready to receive traffic.
+	LivenessProbe *Probe `json:"livenessProbe,omitempty"`
 }
+
+type Probe struct {
+	ProbeHandler        `json:",inline"`
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	TimeoutSeconds      int32 `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       int32 `json:"periodSeconds,omitempty"`
+	SuccessThreshold    int32 `json:"successThreshold,omitempty"`
+	FailureThreshold    int32 `json:"failureThreshold,omitempty"`
+}
+
+type ProbeHandler struct {
+	HTTPGet   *HTTPGetAction   `json:"httpGet,omitempty"`
+	Exec      *ExecAction      `json:"exec,omitempty"`
+	TCPSocket *TCPSocketAction `json:"tcpSocket,omitempty"`
+}
+
+type TCPSocketAction struct {
+	Port IntOrString `json:"port,omitempty"`
+	Host string      `json:"host,omitempty"`
+}
+
+type ExecAction struct {
+	Command []string `json:"command,omitempty"`
+}
+
+type HTTPGetAction struct {
+	Path        string       `json:"path,omitempty"`
+	Port        IntOrString  `json:"port,omitempty"`
+	Host        string       `json:"host,omitempty"`
+	Scheme      URIScheme    `json:"scheme,omitempty" default:"HTTP"`
+	HTTPHeaders []HTTPHeader `json:"httpHeaders,omitempty"`
+}
+
+type URIScheme string
+
+const (
+	URISchemeHTTP  URIScheme = "HTTP"
+	URISchemeHTTPS URIScheme = "HTTPS"
+)
+
+type HTTPHeader struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type IntOrString struct {
+	Type   Type   `json:"type"`
+	IntVal int32  `json:"intVal"`
+	StrVal string `json:"strVal"`
+}
+
+type Type int64
+
+const (
+	Int Type = iota
+	String
+)
 
 type SecurityContext struct {
 	Privileged bool `json:"privileged,omitempty" yaml:"privileged,omitempty"`
