@@ -102,7 +102,98 @@ type Service struct {
 	// Deprecated: Use Application.Workload instead.
 	// Change from one workload for each service to one workload for one app, and each service as a container
 	Type string `json:"type,omitempty" yaml:"type,omitempty" default:"deployment"`
+	//Probe describes a health check to be performed against a container to
+	//determine whether it is alive or ready to receive traffic.
+	LivenessProbe *Probe `json:"livenessProbe,omitempty"`
 }
+
+type Probe struct {
+	// The action taken to determine the health of a container
+	ProbeHandler `json:",inline"`
+	// Number of seconds after the container has started before liveness probes are initiated.
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	// Number of seconds after which the probe times out.
+	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty"`
+	// How often (in seconds) to perform the probe.
+	// Default to 10 seconds. Minimum value is 1.
+	PeriodSeconds int32 `json:"periodSeconds,omitempty"`
+	// Minimum consecutive successes for the probe to be considered successful after having failed.
+	// Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.
+	SuccessThreshold int32 `json:"successThreshold,omitempty"`
+	// Minimum consecutive failures for the probe to be considered failed after having succeeded.
+	// Defaults to 3. Minimum value is 1.
+	FailureThreshold int32 `json:"failureThreshold,omitempty"`
+}
+
+type ProbeHandler struct {
+	// HTTPGet specifies the http request to perform.
+	HTTPGet *HTTPGetAction `json:"httpGet,omitempty"`
+	// Exec specifies the action to take.
+	Exec *ExecAction `json:"exec,omitempty"`
+	// TCPSocket specifies an action involving a TCP port.
+	TCPSocket *TCPSocketAction `json:"tcpSocket,omitempty"`
+}
+
+type TCPSocketAction struct {
+	// Number or name of the port to access on the container.
+	// Number must be in the range 1 to 65535.
+	// Name must be an IANA_SVC_NAME.
+	Port IntOrString `json:"port,omitempty"`
+	// Host name to connect to, defaults to the pod IP.
+	Host string `json:"host,omitempty"`
+}
+
+type ExecAction struct {
+	// Command is the command line to execute inside the container, the working directory for the
+	// command  is root ('/') in the container's filesystem. The command is simply exec'd, it is
+	// not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use
+	// a shell, you need to explicitly call out to that shell.
+	// Exit status of 0 is treated as live/healthy and non-zero is unhealthy.
+	Command []string `json:"command,omitempty"`
+}
+
+type HTTPGetAction struct {
+	// Path to access on the HTTP server.
+	Path string `json:"path,omitempty"`
+	// Name or number of the port to access on the container.
+	// Number must be in the range 1 to 65535.
+	// Name must be an IANA_SVC_NAME.
+	Port IntOrString `json:"port,omitempty"`
+	// Host name to connect to, defaults to the pod IP. You probably want to set
+	Host string `json:"host,omitempty"`
+	// Scheme to use for connecting to the host.
+	Scheme URIScheme `json:"scheme,omitempty" default:"HTTP"`
+	// Custom headers to set in the request. HTTP allows repeated headers.
+	HTTPHeaders []HTTPHeader `json:"httpHeaders,omitempty"`
+}
+
+// URIScheme identifies the scheme used for connection to a host for Get actions
+type URIScheme string
+
+const (
+	// URISchemeHTTP means that the scheme used will be http://
+	URISchemeHTTP URIScheme = "HTTP"
+	// URISchemeHTTPS means that the scheme used will be https://
+	URISchemeHTTPS URIScheme = "HTTPS"
+)
+
+type HTTPHeader struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type IntOrString struct {
+	Type   Type   `json:"type"`
+	IntVal int32  `json:"intVal"`
+	StrVal string `json:"strVal"`
+}
+
+type Type int64
+
+const (
+	Int Type = iota
+	String
+)
 
 type SecurityContext struct {
 	Privileged bool `json:"privileged,omitempty" yaml:"privileged,omitempty"`
