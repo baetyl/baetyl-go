@@ -2,6 +2,8 @@ package v1
 
 import (
 	"time"
+
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -34,20 +36,22 @@ type Application struct {
 	Version           string            `json:"version,omitempty" yaml:"version,omitempty"`
 	Selector          string            `json:"selector,omitempty" yaml:"selector,omitempty"`
 	NodeSelector      string            `json:"nodeSelector,omitempty" yaml:"nodeSelector,omitempty"`
-	InitServices      []Service         `json:"initServices,omitempty" yaml:"initServices,omitempty" binding:"dive"`
-	Services          []Service         `json:"services,omitempty" yaml:"services,omitempty" binding:"dive"`
-	Volumes           []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty" binding:"dive"`
 	Description       string            `json:"description,omitempty" yaml:"description,omitempty"`
 	System            bool              `json:"system,omitempty" yaml:"system,omitempty"`
 	CronStatus        CronStatusCode    `json:"cronStatus,omitempty" yaml:"cronStatus,omitempty" default:"0"`
 	UpdateTime        time.Time         `json:"updateTime,omitempty" yaml:"updateTime,omitempty"`
 	CronTime          time.Time         `json:"cronTime,omitempty" yaml:"cronTime,omitempty"`
-	HostNetwork       bool              `json:"hostNetwork,omitempty" yaml:"hostNetwork,omitempty"` // specifies host network mode of service
 	Replica           int               `json:"replica" yaml:"replica"`
 	Workload          string            `json:"workload,omitempty" yaml:"workload,omitempty"` // deployment | daemonset | statefulset | job
 	JobConfig         *AppJobConfig     `json:"jobConfig,omitempty" yaml:"jobConfig,omitempty"`
 	Ota               OtaInfo           `json:"ota,omitempty" yaml:"ota,omitempty"`
 	AutoScaleCfg      *AutoScaleCfg     `json:"autoScaleCfg,omitempty" yaml:"autoScaleCfg,omitempty"`
+	// Reference to k8s PodSpec
+	InitServices []Service    `json:"initServices,omitempty" yaml:"initServices,omitempty" binding:"dive"`
+	Services     []Service    `json:"services,omitempty" yaml:"services,omitempty" binding:"dive"`
+	Volumes      []Volume     `json:"volumes,omitempty" yaml:"volumes,omitempty" binding:"dive"`
+	HostNetwork  bool         `json:"hostNetwork,omitempty" yaml:"hostNetwork,omitempty"` // specifies host network mode of service
+	DNSPolicy    v1.DNSPolicy `json:"dnsPolicy,omitempty" yaml:"dnsPolicy,omitempty" default:"ClusterFirst"`
 }
 
 // Service service config1ma1
