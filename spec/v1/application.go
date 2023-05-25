@@ -108,7 +108,7 @@ type Service struct {
 	Type string `json:"type,omitempty" yaml:"type,omitempty" default:"deployment"`
 	//Probe describes a health check to be performed against a container to
 	//determine whether it is alive or ready to receive traffic.
-	LivenessProbe *Probe `json:"livenessProbe,omitempty"`
+	LivenessProbe *Probe `json:"livenessProbe,omitempty" yaml:"livenessProbe,omitempty"`
 }
 
 type Probe struct {
