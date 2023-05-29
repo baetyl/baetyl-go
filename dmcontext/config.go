@@ -130,8 +130,8 @@ type OpcdaVisitor struct {
 
 type BacnetVisitor struct {
 	Type                 string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
-	BacnetType           uint   `yaml:"bacnetType,omitempty" json:"bacnetType,omitempty"`
-	BacnetAddress        uint   `yaml:"bacnetAddress,omitempty" json:"bacnetAddress,omitempty"`
+	BacnetType           uint   `yaml:"bacnetType" json:"bacnetType" default:"0"`
+	BacnetAddress        uint   `yaml:"bacnetAddress" json:"bacnetAddress" default:"0"`
 	ApplicationTagNumber byte   `yaml:"applicationTagNumber" json:"applicationTagNumber"`
 }
 
