@@ -204,6 +204,7 @@ type DeviceConfigView struct {
 	Opcua  *OpcuaConfig        `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	Ipc    *IpcDeviceConfig    `yaml:"ipc,omitempty" json:"ipc,omitempty"`
 	IEC104 *IEC104Config       `yaml:"iec104,omitempty" json:"iec104,omitempty"`
+	Bacnet *BacnetConfig       `yaml:"bacnet,omitempty" json:"bacnet,omitempty"`
 	Opcda  *OpcdaConfig        `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 	Custom *CustomDeviceConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
