@@ -188,7 +188,7 @@ type DeviceConfig struct {
 	Modbus *ModbusConfig       `yaml:"modbus,omitempty" json:"modbus,omitempty"`
 	OpcUA  *OpcuaConfig        `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	IEC104 *IEC104Config       `yaml:"iec104,omitempty" json:"iec104,omitempty"`
-	Opcda  *OpcdaConfig        `yaml:"opcda,omitempty" json:"opcda,omitempty"`
+	OpcDA  *OpcdaConfig        `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 	Bacnet *BacnetConfig       `yaml:"bacnet,omitempty" json:"bacnet,omitempty"`
 	Ipc    *IpcDeviceConfig    `yaml:"ipc,omitempty" json:"ipc,omitempty"`
 	Custom *CustomDeviceConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
@@ -201,11 +201,11 @@ type FullDeviceConfig struct {
 
 type DeviceConfigView struct {
 	Modbus *ModbusConfig       `yaml:"modbus,omitempty" json:"modbus,omitempty"`
-	Opcua  *OpcuaConfig        `yaml:"opcua,omitempty" json:"opcua,omitempty"`
+	OpcUA  *OpcuaConfig        `yaml:"opcua,omitempty" json:"opcua,omitempty"`
 	Ipc    *IpcDeviceConfig    `yaml:"ipc,omitempty" json:"ipc,omitempty"`
 	IEC104 *IEC104Config       `yaml:"iec104,omitempty" json:"iec104,omitempty"`
 	Bacnet *BacnetConfig       `yaml:"bacnet,omitempty" json:"bacnet,omitempty"`
-	Opcda  *OpcdaConfig        `yaml:"opcda,omitempty" json:"opcda,omitempty"`
+	OpcDA  *OpcdaConfig        `yaml:"opcda,omitempty" json:"opcda,omitempty"`
 	Custom *CustomDeviceConfig `yaml:"custom,omitempty" json:"custom,omitempty"`
 }
 
