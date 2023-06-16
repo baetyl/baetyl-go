@@ -109,7 +109,12 @@ type Service struct {
 	//Probe describes a health check to be performed against a container to
 	//determine whether it is alive or ready to receive traffic.
 	LivenessProbe *Probe `json:"livenessProbe,omitempty" yaml:"livenessProbe,omitempty"`
+	// Image pull policy.
+	// One of Always, Never, IfNotPresent.
+	ImagePullPolicy PullPolicy `json:"imagePullPolicy,omitempty" yaml:"imagePullPolicy" `
 }
+
+type PullPolicy string
 
 type Probe struct {
 	// The action taken to determine the health of a container
