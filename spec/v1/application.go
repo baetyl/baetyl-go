@@ -106,12 +106,17 @@ type Service struct {
 	// Deprecated: Use Application.Workload instead.
 	// Change from one workload for each service to one workload for one app, and each service as a container
 	Type string `json:"type,omitempty" yaml:"type,omitempty" default:"deployment"`
-	//Probe describes a health check to be performed against a container to
-	//determine whether it is alive or ready to receive traffic.
+	// Probe describes a health check to be performed against a container to
+	// determine whether it is alive or ready to receive traffic.
 	LivenessProbe *Probe `json:"livenessProbe,omitempty" yaml:"livenessProbe,omitempty"`
 	// Image pull policy.
 	// One of Always, Never, IfNotPresent.
-	ImagePullPolicy PullPolicy `json:"imagePullPolicy,omitempty" yaml:"imagePullPolicy" `
+	ImagePullPolicy PullPolicy `json:"imagePullPolicy,omitempty" yaml:"imagePullPolicy,omitempty"`
+	// Indicates whether the container is ready for service requests.
+	// If the ready probe fails,
+	// the endpoint controller will remove the IP address of the Pod from the endpoints of all services that match it.
+	// The ready state before the initial delay defaults to Failure.
+	ReadinessProbe *Probe `json:"readinessProbe,omitempty" yaml:"readinessProbe,omitempty"`
 }
 
 type PullPolicy string
