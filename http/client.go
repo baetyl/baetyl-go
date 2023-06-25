@@ -111,7 +111,7 @@ func (c *Client) SendUrl(method, url string, body io.Reader, header ...map[strin
 func HandleResponse(r *gohttp.Response) ([]byte, error) {
 	defer r.Body.Close()
 	data, err := ioutil.ReadAll(r.Body)
-	if r.StatusCode != gohttp.StatusOK {
+	if r.StatusCode < gohttp.StatusOK || r.StatusCode > gohttp.StatusAlreadyReported {
 		msg := strings.TrimRight(string(data), "\n")
 		if msg == "" {
 			msg = r.Status
