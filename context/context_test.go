@@ -33,6 +33,7 @@ func TestContext(t *testing.T) {
 			IdleConnTimeout:       90000000000,
 			TLSHandshakeTimeout:   10000000000,
 			ExpectContinueTimeout: 1000000000,
+			ByteUnit:              "KB",
 			Certificate: utils.Certificate{
 				CA:                 "var/lib/baetyl/system/certs/ca.pem",
 				Key:                "var/lib/baetyl/system/certs/key.pem",
@@ -49,6 +50,7 @@ func TestContext(t *testing.T) {
 			IdleConnTimeout:       90000000000,
 			TLSHandshakeTimeout:   10000000000,
 			ExpectContinueTimeout: 1000000000,
+			ByteUnit:              "KB",
 			Certificate: utils.Certificate{
 				CA:                 "var/lib/baetyl/system/certs/ca.pem",
 				Key:                "var/lib/baetyl/system/certs/key.pem",
