@@ -8,6 +8,11 @@ import (
 	"github.com/baetyl/baetyl-go/v2/utils"
 )
 
+const (
+	ByteUnitKB = "KB"
+	ByteUnitMB = "MB"
+)
+
 // ServerConfig server config
 type ServerConfig struct {
 	Address            string        `yaml:"address" json:"address" default:":80"`
@@ -31,6 +36,8 @@ type ClientOptions struct {
 	IdleConnTimeout       time.Duration
 	TLSHandshakeTimeout   time.Duration
 	ExpectContinueTimeout time.Duration
+	SpeedLimit            int
+	ByteUnit              string
 }
 
 // NewClientOptions creates client options with default values
@@ -54,6 +61,8 @@ type ClientConfig struct {
 	IdleConnTimeout       time.Duration `yaml:"idleConnTimeout" json:"idleConnTimeout" default:"90s"`
 	TLSHandshakeTimeout   time.Duration `yaml:"tlsHandshakeTimeout" json:"tlsHandshakeTimeout" default:"10s"`
 	ExpectContinueTimeout time.Duration `yaml:"expectContinueTimeout" json:"expectContinueTimeout" default:"1s"`
+	ByteUnit              string        `yaml:"byteUnit" json:"byteUnit" default:"KB"`
+	SpeedLimit            int           `yaml:"speedLimit" json:"speedLimit" default:"0"`
 	utils.Certificate     `yaml:",inline" json:",inline"`
 }
 
@@ -72,5 +81,7 @@ func (cc ClientConfig) ToClientOptions() (*ClientOptions, error) {
 		IdleConnTimeout:       cc.IdleConnTimeout,
 		TLSHandshakeTimeout:   cc.TLSHandshakeTimeout,
 		ExpectContinueTimeout: cc.ExpectContinueTimeout,
+		SpeedLimit:            cc.SpeedLimit,
+		ByteUnit:              cc.ByteUnit,
 	}, nil
 }

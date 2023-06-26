@@ -9,6 +9,8 @@ import (
 	gohttp "net/http"
 	"strings"
 
+	"github.com/conduitio/bwlimit"
+
 	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
@@ -23,18 +25,36 @@ type Client struct {
 // NewClient creates a new http client
 func NewClient(ops *ClientOptions) *Client {
 	transport := &gohttp.Transport{
-		Proxy: gohttp.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   ops.Timeout,
-			KeepAlive: ops.KeepAlive,
-			DualStack: true,
-		}).DialContext,
+		Proxy:                 gohttp.ProxyFromEnvironment,
 		ForceAttemptHTTP2:     true,
 		TLSClientConfig:       ops.TLSConfig,
 		MaxIdleConns:          ops.MaxIdleConns,
 		IdleConnTimeout:       ops.IdleConnTimeout,
 		TLSHandshakeTimeout:   ops.TLSHandshakeTimeout,
 		ExpectContinueTimeout: ops.ExpectContinueTimeout,
+	}
+	if ops.SpeedLimit != 0 {
+		var speedLimit bwlimit.Byte
+		speedLimit = bwlimit.Byte(ops.SpeedLimit)
+		switch ops.ByteUnit {
+		case ByteUnitMB:
+			speedLimit = speedLimit * bwlimit.MB
+		default:
+			speedLimit = speedLimit * bwlimit.KB
+		}
+		bwlimitDialer := bwlimit.NewDialer(&net.Dialer{
+			Timeout:   ops.Timeout,
+			KeepAlive: ops.KeepAlive,
+		}, 0, speedLimit)
+
+		transport.DialContext = bwlimitDialer.DialContext
+	} else {
+		dialer := &net.Dialer{
+			Timeout:   ops.Timeout,
+			KeepAlive: ops.KeepAlive,
+			DualStack: true,
+		}
+		transport.DialContext = dialer.DialContext
 	}
 	return &Client{
 		ops: ops,
@@ -43,6 +63,14 @@ func NewClient(ops *ClientOptions) *Client {
 			Transport: transport,
 		},
 	}
+}
+
+func (c *Client) SetBwlimit(writeLimit, readLimit bwlimit.Byte) {
+	dialer := bwlimit.NewDialer(&net.Dialer{
+		Timeout:   c.ops.Timeout,
+		KeepAlive: c.ops.KeepAlive,
+	}, writeLimit*bwlimit.Mebibyte, readLimit*bwlimit.KB)
+	c.http.Transport.(*gohttp.Transport).DialContext = dialer.DialContext
 }
 
 // Call calls the function via HTTP POST
