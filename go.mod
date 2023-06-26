@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/256dpi/gomqtt v0.14.3
+	github.com/conduitio/bwlimit v0.1.0
 	github.com/containerd/containerd v1.5.18
 	github.com/creasty/defaults v1.4.0
 	github.com/crsmithdev/goexpr v0.0.0-20150309021426-69a8c42346f1
@@ -87,6 +88,7 @@ require (
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
