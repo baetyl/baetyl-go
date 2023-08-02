@@ -9,6 +9,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	_ "github.com/golang/mock/mockgen/model"
+
 	"github.com/baetyl/baetyl-go/v2/context"
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
