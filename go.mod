@@ -18,7 +18,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.1.1
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/jinzhu/copier v0.1.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/json-iterator/go v1.1.12
@@ -34,7 +34,7 @@ require (
 	github.com/valyala/fasthttp v1.34.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
-	google.golang.org/grpc v1.33.2
+	google.golang.org/grpc v1.53.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/yaml.v2 v2.4.0
@@ -49,7 +49,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20220106215444-fb4bf637b56d // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -65,7 +65,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
@@ -95,7 +95,7 @@ require (
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a // indirect
+	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/klog/v2 v2.4.0 // indirect
