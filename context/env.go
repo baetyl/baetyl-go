@@ -120,6 +120,13 @@ func FunctionHost() string {
 	return fmt.Sprintf("%s.%s", "baetyl-function", baetylEdgeSystemNamespace)
 }
 
+func GatewayHost() string {
+	if RunMode() == RunModeNative {
+		return localHost
+	}
+	return fmt.Sprintf("%s.%s", "baetyl-gateway", baetylEdgeSystemNamespace)
+}
+
 func getBrokerAddress() string {
 	return fmt.Sprintf("%s://%s:%s", "ssl", BrokerHost(), BrokerPort())
 }

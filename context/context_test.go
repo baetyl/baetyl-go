@@ -187,6 +187,9 @@ func TestContext_CheckSystemCert(t *testing.T) {
 	cc, err = ctx.NewCoreHttpsClient()
 	assert.NoError(t, err)
 	assert.NotNil(t, cc)
+
+	gateway := ctx.GetGatewayHost()
+	assert.Equal(t, gateway, fmt.Sprintf("%s.%s", "baetyl-gateway", baetylEdgeSystemNamespace))
 }
 
 func initCert(t *testing.T) string {

@@ -74,6 +74,7 @@ type Context interface {
 	NewBrokerClient(mqtt.ClientConfig) (*mqtt.Client, error)
 	// NewSystemBrokerClient creates a new system broker client.
 	NewSystemBrokerClient([]mqtt.QOSTopic) (*mqtt.Client, error)
+	GetGatewayHost() string
 }
 
 type ctx struct {
@@ -333,4 +334,8 @@ func (c *ctx) NewCoreHttpClient() (*http.Client, error) {
 	ops := http.NewClientOptions()
 	ops.Address = getCoreInscureAdddress()
 	return http.NewClient(ops), nil
+}
+
+func (c *ctx) GetGatewayHost() string {
+	return GatewayHost()
 }
