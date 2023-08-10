@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"fmt"
+	"github.com/baetyl/baetyl-go/v2/log"
 	"io"
 	"io/ioutil"
 	"net"
@@ -152,24 +153,32 @@ func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan
 			response, err := c.SendUrl(method, url, body, header...)
 			sendElapsed := time.Since(sendStart)
 			syncElapsed := time.Since(SyncSendStart)
-			syncResult <- &SyncResults{
+
+			result := &SyncResults{
 				Err:      err,
 				Response: response,
 				SendCost: sendElapsed,
 				SyncCost: syncElapsed,
 				Extra:    extra,
 			}
-			if err != nil {
-
+			select {
+			case syncResult <- result:
+			default:
+				log.Error(errors.New("can not add send result to syncResult from websocket con"))
 			}
 		})
 	if err != nil {
-		syncResult <- &SyncResults{
+		result := &SyncResults{
 			Err:      err,
 			Response: nil,
 			SendCost: 0,
 			SyncCost: 0,
 			Extra:    extra,
+		}
+		select {
+		case syncResult <- result:
+		default:
+			log.Error(errors.New("can not add send result to syncResult from websocket con"))
 		}
 	}
 }

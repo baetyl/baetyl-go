@@ -88,22 +88,29 @@ func (c *Client) SyncSendMsg(msg []byte, syncResult chan *SyncResults, extra map
 			err := c.SendMsg(msg)
 			sendElapsed := time.Since(sendStart)
 			syncElapsed := time.Since(SyncSendStart)
-			syncResult <- &SyncResults{
+			result := &SyncResults{
 				Err:      err,
 				SendCost: sendElapsed,
 				SyncCost: syncElapsed,
 				Extra:    extra,
 			}
-			if err != nil {
-
+			select {
+			case syncResult <- result:
+			default:
+				log.Error(errors.New("can not add send result to syncResult from websocket con"))
 			}
 		})
 	if err != nil {
-		syncResult <- &SyncResults{
+		result := &SyncResults{
 			Err:      err,
 			SendCost: 0,
 			SyncCost: 0,
 			Extra:    extra,
+		}
+		select {
+		case syncResult <- result:
+		default:
+			log.Error(errors.New("can not add send result to syncResult from websocket con"))
 		}
 	}
 }
