@@ -6,14 +6,15 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/errors"
-	"github.com/baetyl/baetyl-go/v2/json"
-	"github.com/baetyl/baetyl-go/v2/log"
-	"github.com/baetyl/baetyl-go/v2/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/satori/go.uuid"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
+	"github.com/baetyl/baetyl-go/v2/json"
+	"github.com/baetyl/baetyl-go/v2/log"
+	"github.com/baetyl/baetyl-go/v2/utils"
 )
 
 const (
