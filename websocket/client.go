@@ -80,7 +80,7 @@ func ReadConMsg(con *websocket.Conn, readMsg chan *ReadMsg) {
 	}
 }
 
-func (c *Client) SyncSendMsg(msg []byte, syncResult chan *SyncResults, extra map[string]any) {
+func (c *Client) SyncSendMsg(msg []byte, syncResult chan *SyncResults, extra map[string]interface{}) {
 	SyncSendStart := time.Now()
 	err := c.antPool.Submit(
 		func() {

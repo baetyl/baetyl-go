@@ -51,7 +51,7 @@ func Test_client(t *testing.T) {
 	client, err := NewClient(options, msg)
 	assert.NoError(t, err)
 	result := make(chan *SyncResults, 100)
-	extra := map[string]any{"a": 1}
+	extra := map[string]interface{}{"a": 1}
 
 	for i := 0; i < 100; i++ {
 		client.SyncSendMsg([]byte("hello"), result, extra)
