@@ -1,24 +1,32 @@
-package http
+package comctx
 
 import (
 	"context"
 	"net/http"
 	"runtime/debug"
-
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
-	uuid "github.com/satori/go.uuid"
+	"time"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/json"
 	"github.com/baetyl/baetyl-go/v2/log"
 	"github.com/baetyl/baetyl-go/v2/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+	"github.com/satori/go.uuid"
+)
+
+const (
+	LogKeyRequestID = "requestID"
+	LogKeyAction    = "action"
+
+	ActionExecStartTime = "startTime"
 )
 
 // Context context
 type Context struct {
 	*gin.Context
+	*log.Logger
 }
 
 type User struct {
@@ -43,13 +51,60 @@ type Domain struct {
 }
 
 // NewContext create a new context with gin context
-func NewContext(inner *gin.Context) *Context {
-	return &Context{inner}
+func NewHttpContext(inner *gin.Context) *Context {
+	return &Context{inner, log.With(log.Any(LogKeyRequestID, uuid.NewV4().String()))}
 }
 
-// NewContextEmpty create a new empty context
+// NewContext create a new context with log
+func NewLogContext(log *log.Logger) *Context {
+	return &Context{&gin.Context{}, log}
+}
+
+// NewGInContextEmpty create a new empty context
 func NewContextEmpty() *Context {
-	return &Context{&gin.Context{}}
+	return &Context{&gin.Context{}, log.L()}
+}
+
+// SetStartTime set action exec start time
+func (c *Context) SetStartTime() {
+	t := time.Now()
+	c.Set(ActionExecStartTime, t)
+	c.Logger = c.Logger.With(log.Any("startTime", t))
+}
+
+// AddLogTime add log  time
+func (c *Context) AddLogTime(key string) {
+	if v, ok := c.Get(ActionExecStartTime); ok {
+		if t, ok := v.(time.Time); ok {
+			c.Logger = c.Logger.With(log.Any(key+" costTime", time.Since(t)))
+		}
+	}
+}
+
+// SetRequestID  set log requestID
+func (c *Context) SetRequestID(requestID string) {
+	if requestID == "" {
+		requestID = uuid.NewV4().String()
+	}
+	c.Logger = c.Logger.With(log.Any(LogKeyRequestID, requestID))
+	c.Set(LogKeyRequestID, requestID)
+}
+
+// SetAction set exec action func
+func (c *Context) SetAction(value interface{}) {
+	c.Logger = c.Logger.With(log.Any(LogKeyAction, value))
+}
+
+// GetRequestID get log requestID
+func (c *Context) GetRequestID() string {
+	if _, ok := c.Get(LogKeyRequestID); ok {
+		return c.GetString(LogKeyRequestID)
+	}
+	return ""
+}
+
+func (c *Context) SetInfo(key string, value interface{}) {
+	c.Logger = c.Logger.With(log.Any(key, value))
 }
 
 // SetNamespace sets namespace into context
@@ -103,21 +158,6 @@ func (c *Context) GetName() string {
 // GetNameFromParam gets name from param if exists
 func (c *Context) GetNameFromParam() string {
 	return c.Param("name")
-}
-
-// SetTrace set the trace key and value
-func (c *Context) SetTrace() {
-	k := GetTraceHeader()
-	v := c.Request.Header.Get(k)
-	if v == "" {
-		v = uuid.NewV4().String()
-	}
-	c.Writer.Header().Set(k, v)
-}
-
-// GetTrace gets the trace key and value
-func (c *Context) GetTrace() (k string, v string) {
-	return GetTraceKey(), c.Request.Header.Get(GetTraceHeader())
 }
 
 // LoadBody loads json data from body into object and set defaults
@@ -174,13 +214,12 @@ func PopulateFailedResponse(cc *Context, err error, abort bool) {
 		status = http.StatusInternalServerError
 	}
 
-	log.L().Error("process failed.", log.Any(cc.GetTrace()), log.Code(err))
+	cc.Logger.Error("process failed.", log.Code(err))
 
-	k, v := cc.GetTrace()
 	body := gin.H{
-		"code":    code,
-		"message": err.Error(),
-		k:         v,
+		"code":          code,
+		"message":       err.Error(),
+		LogKeyRequestID: cc.GetRequestID(),
 	}
 	if abort {
 		cc.AbortWithStatusJSON(status, body)
@@ -198,24 +237,25 @@ type UnlockFunc func(ctx context.Context, name, version string)
 // TODO: to use gin.HandlerFunc ?
 func Wrapper(handler HandlerFunc) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		cc := NewContext(c)
+		cc := NewHttpContext(c)
+		cc.Set("startTime", time.Now())
 		defer func() {
 			if r := recover(); r != nil {
 				err, ok := r.(error)
 				if !ok {
 					err = Error(ErrUnknown, Field("error", r))
 				}
-				log.L().Info("handle a panic", log.Any(cc.GetTrace()), log.Code(err), log.Error(err), log.Any("panic", string(debug.Stack())))
+				cc.Logger.Info("handle a panic", log.Code(err), log.Error(err), log.Any("panic", string(debug.Stack())))
 				PopulateFailedResponse(cc, err, false)
 			}
 		}()
 		res, err := handler(cc)
 		if err != nil {
-			log.L().Error("failed to handler request", log.Any(cc.GetTrace()), log.Code(err), log.Error(err))
+			cc.Logger.Error("failed to handler request", log.Code(err), log.Error(err))
 			PopulateFailedResponse(cc, err, false)
 			return
 		}
-		log.L().Debug("process success", log.Any(cc.GetTrace()), log.Any("response", _toJsonString(res)))
+		cc.Logger.Debug("process success", log.Any("response", _toJsonString(res)))
 		// unlike JSON, does not replace special html characters with their unicode entities. eg: JSON(&)->'\u0026' PureJSON(&)->'&'
 		cc.PureJSON(PackageResponse(res))
 	}
@@ -224,14 +264,14 @@ func Wrapper(handler HandlerFunc) func(c *gin.Context) {
 // WrapperWithLock wrap handler with lock
 func WrapperWithLock(lockFunc LockFunc, unlockFunc UnlockFunc) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		cc := NewContext(c)
+		cc := NewHttpContext(c)
 		defer func() {
 			if r := recover(); r != nil {
 				err, ok := r.(error)
 				if !ok {
 					err = Error(ErrUnknown, Field("error", r))
 				}
-				log.L().Info("handle a panic", log.Any(cc.GetTrace()), log.Code(err), log.Error(err), log.Any("panic", string(debug.Stack())))
+				cc.Logger.Info("handle a panic", log.Code(err), log.Error(err), log.Any("panic", string(debug.Stack())))
 				PopulateFailedResponse(cc, err, false)
 			}
 		}()
@@ -239,7 +279,7 @@ func WrapperWithLock(lockFunc LockFunc, unlockFunc UnlockFunc) func(c *gin.Conte
 		lockName := "namespace_" + cc.GetNamespace()
 		version, err := lockFunc(ctx, lockName, 0)
 		if err != nil {
-			log.L().Error("failed to handler request", log.Any(cc.GetTrace()), log.Code(err), log.Error(err))
+			cc.Logger.Error("failed to handler request", log.Code(err), log.Error(err))
 			PopulateFailedResponse(cc, err, true)
 			return
 		}
@@ -250,20 +290,20 @@ func WrapperWithLock(lockFunc LockFunc, unlockFunc UnlockFunc) func(c *gin.Conte
 
 func WrapperRaw(handler HandlerFunc, abort bool) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		cc := NewContext(c)
+		cc := NewHttpContext(c)
 		defer func() {
 			if r := recover(); r != nil {
 				err, ok := r.(error)
 				if !ok {
 					err = Error(ErrUnknown, Field("error", r))
 				}
-				log.L().Info("handle a panic", log.Any(cc.GetTrace()), log.Code(err), log.Error(err))
+				cc.Logger.Info("handle a panic", log.Code(err), log.Error(err))
 				PopulateFailedResponse(cc, err, abort)
 			}
 		}()
 		res, err := handler(cc)
 		if err != nil {
-			log.L().Error("failed to handler request", log.Any(cc.GetTrace()), log.Code(err), log.Error(err))
+			cc.Logger.Error("failed to handler request", log.Code(err), log.Error(err))
 			PopulateFailedResponse(cc, err, abort)
 			return
 		}
@@ -273,7 +313,7 @@ func WrapperRaw(handler HandlerFunc, abort bool) func(c *gin.Context) {
 		if data, ok := res.([]byte); ok {
 			cc.Data(http.StatusOK, "application/octet-stream", data)
 		} else {
-			log.L().Error("failed to convert data to []byte", log.Any(cc.GetTrace()))
+			cc.Logger.Error("failed to convert data to []byte")
 			PopulateFailedResponse(cc, Error(ErrUnknown), abort)
 		}
 	}
@@ -281,20 +321,20 @@ func WrapperRaw(handler HandlerFunc, abort bool) func(c *gin.Context) {
 
 func WrapperNative(handler HandlerFunc, abort bool) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		cc := NewContext(c)
+		cc := NewHttpContext(c)
 		defer func() {
 			if r := recover(); r != nil {
 				err, ok := r.(error)
 				if !ok {
 					err = Error(ErrUnknown, Field("error", r))
 				}
-				log.L().Info("handle a panic", log.Any(cc.GetTrace()), log.Code(err), log.Error(err))
+				cc.Logger.Info("handle a panic", log.Code(err), log.Error(err))
 				PopulateFailedResponse(cc, err, abort)
 			}
 		}()
 		_, err := handler(cc)
 		if err != nil {
-			log.L().Error("failed to handler request", log.Any(cc.GetTrace()), log.Code(err), log.Error(err))
+			cc.Logger.Error("failed to handler request", log.Code(err), log.Error(err))
 			PopulateFailedResponse(cc, err, abort)
 			return
 		}
@@ -308,24 +348,24 @@ func _toJsonString(obj interface{}) string {
 
 func WrapperMis(handler HandlerFunc) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		cc := NewContext(c)
+		cc := NewHttpContext(c)
 		defer func() {
 			if r := recover(); r != nil {
 				err, ok := r.(error)
 				if !ok {
 					err = Error(ErrUnknown, Field("error", r))
 				}
-				log.L().Info("handle a panic", log.Any(cc.GetTrace()), log.Code(err), log.Error(err), log.Any("panic", string(debug.Stack())))
+				cc.Logger.Info("handle a panic", log.Code(err), log.Error(err), log.Any("panic", string(debug.Stack())))
 				PopulateFailedMisResponse(cc, err, false)
 			}
 		}()
 		res, err := handler(cc)
 		if err != nil {
-			log.L().Error("failed to handler request", log.Any(cc.GetTrace()), log.Code(err), log.Error(err))
+			cc.Logger.Error("failed to handler request", log.Code(err), log.Error(err))
 			PopulateFailedMisResponse(cc, err, false)
 			return
 		}
-		log.L().Debug("process success", log.Any(cc.GetTrace()), log.Any("response", _toJsonString(res)))
+		cc.Logger.Debug("process success", log.Any("response", _toJsonString(res)))
 		// unlike JSON, does not replace special html characters with their unicode entities. eg: JSON(&)->'\u0026' PureJSON(&)->'&'
 		cc.PureJSON(http.StatusOK, gin.H{
 			"status": 0,
@@ -338,7 +378,7 @@ func WrapperMis(handler HandlerFunc) func(c *gin.Context) {
 // PopulateFailedMisResponse PopulateFailedMisResponse
 func PopulateFailedMisResponse(cc *Context, err error, abort bool) {
 	var status int = http.StatusOK
-	log.L().Error("process failed.", log.Any(cc.GetTrace()), log.Code(err))
+	cc.Logger.Error("process failed.", log.Code(err))
 
 	body := gin.H{
 		"status": 1,
