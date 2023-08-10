@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -43,9 +44,9 @@ func Test_client(t *testing.T) {
 	options, err := cfg.ToClientOptions()
 	assert.NoError(t, err)
 
-	var msg []chan *ReadMsg
+	var msg []chan *v1.Message
 	for i := 0; i < options.SyncMaxConcurrency; i++ {
-		msg = append(msg, make(chan *ReadMsg, 1))
+		msg = append(msg, make(chan *v1.Message, 1))
 	}
 
 	client, err := NewClient(options, msg)
@@ -65,8 +66,8 @@ func Test_client(t *testing.T) {
 
 	for _, m := range msg {
 		r := <-m
-		assert.Equal(t, r.Data, []byte("hello"))
-		assert.NoError(t, r.Err)
+		assert.Equal(t, r.Content.Value.(WebsocketReadMsg).Data, []byte("hello"))
+		assert.Equal(t, r.Kind, v1.MessageWebsocketRead)
 	}
 
 }

@@ -20,10 +20,9 @@ type SyncResults struct {
 	Extra    map[string]interface{}
 }
 
-type ReadMsg struct {
+type WebsocketReadMsg struct {
 	MsgType int
 	Data    []byte
-	Err     error
 }
 
 type ClientOptions struct {

@@ -57,27 +57,35 @@ func NewHttpContext(inner *gin.Context) *Context {
 }
 
 // NewContext create a new context with log
-func NewLogContext(log *log.Logger) *Context {
+func NewContextWithLog(log *log.Logger) *Context {
 	return &Context{&gin.Context{}, log}
 }
 
-// NewGInContextEmpty create a new empty context
+// NewTraceContext trace contest with start time and field
+func NewTraceContext(requestID string, field ...log.Field) *Context {
+	c := &Context{&gin.Context{}, log.With(field...)}
+	c.SetRequestID(requestID)
+	c.SetTraceStartTime()
+	return c
+}
+
+// NewContextEmpty create a new empty context
 func NewContextEmpty() *Context {
 	return &Context{&gin.Context{}, log.L()}
 }
 
-// SetStartTime set action exec start time
-func (c *Context) SetStartTime() {
+// SetTraceStartTime set action exec start time
+func (c *Context) SetTraceStartTime() {
 	t := time.Now()
 	c.Set(ActionExecStartTime, t)
 	c.Logger = c.Logger.With(log.Any("startTime", t))
 }
 
-// AddLogTime add log  time
-func (c *Context) AddLogTime(key string) {
+// TraceCostTime add from start trace to this func cost time
+func (c *Context) TraceCostTime(event string) {
 	if v, ok := c.Get(ActionExecStartTime); ok {
 		if t, ok := v.(time.Time); ok {
-			c.Logger = c.Logger.With(log.Any(key+" costTime", time.Since(t)))
+			c.Logger = c.Logger.With(log.Any(event+" costTime", time.Since(t)))
 		}
 	}
 }

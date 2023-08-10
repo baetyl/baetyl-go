@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 	"net/http"
 	"net/url"
 	"time"
@@ -18,7 +19,7 @@ type Client struct {
 	antPool *ants.Pool
 }
 
-func NewClient(ops *ClientOptions, readMsgChan []chan *ReadMsg) (*Client, error) {
+func NewClient(ops *ClientOptions, readMsgChan []chan *v1.Message) (*Client, error) {
 	u := url.URL{Scheme: ops.Schema, Host: ops.Address, Path: ops.Path}
 	dialer := websocket.Dialer{
 		NetDial:          nil,
@@ -64,14 +65,27 @@ func (c *Client) SendMsg(msg []byte) error {
 	return err
 }
 
-func ReadConMsg(con *websocket.Conn, readMsg chan *ReadMsg) {
+func ReadConMsg(con *websocket.Conn, readMsg chan *v1.Message) {
 	for {
 		msgType, data, err := con.ReadMessage()
-		msg := &ReadMsg{
-			MsgType: msgType,
-			Data:    data,
-			Err:     err,
+		msg := &v1.Message{}
+		if err != nil {
+			msg = &v1.Message{
+				Kind:     v1.MessageError,
+				Metadata: nil,
+				Content:  v1.LazyValue{Value: err},
+			}
+		} else {
+			msg = &v1.Message{
+				Kind:     v1.MessageWebsocketRead,
+				Metadata: nil,
+				Content: v1.LazyValue{Value: WebsocketReadMsg{
+					MsgType: msgType,
+					Data:    data,
+				}},
+			}
 		}
+
 		select {
 		case readMsg <- msg:
 		default:

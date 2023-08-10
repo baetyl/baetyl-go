@@ -60,9 +60,15 @@ func NewClient(ops *ClientOptions) *Client {
 		}
 		transport.DialContext = dialer.DialContext
 	}
-	p, _ := ants.NewPool(1)
+	p, err := ants.NewPool(1)
+	if err != nil {
+		log.Error(errors.Errorf("http init pool error", log.Any("err", err)))
+	}
 	if ops.SyncMaxConcurrency != 0 {
-		p, _ = ants.NewPool(ops.SyncMaxConcurrency)
+		p, err = ants.NewPool(ops.SyncMaxConcurrency)
+		if err != nil {
+			log.Error(errors.Errorf("http init pool error", log.Any("err", err)))
+		}
 	}
 
 	return &Client{

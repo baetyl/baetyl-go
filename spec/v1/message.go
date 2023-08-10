@@ -4,6 +4,8 @@ package v1
 type MessageKind string
 
 const (
+	// Message response message kind
+	MessageWebsocketRead MessageKind = "wsReadMsg"
 	// MessageReport report message kind
 	MessageReport MessageKind = "report"
 	// MessageDesire desire message kind
