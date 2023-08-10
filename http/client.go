@@ -3,7 +3,6 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"github.com/baetyl/baetyl-go/v2/log"
 	"io"
 	"io/ioutil"
 	"net"
@@ -15,6 +14,7 @@ import (
 	"github.com/panjf2000/ants/v2"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
+	"github.com/baetyl/baetyl-go/v2/log"
 )
 
 var jsonHeaders = map[string]string{"Content-Type": "application/json"}
