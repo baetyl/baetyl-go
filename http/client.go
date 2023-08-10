@@ -62,12 +62,12 @@ func NewClient(ops *ClientOptions) *Client {
 	}
 	p, err := ants.NewPool(1)
 	if err != nil {
-		log.Error(errors.Errorf("http init pool error", log.Any("err", err)))
+		log.Error(errors.Errorf("http init pool error :%s", err))
 	}
 	if ops.SyncMaxConcurrency != 0 {
 		p, err = ants.NewPool(ops.SyncMaxConcurrency)
 		if err != nil {
-			log.Error(errors.Errorf("http init pool error", log.Any("err", err)))
+			log.Error(errors.Errorf("http init pool error :%s", err))
 		}
 	}
 
