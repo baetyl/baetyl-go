@@ -144,7 +144,7 @@ func (c *Client) SendUrl(method, url string, body io.Reader, header ...map[strin
 	return r, errors.Trace(err)
 }
 
-func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan *SyncResults, extra map[string]any, header ...map[string]string) {
+func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan *SyncResults, extra map[string]interface{}, header ...map[string]string) {
 	SyncSendStart := time.Now()
 	err := c.antPool.Submit(
 		func() {

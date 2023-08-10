@@ -21,7 +21,7 @@ type SyncResults struct {
 	Response *http.Response
 	SendCost time.Duration
 	SyncCost time.Duration
-	Extra    map[string]any
+	Extra    map[string]interface{}
 }
 
 // ServerConfig server config
