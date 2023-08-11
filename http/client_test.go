@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -63,6 +64,16 @@ func TestClientBadRequests(t *testing.T) {
 	data, err = c.PostJSON(ms.URL, []byte("abc"))
 	assert.EqualError(t, err, "[400] abc")
 	assert.Equal(t, "abc", string(data))
+
+	ops.SyncMaxConcurrency = 10
+	c = NewClient(ops)
+	result := make(chan *SyncResults, 1000)
+	for i := 0; i < 100; i++ {
+		c.SyncSendUrl("GET", ms.URL, nil, result, map[string]interface{}{})
+	}
+	time.Sleep(time.Second * 2)
+	assert.Equal(t, len(result), 100)
+
 }
 
 func TestSendURL(t *testing.T) {

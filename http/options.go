@@ -2,6 +2,7 @@ package http
 
 import (
 	"crypto/tls"
+	"net/http"
 	"time"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
@@ -12,6 +13,16 @@ const (
 	ByteUnitKB = "KB"
 	ByteUnitMB = "MB"
 )
+
+type SyncResults struct {
+	Url      string
+	Body     []byte
+	Err      error
+	Response *http.Response
+	SendCost time.Duration
+	SyncCost time.Duration
+	Extra    map[string]interface{}
+}
 
 // ServerConfig server config
 type ServerConfig struct {
@@ -38,6 +49,7 @@ type ClientOptions struct {
 	ExpectContinueTimeout time.Duration
 	SpeedLimit            int
 	ByteUnit              string
+	SyncMaxConcurrency    int
 }
 
 // NewClientOptions creates client options with default values
@@ -63,6 +75,7 @@ type ClientConfig struct {
 	ExpectContinueTimeout time.Duration `yaml:"expectContinueTimeout" json:"expectContinueTimeout" default:"1s"`
 	ByteUnit              string        `yaml:"byteUnit" json:"byteUnit" default:"KB"`
 	SpeedLimit            int           `yaml:"speedLimit" json:"speedLimit" default:"0"`
+	SyncMaxConcurrency    int           `yaml:"syncMaxConcurrency" json:"syncMaxConcurrency" default:"0"`
 	utils.Certificate     `yaml:",inline" json:",inline"`
 }
 
@@ -83,5 +96,6 @@ func (cc ClientConfig) ToClientOptions() (*ClientOptions, error) {
 		ExpectContinueTimeout: cc.ExpectContinueTimeout,
 		SpeedLimit:            cc.SpeedLimit,
 		ByteUnit:              cc.ByteUnit,
+		SyncMaxConcurrency:    cc.SyncMaxConcurrency,
 	}, nil
 }

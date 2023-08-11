@@ -16,14 +16,14 @@ func TestNewPortAllocator(t *testing.T) {
 	_, err = NewPortAllocator(1024, 1024)
 	assert.Error(t, err)
 
-	alloc, err := NewPortAllocator(50010, 50011)
+	alloc, err := NewPortAllocator(50020, 50021)
 	assert.NoError(t, err)
 	port1, err := alloc.Allocate()
 	assert.NoError(t, err)
-	assert.Equal(t, port1, 50010)
+	assert.Equal(t, port1, 50020)
 	port2, err := alloc.Allocate()
 	assert.NoError(t, err)
-	assert.Equal(t, port2, 50011)
+	assert.Equal(t, port2, 50021)
 
 	listener1, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port1))
 	assert.NoError(t, err)
@@ -33,12 +33,12 @@ func TestNewPortAllocator(t *testing.T) {
 
 	_, err = alloc.Allocate()
 	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "no available ports in range 50010-50011")
+	assert.Equal(t, err.Error(), "no available ports in range 50020-50021")
 
 	listener1.Close()
 	listener2.Close()
 
 	port4, err := alloc.Allocate()
 	assert.NoError(t, err)
-	assert.Equal(t, port4, 50010)
+	assert.Equal(t, port4, 50020)
 }

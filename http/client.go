@@ -8,18 +8,22 @@ import (
 	"net"
 	gohttp "net/http"
 	"strings"
+	"time"
 
 	"github.com/conduitio/bwlimit"
+	"github.com/panjf2000/ants/v2"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
+	"github.com/baetyl/baetyl-go/v2/log"
 )
 
 var jsonHeaders = map[string]string{"Content-Type": "application/json"}
 
 // Client client of http server
 type Client struct {
-	ops  *ClientOptions
-	http *gohttp.Client
+	ops     *ClientOptions
+	http    *gohttp.Client
+	antPool *ants.Pool
 }
 
 // NewClient creates a new http client
@@ -56,12 +60,24 @@ func NewClient(ops *ClientOptions) *Client {
 		}
 		transport.DialContext = dialer.DialContext
 	}
+	p, err := ants.NewPool(1)
+	if err != nil {
+		log.Error(errors.Errorf("http init pool error :%s", err))
+	}
+	if ops.SyncMaxConcurrency != 0 {
+		p, err = ants.NewPool(ops.SyncMaxConcurrency)
+		if err != nil {
+			log.Error(errors.Errorf("http init pool error :%s", err))
+		}
+	}
+
 	return &Client{
 		ops: ops,
 		http: &gohttp.Client{
 			Timeout:   ops.Timeout,
 			Transport: transport,
 		},
+		antPool: p,
 	}
 }
 
@@ -133,6 +149,44 @@ func (c *Client) SendUrl(method, url string, body io.Reader, header ...map[strin
 	}
 	r, err := c.http.Do(req)
 	return r, errors.Trace(err)
+}
+
+func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan *SyncResults, extra map[string]interface{}, header ...map[string]string) {
+	SyncSendStart := time.Now()
+	err := c.antPool.Submit(
+		func() {
+			sendStart := time.Now()
+			response, err := c.SendUrl(method, url, body, header...)
+			sendElapsed := time.Since(sendStart)
+			syncElapsed := time.Since(SyncSendStart)
+
+			result := &SyncResults{
+				Err:      err,
+				Response: response,
+				SendCost: sendElapsed,
+				SyncCost: syncElapsed,
+				Extra:    extra,
+			}
+			select {
+			case syncResult <- result:
+			default:
+				log.Error(errors.New("can not add send result to syncResult from websocket con"))
+			}
+		})
+	if err != nil {
+		result := &SyncResults{
+			Err:      err,
+			Response: nil,
+			SendCost: 0,
+			SyncCost: 0,
+			Extra:    extra,
+		}
+		select {
+		case syncResult <- result:
+		default:
+			log.Error(errors.New("can not add send result to syncResult from websocket con"))
+		}
+	}
 }
 
 // HandleResponse handles response
