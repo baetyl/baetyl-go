@@ -231,6 +231,7 @@ type FullDriverConfig struct {
 
 type OpcuaConfig struct {
 	ChannelId string `yaml:"channelId,omitempty" json:"channelId,omitempty" binding:"required"`
+	Subscribe bool   `yaml:"subscribe,omitempty" json:"subscribe,omitempty"`
 	Interval  int    `yaml:"interval" json:"interval,omitempty"`
 	NsOffset  int    `yaml:"nsOffset" json:"nsOffset,omitempty"`
 	IdOffset  int    `yaml:"idOffset" json:"idOffset,omitempty"`

@@ -29,7 +29,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/qiangxue/fasthttp-routing v0.0.0-20160225050629-6ccdc2a18d87
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62
-	github.com/satori/go.uuid v1.2.0+incompatible
+	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cast v1.3.0
 	github.com/stretchr/testify v1.8.1
 	github.com/valyala/fasthttp v1.34.0
