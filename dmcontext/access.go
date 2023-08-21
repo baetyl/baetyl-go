@@ -73,6 +73,7 @@ type RtuConfig struct {
 type OpcuaAccessConfig struct {
 	Id          byte              `yaml:"id,omitempty" json:"id,omitempty"`
 	Endpoint    string            `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+	Subscribe   bool              `yaml:"subscribe,omitempty" json:"subscribe,omitempty"`
 	Interval    time.Duration     `yaml:"interval,omitempty" json:"interval,omitempty"`
 	Timeout     time.Duration     `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	Security    OpcuaSecurity     `yaml:"security,omitempty" json:"security,omitempty"`
