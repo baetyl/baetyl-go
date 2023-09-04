@@ -5,8 +5,29 @@ import (
 	"strings"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/spf13/cast"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
+)
+
+const (
+	TypeInt     = "int"
+	TypeInt16   = "int16"
+	TypeInt32   = "int32"
+	TypeInt64   = "int64"
+	TypeFloat32 = "float32"
+	TypeFloat64 = "float64"
+	TypeBool    = "bool"
+	TypeString  = "string"
+	TypeTime    = "time"
+	TypeDate    = "date"
+	TypeArray   = "array"
+	TypeEnum    = "enum"
+	TypeObject  = "object"
+)
+
+var (
+	ErrUnsupportedValueType = errors.New("unsupported value type")
 )
 
 var timeFormats = map[string]string{
@@ -22,7 +43,24 @@ var parseLayout = [6]string{
 	"2006-01-02", "2006.01.02", "2006/01/02", "15:04:05", "15-04-05", "15.04.05",
 }
 
-func ParseValue(typ string, value, args interface{}) (interface{}, error) {
+func ParsePropertyValue(tpy string, val float64) (any, error) {
+	switch tpy {
+	case TypeInt16:
+		return int16(val), nil
+	case TypeInt32:
+		return int32(val), nil
+	case TypeInt64:
+		return int64(val), nil
+	case TypeFloat32:
+		return float32(val), nil
+	case TypeFloat64:
+		return val, nil
+	default:
+		return nil, ErrTypeNotSupported
+	}
+}
+
+func ParseValue(typ string, value, args any) (any, error) {
 	switch typ {
 	case TypeInt:
 		return cast.ToIntE(value)
@@ -53,7 +91,7 @@ func ParseValue(typ string, value, args interface{}) (interface{}, error) {
 	}
 }
 
-func parseTime(value, args interface{}) (string, error) {
+func parseTime(value, args any) (string, error) {
 	// validate params
 	format, argsOk := args.(string)
 	timeFormat, formatOk := timeFormats[strings.ToLower(format)]
@@ -79,7 +117,7 @@ func parseTime(value, args interface{}) (string, error) {
 	}
 }
 
-func parseArray(value, args interface{}) ([]interface{}, error) {
+func parseArray(value, args any) ([]any, error) {
 	// validate params
 	arrayType, ok := args.(ArrayType)
 	if ok && reflect.TypeOf(value).Kind() != reflect.Array {
@@ -90,7 +128,7 @@ func parseArray(value, args interface{}) ([]interface{}, error) {
 		return nil, errors.New("the length of the array does not conform to the range")
 	}
 	// convert array
-	var newArray []interface{}
+	var newArray []any
 	for i := 0; i < originArray.Len(); i++ {
 		parseVal, err := ParseValue(arrayType.Type, originArray.Index(i).Interface(), arrayType.Format)
 		if err != nil {
@@ -101,7 +139,7 @@ func parseArray(value, args interface{}) ([]interface{}, error) {
 	return newArray, nil
 }
 
-func parseEnum(value, args interface{}) (string, error) {
+func parseEnum(value, args any) (string, error) {
 	// validate params
 	enumType, ok := args.(EnumType)
 	if ok && reflect.TypeOf(value).Name() != enumType.Type {
@@ -120,15 +158,15 @@ func parseEnum(value, args interface{}) (string, error) {
 	return "", errors.New("no matching enum value")
 }
 
-func parseObject(value, args interface{}) (map[string]interface{}, error) {
+func parseObject(value, args any) (map[string]any, error) {
 	// validate params
 	objectTypes, argsOk := args.(map[string]ObjectType)
-	originMap, valueOk := value.(map[string]interface{})
+	originMap, valueOk := value.(map[string]any)
 	if !argsOk || !valueOk {
 		return nil, ErrUnsupportedValueType
 	}
 	// convert object
-	parseMap := map[string]interface{}{}
+	parseMap := map[string]any{}
 	for key, objectType := range objectTypes {
 		originVal, ok := originMap[key]
 		if !ok {
@@ -141,4 +179,74 @@ func parseObject(value, args interface{}) (map[string]interface{}, error) {
 		parseMap[key] = parseValue
 	}
 	return parseMap, nil
+}
+
+func ParseValueToFloat64(v any) (float64, error) {
+	switch i := v.(type) {
+	case float64:
+		return i, nil
+	case float32:
+		return float64(i), nil
+	case int64:
+		return float64(i), nil
+	case int32:
+		return float64(i), nil
+	case int16:
+		return float64(i), nil
+	case int:
+		return float64(i), nil
+	case uint64:
+		return float64(i), nil
+	case uint32:
+		return float64(i), nil
+	case uint16:
+		return float64(i), nil
+	case uint:
+		return float64(i), nil
+	default:
+		return 0, ErrUnsupportedValueType
+	}
+}
+
+func ParseValueToBool(v interface{}) (bool, error) {
+	switch v.(type) {
+	case bool:
+		return v.(bool), nil
+	default:
+		return false, ErrUnsupportedValueType
+	}
+}
+
+func ParseValueToUint32(v interface{}) (uint32, error) {
+	switch v.(type) {
+	case int16:
+		return uint32(v.(int16)), nil
+	case int32:
+		return uint32(v.(int32)), nil
+	case int64:
+		return uint32(v.(int64)), nil
+	case float32:
+		return uint32(v.(float32)), nil
+	case float64:
+		return uint32(v.(float64)), nil
+	default:
+		return 0, ErrUnsupportedValueType
+	}
+}
+
+func ParseValueToFloat32(v interface{}) (float32, error) {
+	switch v.(type) {
+	case int16:
+		return float32(v.(int16)), nil
+	case int32:
+		return float32(v.(int32)), nil
+	case int64:
+		return float32(v.(int64)), nil
+	case float32:
+		return v.(float32), nil
+	case float64:
+		return float32(v.(float64)), nil
+	default:
+		return 0, ErrUnsupportedValueType
+	}
 }

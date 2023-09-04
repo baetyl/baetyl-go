@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
-	mqtt2 "github.com/baetyl/baetyl-go/v2/mqtt"
+	"github.com/baetyl/baetyl-go/v2/mqtt"
 	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 )
 
@@ -117,7 +117,7 @@ func (da *DeviceAttribute) UnmarshalJSON(b []byte) error {
 
 type DeviceProperty struct {
 	Name           string                `yaml:"name,omitempty" json:"name,omitempty"`
-	Id             string                `yaml:"id,omitempty" json:"id,omitempty" binding:"nonzero"`
+	ID             string                `yaml:"id,omitempty" json:"id,omitempty" binding:"nonzero"`
 	Type           string                `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
 	Mode           string                `yaml:"mode,omitempty" json:"mode,omitempty" binding:"oneof=ro rw"`
 	Unit           string                `yaml:"unit,omitempty" json:"unit,omitempty"`
@@ -127,8 +127,8 @@ type DeviceProperty struct {
 	ArrayType      ArrayType             `yaml:"arrayType,omitempty" json:"arrayType,omitempty" binding:"dive"`   // 当 Type 为 array 时使用
 	ObjectType     map[string]ObjectType `yaml:"objectType,omitempty" json:"objectType,omitempty" binding:"dive"` // 当 Type 为 object 时使用
 	ObjectRequired []string              `yaml:"objectRequired,omitempty" json:"objectRequired,omitempty"`        // 当 Type 为 object 时, 记录必填字段
-	Current        interface{}           `yaml:"current" json:"current"`
-	Expect         interface{}           `yaml:"expect" json:"expect"`
+	Current        any                   `yaml:"current" json:"current"`
+	Expect         any                   `yaml:"expect" json:"expect"`
 }
 
 type deviceProperty struct {
@@ -155,7 +155,7 @@ func (dp *DeviceProperty) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	dp.Name = prop.Name
-	dp.Id = prop.Id
+	dp.ID = prop.Id
 	dp.Unit = prop.Unit
 	dp.Type = prop.Type
 	dp.Mode = prop.Mode
@@ -261,8 +261,8 @@ type BacnetConfig struct {
 }
 
 type ModbusChannel struct {
-	Tcp *TcpConfig `yaml:"tcp,omitempty" json:"tcp,omitempty"`
-	Rtu *RtuConfig `yaml:"rtu,omitempty" json:"rtu,omitempty"`
+	Tcp *TCPConfig `yaml:"tcp,omitempty" json:"tcp,omitempty"`
+	Rtu *RTUConfig `yaml:"rtu,omitempty" json:"rtu,omitempty"`
 }
 
 type OpcuaChannel struct {
@@ -330,11 +330,8 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 //
 
 type DeviceInfo struct {
-	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
-	Version string `yaml:"version,omitempty" json:"version,omitempty"`
-	// Deprecated: Use DeviceTopic instead.
-	// Change from access template support
-	Topic          `yaml:",inline" json:",inline"`
+	Name           string        `yaml:"name,omitempty" json:"name,omitempty"`
+	Version        string        `yaml:"version,omitempty" json:"version,omitempty"`
 	DeviceModel    string        `yaml:"deviceModel,omitempty" json:"deviceModel,omitempty"`
 	AccessTemplate string        `yaml:"accessTemplate,omitempty" json:"accessTemplate,omitempty"`
 	DeviceTopic    DeviceTopic   `yaml:"deviceTopic,omitempty" json:"deviceTopic,omitempty"`
@@ -342,24 +339,14 @@ type DeviceInfo struct {
 }
 
 type DeviceTopic struct {
-	Delta           mqtt2.QOSTopic `yaml:"delta,omitempty" json:"delta,omitempty"`
-	Report          mqtt2.QOSTopic `yaml:"report,omitempty" json:"report,omitempty"`
-	Event           mqtt2.QOSTopic `yaml:"event,omitempty" json:"event,omitempty"`
-	Get             mqtt2.QOSTopic `yaml:"get,omitempty" json:"get,omitempty"`
-	GetResponse     mqtt2.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
-	EventReport     mqtt2.QOSTopic `yaml:"eventReport,omitempty" json:"eventReport,omitempty"`
-	PropertyGet     mqtt2.QOSTopic `yaml:"propertyGet,omitempty" json:"propertyGet,omitempty"`
-	LifecycleReport mqtt2.QOSTopic `yaml:"lifecycleReport,omitempty" json:"lifecycleReport,omitempty"`
-}
-
-// Deprecated: Use DeviceTopic instead.
-// Change from access template support
-type Topic struct {
-	Delta       mqtt2.QOSTopic `yaml:"delta,omitempty" json:"delta,omitempty"`
-	Report      mqtt2.QOSTopic `yaml:"report,omitempty" json:"report,omitempty"`
-	Event       mqtt2.QOSTopic `yaml:"event,omitempty" json:"event,omitempty"`
-	Get         mqtt2.QOSTopic `yaml:"get,omitempty" json:"get,omitempty"`
-	GetResponse mqtt2.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
+	Delta           mqtt.QOSTopic `yaml:"delta,omitempty" json:"delta,omitempty"`
+	Report          mqtt.QOSTopic `yaml:"report,omitempty" json:"report,omitempty"`
+	Event           mqtt.QOSTopic `yaml:"event,omitempty" json:"event,omitempty"`
+	Get             mqtt.QOSTopic `yaml:"get,omitempty" json:"get,omitempty"`
+	GetResponse     mqtt.QOSTopic `yaml:"getResponse,omitempty" json:"getResponse,omitempty"`
+	EventReport     mqtt.QOSTopic `yaml:"eventReport,omitempty" json:"eventReport,omitempty"`
+	PropertyGet     mqtt.QOSTopic `yaml:"propertyGet,omitempty" json:"propertyGet,omitempty"`
+	LifecycleReport mqtt.QOSTopic `yaml:"lifecycleReport,omitempty" json:"lifecycleReport,omitempty"`
 }
 
 type PropertyGet struct {
@@ -377,9 +364,9 @@ type driverConfig struct {
 	Driver  string       `yaml:"driver,omitempty" json:"driver,omitempty"`
 }
 
-func (c *DmCtx) parsePropertyValues(device *DeviceInfo, props map[string]interface{}) (map[string]interface{}, error) {
-	res := make(map[string]interface{})
-	vals, ok := c.deviceModels[device.DeviceModel]
+func (c *DmCtx) ParsePropertyValues(driverName string, device *DeviceInfo, props map[string]any) (map[string]any, error) {
+	res := make(map[string]any)
+	vals, ok := c.deviceModels[driverName][device.DeviceModel]
 	if !ok {
 		return nil, errors.Trace(ErrDeviceNotExist)
 	}
@@ -401,7 +388,7 @@ func (c *DmCtx) parsePropertyValues(device *DeviceInfo, props map[string]interfa
 	return res, nil
 }
 
-func parsePropertyValue(tpy string, val interface{}) (interface{}, error) {
+func parsePropertyValue(tpy string, val any) (any, error) {
 	// it is json.Number (string actually) when val is number
 	switch tpy {
 	case TypeInt16:
@@ -446,8 +433,8 @@ func parsePropertyValue(tpy string, val interface{}) (interface{}, error) {
 	}
 }
 
-func parsePropertyKeys(v interface{}) ([]string, error) {
-	properties, ok := v.([]interface{})
+func ParsePropertyKeys(v any) ([]string, error) {
+	properties, ok := v.([]any)
 	if !ok {
 		return nil, ErrInvalidPropertyKey
 	}

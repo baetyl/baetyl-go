@@ -73,7 +73,7 @@ func TestParseValue(t *testing.T) {
 	args, err = ParseValue("array", testArray, arrayType)
 	assert.NoError(t, err)
 	assert.NotNil(t, args)
-	arg := args.([]interface{})
+	arg := args.([]any)
 	fmt.Println(arg[0])
 	assert.Equal(t, "1", arg[0])
 
@@ -104,13 +104,13 @@ func TestParseValue(t *testing.T) {
 		"age":   {DisplayName: "demo", Type: "int"},
 		"class": {DisplayName: "demo", Type: "string"},
 	}
-	test := map[string]interface{}{
+	test := map[string]any{
 		"name": "te",
 		"age":  12,
 	}
 	args, err = ParseValue("object", test, ob)
 	assert.NoError(t, err)
 	assert.NotNil(t, args)
-	testMap := args.(map[string]interface{})
+	testMap := args.(map[string]any)
 	assert.Equal(t, 12, testMap["age"])
 }

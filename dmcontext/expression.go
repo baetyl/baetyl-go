@@ -7,14 +7,18 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/crsmithdev/goexpr"
-
 	"github.com/baetyl/baetyl-go/v2/errors"
+	"github.com/crsmithdev/goexpr"
+)
+
+const (
+	MappingNone      = "none"
+	MappingValue     = "value"
+	MappingCalculate = "calculate"
 )
 
 var (
-	ErrUnknownMappingType   = errors.New("unknown mapping type")
-	ErrUnsupportedValueType = errors.New("unsupported value type")
+	ErrUnknownMappingType = errors.New("unknown mapping type")
 )
 
 // ParseExpression parse expression string to args
@@ -36,11 +40,11 @@ func ParseExpression(e string) ([]string, error) {
 
 // ExecExpression execute expression with args and mappingType
 // for example, input: ("x1+x2", '{"x1":1,"x2":2}', "calc"), output: 3
-func ExecExpression(e string, args map[string]interface{}, mappingType string) (interface{}, error) {
+func ExecExpression(e string, args map[string]any, mappingType string) (any, error) {
 	return ExecExpressionWithPrecision(e, args, mappingType, -1)
 }
 
-func ExecExpressionWithPrecision(e string, args map[string]interface{}, mappingType string, precision int) (interface{}, error) {
+func ExecExpressionWithPrecision(e string, args map[string]any, mappingType string, precision int) (any, error) {
 	switch mappingType {
 	case MappingNone:
 		return nil, nil
@@ -53,11 +57,7 @@ func ExecExpressionWithPrecision(e string, args map[string]interface{}, mappingT
 	}
 }
 
-func processValueMapping(e string, args map[string]interface{}) (interface{}, error) {
-	return processValueMappingWithPrecision(e, args, -1)
-}
-
-func processValueMappingWithPrecision(e string, args map[string]interface{}, precision int) (interface{}, error) {
+func processValueMappingWithPrecision(e string, args map[string]any, precision int) (any, error) {
 	// parse expression
 	expression, err := goexpr.Parse(e)
 	if err != nil {
@@ -72,7 +72,7 @@ func processValueMappingWithPrecision(e string, args map[string]interface{}, pre
 		if precision <= 0 {
 			return val, nil
 		}
-		originValue, err := parseValueToFloat64(val)
+		originValue, err := ParseValueToFloat64(val)
 		if err != nil {
 			if err == ErrUnsupportedValueType {
 				return val, nil
@@ -84,11 +84,7 @@ func processValueMappingWithPrecision(e string, args map[string]interface{}, pre
 	return nil, errors.New("missing argument:" + expression.Vars[0])
 }
 
-func processCalcMapping(e string, args map[string]interface{}) (interface{}, error) {
-	return processCalcMappingWithPrecision(e, args, -1)
-}
-
-func processCalcMappingWithPrecision(e string, args map[string]interface{}, precision int) (interface{}, error) {
+func processCalcMappingWithPrecision(e string, args map[string]any, precision int) (any, error) {
 	// parse expression
 	expression, err := goexpr.Parse(e)
 	if err != nil {
@@ -100,7 +96,7 @@ func processCalcMappingWithPrecision(e string, args map[string]interface{}, prec
 		if _, ok := args[v]; !ok {
 			return nil, errors.New("missing variable:" + v)
 		}
-		val, err := parseValueToFloat64(args[v])
+		val, err := ParseValueToFloat64(args[v])
 		if err != nil {
 			return nil, err
 		}
@@ -118,26 +114,6 @@ func processCalcMappingWithPrecision(e string, args map[string]interface{}, prec
 	return res, nil
 }
 
-func parseValueToFloat64(v interface{}) (float64, error) {
-	switch v.(type) {
-	case int:
-		return float64(v.(int)), nil
-	case int16:
-		return float64(v.(int16)), nil
-	case int32:
-		return float64(v.(int32)), nil
-	case int64:
-		return float64(v.(int64)), nil
-	case float32:
-		s := strconv.FormatFloat(float64(v.(float32)), 'e', -1, 32)
-		return strconv.ParseFloat(s, 64)
-	case float64:
-		return v.(float64), nil
-	default:
-		return 0, ErrUnsupportedValueType
-	}
-}
-
 // SolveExpression solve the expression with value
 // Note: currently only support the expression that can be simplified to ax+b
 // for example, input: ((x1+1)*3+x1*2+1, 9) which means (x1+1)*3+x1*2+1=9, output: 1 which means x1=1
@@ -148,7 +124,7 @@ func SolveExpression(e string, value float64) (float64, error) {
 		return 0, errors.Trace(err)
 	}
 	// check the number of variables
-	set := map[string]interface{}{}
+	set := map[string]any{}
 	for _, v := range expression.Vars {
 		set[v] = nil
 	}
