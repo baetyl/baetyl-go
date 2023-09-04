@@ -5,13 +5,19 @@ import (
 )
 
 const (
-	MappingNone      = "none"
-	MappingValue     = "value"
-	MappingCalculate = "calculate"
-	OpcuaIdTypeI     = "i"
-	OpcuaIdTypeS     = "s"
-	OpcuaIdTypeG     = "g"
-	OpcuaIdTypeB     = "b"
+	KeyDriverName     = "driverName"
+	KeyDeviceName     = "deviceName"
+	KeyDevice         = "device"
+	KeyDeviceProduct  = "deviceProduct"
+	KeyAccessTemplate = "accessTemplate"
+	KeyNode           = "node"
+	KeyNodeProduct    = "nodeProduct"
+	NodeProduct       = "BIE-Product"
+
+	TypeReportEvent = "report"
+
+	ModeReadWriteProperty = "rw"
+	ModeReadOnlyProperty  = "ro"
 )
 
 type IpcDeviceConfig struct {
@@ -54,13 +60,13 @@ type IpcServiceConfig struct {
 }
 
 type ReportProperty struct {
-	Time  time.Time   `yaml:"time,omitempty" json:"time,omitempty"`
-	Value interface{} `yaml:"value,omitempty" json:"value,omitempty"`
+	Time  time.Time `yaml:"time,omitempty" json:"time,omitempty"`
+	Value any       `yaml:"value,omitempty" json:"value,omitempty"`
 }
 
 type Event struct {
-	Type    string      `yaml:"type,omitempty" json:"type,omitempty"`
-	Payload interface{} `yaml:"payload,omitempty" json:"payload,omitempty"`
+	Type    string `yaml:"type,omitempty" json:"type,omitempty"`
+	Payload any    `yaml:"payload,omitempty" json:"payload,omitempty"`
 }
 
 type EnumType struct {
@@ -119,8 +125,8 @@ type OpcuaVisitor struct {
 	NodeID string `yaml:"nodeid,omitempty" json:"nodeid,omitempty"`
 	Type   string `yaml:"type,omitempty" json:"type,omitempty" binding:"data_type"`
 	NsBase int    `yaml:"nsBase,omitempty" json:"nsBase,omitempty"`
-	IdBase string `yaml:"idBase,omitempty" json:"idBase,omitempty"`
-	IdType string `yaml:"idType,omitempty" json:"idType,omitempty" binding:"omitempty,oneof=i s g b"`
+	IDBase string `yaml:"idBase,omitempty" json:"idBase,omitempty"`
+	IDType string `yaml:"idType,omitempty" json:"idType,omitempty" binding:"omitempty,oneof=i s g b"`
 }
 
 type OpcdaVisitor struct {

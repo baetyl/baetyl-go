@@ -1,6 +1,9 @@
 package dmcontext
 
 import (
+	"fmt"
+	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,56 +41,56 @@ func TestParseExpression(t *testing.T) {
 }
 
 func TestExecExpression(t *testing.T) {
-	res, err := ExecExpression("", map[string]interface{}{}, "test")
+	res, err := ExecExpression("", map[string]any{}, "test")
 	assert.Error(t, err)
 	assert.Nil(t, res)
 
-	res, err = ExecExpression("", map[string]interface{}{}, MappingNone)
+	res, err = ExecExpression("", map[string]any{}, MappingNone)
 	assert.NoError(t, err)
 	assert.Nil(t, res)
 
-	res, err = ExecExpression("", map[string]interface{}{}, MappingValue)
+	res, err = ExecExpression("", map[string]any{}, MappingValue)
 	assert.Error(t, err)
 	assert.Nil(t, res)
-	res, err = ExecExpression("x1++x2", map[string]interface{}{}, MappingValue)
+	res, err = ExecExpression("x1++x2", map[string]any{}, MappingValue)
 	assert.Error(t, err)
 	assert.Nil(t, res)
-	res, err = ExecExpression("x1+x2", map[string]interface{}{}, MappingValue)
+	res, err = ExecExpression("x1+x2", map[string]any{}, MappingValue)
 	assert.Error(t, err)
 	assert.Nil(t, res)
-	res, err = ExecExpression("x1", map[string]interface{}{"x2": 1}, MappingValue)
+	res, err = ExecExpression("x1", map[string]any{"x2": 1}, MappingValue)
 	assert.Error(t, err)
 	assert.Nil(t, res)
-	res, err = ExecExpression("x1", map[string]interface{}{"x1": 1}, MappingValue)
+	res, err = ExecExpression("x1", map[string]any{"x1": 1}, MappingValue)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, res)
-	res, err = ExecExpression("x1", map[string]interface{}{"x1": "1"}, MappingValue)
+	res, err = ExecExpression("x1", map[string]any{"x1": "1"}, MappingValue)
 	assert.NoError(t, err)
 	assert.Equal(t, "1", res)
-	res, err = processValueMappingWithPrecision("x1", map[string]interface{}{"x1": "2"}, 2)
+	res, err = processValueMappingWithPrecision("x1", map[string]any{"x1": "2"}, 2)
 	assert.NoError(t, err)
 	assert.Equal(t, "2", res)
-	res, err = processValueMappingWithPrecision("x1", map[string]interface{}{"x1": 2}, 2)
+	res, err = processValueMappingWithPrecision("x1", map[string]any{"x1": 2}, 2)
 	assert.NoError(t, err)
 	assert.Equal(t, float64(2), res)
 
-	res, err = ExecExpression("", map[string]interface{}{}, MappingCalculate)
+	res, err = ExecExpression("", map[string]any{}, MappingCalculate)
 	assert.Error(t, err)
 	assert.Nil(t, res)
-	res, err = ExecExpression("x1++x2", map[string]interface{}{}, MappingCalculate)
+	res, err = ExecExpression("x1++x2", map[string]any{}, MappingCalculate)
 	assert.Error(t, err)
 	assert.Nil(t, res)
-	res, err = ExecExpression("x4/(x1+x2+x1*x3*10)", map[string]interface{}{"x1": 1}, MappingCalculate)
+	res, err = ExecExpression("x4/(x1+x2+x1*x3*10)", map[string]any{"x1": 1}, MappingCalculate)
 	assert.Error(t, err)
 	assert.Nil(t, res)
-	res, err = ExecExpression("x4/(x1+x2+x1*x3*10)", map[string]interface{}{"x1": "asasd"}, MappingCalculate)
+	res, err = ExecExpression("x4/(x1+x2+x1*x3*10)", map[string]any{"x1": "asasd"}, MappingCalculate)
 	assert.Error(t, err)
 	assert.Nil(t, res)
-	args1 := map[string]interface{}{"x1": int16(1), "x2": float32(1.1), "x3": 0.99, "x4": int64(15)}
+	args1 := map[string]any{"x1": int16(1), "x2": float32(1.1), "x3": 0.99, "x4": int64(15)}
 	res, err = ExecExpression("x4/(x1+x2+x1*x3*10)", args1, MappingCalculate)
 	assert.NoError(t, err)
 	assert.Equal(t, 1.25, res)
-	args2 := map[string]interface{}{"x1": int16(1), "x2": float32(1.1), "x3": 0.99, "x4": int64(15)}
+	args2 := map[string]any{"x1": int16(1), "x2": float32(1.1), "x3": 0.99, "x4": int64(15)}
 	res, err = processCalcMappingWithPrecision("x4/(x1+x2+x1*x3*10)", args2, 2)
 	assert.NoError(t, err)
 	assert.Equal(t, 1.25, res)
@@ -127,4 +130,21 @@ func TestSolveExpression(t *testing.T) {
 	res, err = SolveExpression("(x1+1)*3+x1*2+1", 9)
 	assert.NoError(t, err)
 	assert.Equal(t, float64(1), res)
+}
+
+func TestDmCtx_GetAccessTemplatesxxx(t *testing.T) {
+	xx := "ls"
+	ss := strings.Fields(xx)
+	cm := xx
+	args := []string{}
+	if len(ss) > 1 {
+		cm = ss[0]
+		args = ss[1:]
+	}
+	fmt.Println(cm)
+	fmt.Println(args)
+
+	c := exec.Command(cm, args...)
+	err := c.Run()
+	fmt.Println(err)
 }

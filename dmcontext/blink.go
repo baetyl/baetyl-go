@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 )
 
 const (
@@ -16,67 +18,90 @@ const (
 	KeyOnlineState       = "online_state"
 )
 
-type BlinkContent struct {
-	Blink BlinkData `yaml:"blink,omitempty" json:"blink,omitempty"`
+type MsgBlink struct {
 }
 
-type BlinkData struct {
-	ReqId      string                 `yaml:"reqId,omitempty" json:"reqId,omitempty"`
-	Method     string                 `yaml:"method,omitempty" json:"method,omitempty"`
-	Version    string                 `yaml:"version,omitempty" json:"version,omitempty"`
-	Timestamp  int64                  `yaml:"timestamp,omitempty" json:"timestamp,omitempty"`
-	Properties interface{}            `yaml:"properties,omitempty" json:"properties,omitempty"`
-	Events     map[string]interface{} `yaml:"events,omitempty" json:"events,omitempty"`
-	Params     map[string]interface{} `yaml:"params,omitempty" json:"params,omitempty"`
+type ContentBlink struct {
+	Blink DataBlink `yaml:"blink,omitempty" json:"blink,omitempty"`
 }
 
-func GenDeltaBlinkData(properties map[string]interface{}) BlinkData {
-	return BlinkData{
-		ReqId:      uuid.New().String(),
-		Method:     MethodPropertyInvoke,
-		Version:    DefaultVersion,
-		Timestamp:  getCurrentTimestamp(),
-		Properties: properties,
+type DataBlink struct {
+	ReqID      string         `yaml:"reqId,omitempty" json:"reqId,omitempty"`
+	Method     string         `yaml:"method,omitempty" json:"method,omitempty"`
+	Version    string         `yaml:"version,omitempty" json:"version,omitempty"`
+	Timestamp  int64          `yaml:"timestamp,omitempty" json:"timestamp,omitempty"`
+	Properties any            `yaml:"properties,omitempty" json:"properties,omitempty"`
+	Events     map[string]any `yaml:"events,omitempty" json:"events,omitempty"`
+	Params     map[string]any `yaml:"params,omitempty" json:"params,omitempty"`
+}
+
+func (b *MsgBlink) GenDeltaBlinkData(properties map[string]interface{}) v1.LazyValue {
+	return v1.LazyValue{
+		Value: ContentBlink{
+			Blink: DataBlink{
+				ReqID:      uuid.New().String(),
+				Method:     MethodPropertyInvoke,
+				Version:    DefaultVersion,
+				Timestamp:  getCurrentTimestamp(),
+				Properties: properties,
+			},
+		},
 	}
 }
 
-func GenPropertyReportBlinkData(properties map[string]interface{}) BlinkData {
-	return BlinkData{
-		ReqId:      uuid.New().String(),
-		Method:     MethodPropertyReport,
-		Version:    DefaultVersion,
-		Timestamp:  getCurrentTimestamp(),
-		Properties: properties,
+func (b *MsgBlink) GenPropertyReportData(properties map[string]any) v1.LazyValue {
+	return v1.LazyValue{
+		Value: ContentBlink{
+			Blink: DataBlink{
+				ReqID:      uuid.New().String(),
+				Method:     MethodPropertyReport,
+				Version:    DefaultVersion,
+				Timestamp:  getCurrentTimestamp(),
+				Properties: properties,
+			},
+		},
 	}
 }
 
-func GenEventReportBlinkData(events map[string]interface{}) BlinkData {
-	return BlinkData{
-		ReqId:     uuid.New().String(),
-		Method:    MethodEventReport,
-		Version:   DefaultVersion,
-		Timestamp: getCurrentTimestamp(),
-		Events:    events,
+func (b *MsgBlink) GenEventReportData(events map[string]any) v1.LazyValue {
+	return v1.LazyValue{
+		Value: ContentBlink{
+			Blink: DataBlink{
+				ReqID:     uuid.New().String(),
+				Method:    MethodEventReport,
+				Version:   DefaultVersion,
+				Timestamp: getCurrentTimestamp(),
+				Events:    events,
+			},
+		},
 	}
 }
 
-func GenPropertyGetBlinkData(properties []string) BlinkData {
-	return BlinkData{
-		ReqId:      uuid.New().String(),
-		Method:     MethodPropertyGet,
-		Version:    DefaultVersion,
-		Timestamp:  getCurrentTimestamp(),
-		Properties: properties,
+func (b *MsgBlink) GenPropertyGetBlinkData(properties []string) v1.LazyValue {
+	return v1.LazyValue{
+		Value: ContentBlink{
+			Blink: DataBlink{
+				ReqID:      uuid.New().String(),
+				Method:     MethodPropertyGet,
+				Version:    DefaultVersion,
+				Timestamp:  getCurrentTimestamp(),
+				Properties: properties,
+			},
+		},
 	}
 }
 
-func GenLifecycleReportBlinkData(online bool) BlinkData {
-	return BlinkData{
-		ReqId:     uuid.New().String(),
-		Method:    MethodLifecyclePost,
-		Version:   DefaultVersion,
-		Timestamp: getCurrentTimestamp(),
-		Params:    map[string]interface{}{KeyOnlineState: online},
+func (b *MsgBlink) GenLifecycleReportData(online bool) v1.LazyValue {
+	return v1.LazyValue{
+		Value: ContentBlink{
+			Blink: DataBlink{
+				ReqID:     uuid.New().String(),
+				Method:    MethodLifecyclePost,
+				Version:   DefaultVersion,
+				Timestamp: getCurrentTimestamp(),
+				Params:    map[string]any{KeyOnlineState: online},
+			},
+		},
 	}
 }
 

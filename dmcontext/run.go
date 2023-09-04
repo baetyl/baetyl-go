@@ -28,10 +28,8 @@ func Run(handle func(Context) error) {
 		if r := recover(); r != nil {
 			ctx.Log().Error("service is stopped with panic", log.Any("panic", r), log.Any("stack", string(debug.Stack())))
 		}
-		ctx.Close()
 	}()
 
-	ctx.Start()
 	pwd, _ := os.Getwd()
 	ctx.Log().Info("service starting", log.Any("args", os.Args), log.Any("pwd", pwd))
 	err := handle(ctx)

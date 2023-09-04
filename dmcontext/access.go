@@ -1,6 +1,16 @@
 package dmcontext
 
-import "time"
+import (
+	"time"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
+)
+
+var (
+	ErrUnknownPropertyID     = errors.New("unknown property id")
+	ErrConfigIDNotExist      = errors.New("config id not exist")
+	ErrPropertyValueNotExist = errors.New("prop value not exist")
+)
 
 type CustomAccessConfig string
 
@@ -39,16 +49,16 @@ type accessConfig struct {
 }
 
 type ModbusAccessConfig struct {
-	Id          byte          `yaml:"id,omitempty" json:"id,omitempty"`
+	ID          byte          `yaml:"id,omitempty" json:"id,omitempty"`
 	Interval    time.Duration `yaml:"interval,omitempty" json:"interval,omitempty"`
 	Timeout     time.Duration `yaml:"timeout,omitempty" json:"timeout,omitempty" default:"10s"`
 	IdleTimeout time.Duration `yaml:"idletimeout,omitempty" json:"idletimeout,omitempty" default:"1m"`
-	Tcp         *TcpConfig    `yaml:"tcp,omitempty" json:"tcp,omitempty"`
-	Rtu         *RtuConfig    `yaml:"rtu,omitempty" json:"rtu,omitempty"`
+	TCP         *TCPConfig    `yaml:"tcp,omitempty" json:"tcp,omitempty"`
+	RTU         *RTUConfig    `yaml:"rtu,omitempty" json:"rtu,omitempty"`
 }
 
 type IEC104AccessConfig struct {
-	Id       byte          `yaml:"id,omitempty" json:"id,omitempty"`
+	ID       byte          `yaml:"id,omitempty" json:"id,omitempty"`
 	Interval time.Duration `yaml:"interval,omitempty" json:"interval,omitempty"`
 	Endpoint string        `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
 	AIOffset uint16        `yaml:"aiOffset,omitempty" json:"aiOffset,omitempty"`
@@ -57,12 +67,12 @@ type IEC104AccessConfig struct {
 	DOOffset uint16        `yaml:"doOffset,omitempty" json:"doOffset,omitempty"`
 }
 
-type TcpConfig struct {
+type TCPConfig struct {
 	Address string `yaml:"address,omitempty" json:"address,omitempty" binding:"required"`
 	Port    uint16 `yaml:"port,omitempty" json:"port,omitempty" binding:"required"`
 }
 
-type RtuConfig struct {
+type RTUConfig struct {
 	Port     string `yaml:"port,omitempty" json:"port,omitempty" binding:"required"`
 	BaudRate int    `yaml:"baudrate,omitempty" json:"baudrate,omitempty" default:"19200"`
 	Parity   string `yaml:"parity,omitempty" json:"parity,omitempty" default:"E" binding:"oneof=E N O"`
@@ -71,7 +81,7 @@ type RtuConfig struct {
 }
 
 type OpcuaAccessConfig struct {
-	Id          byte              `yaml:"id,omitempty" json:"id,omitempty"`
+	ID          byte              `yaml:"id,omitempty" json:"id,omitempty"`
 	Endpoint    string            `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
 	Subscribe   bool              `yaml:"subscribe,omitempty" json:"subscribe,omitempty"`
 	Interval    time.Duration     `yaml:"interval,omitempty" json:"interval,omitempty"`
@@ -80,7 +90,7 @@ type OpcuaAccessConfig struct {
 	Auth        *OpcuaAuth        `yaml:"auth,omitempty" json:"auth,omitempty"`
 	Certificate *OpcuaCertificate `yaml:"certificate,omitempty" json:"certificate,omitempty"`
 	NsOffset    int               `yaml:"nsOffset,omitempty" json:"nsOffset,omitempty"`
-	IdOffset    int               `yaml:"idOffset,omitempty" json:"idOffset,omitempty"`
+	IDOffset    int               `yaml:"idOffset,omitempty" json:"idOffset,omitempty"`
 }
 
 type OpcdaAccessConfig struct {
@@ -91,9 +101,9 @@ type OpcdaAccessConfig struct {
 }
 
 type BacnetAccessConfig struct {
-	Id            byte          `yaml:"id,omitempty" json:"id,omitempty"`
+	ID            byte          `yaml:"id,omitempty" json:"id,omitempty"`
 	Interval      time.Duration `yaml:"interval,omitempty" json:"interval,omitempty"`
-	DeviceId      uint32        `yaml:"deviceId,omitempty" json:"deviceId,omitempty"`
+	DeviceID      uint32        `yaml:"deviceId,omitempty" json:"deviceId,omitempty"`
 	AddressOffset uint          `yaml:"addressOffset,omitempty" json:"addressOffset,omitempty"`
 	Address       string        `yaml:"address,omitempty" json:"address,omitempty"`
 	Port          int           `yaml:"port,omitempty" json:"port,omitempty"`
@@ -114,7 +124,7 @@ type OpcuaCertificate struct {
 	Key  string `yaml:"key,omitempty" json:"key,omitempty"`
 }
 
-func (a *AccessConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (a *AccessConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	var acc accessConfig
 	if err := unmarshal(&acc); err == nil {
 		a.Modbus = acc.Modbus
@@ -123,21 +133,57 @@ func (a *AccessConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		a.Bacnet = acc.Bacnet
 		a.IEC104 = acc.IEC104
 		a.Custom = acc.Custom
-		// for backward compatibility
-		if a.Modbus == nil && a.Opcua == nil && a.Custom == nil && a.IEC104 == nil && a.Opcda == nil && a.Bacnet == nil {
-			var modbus ModbusAccessConfig
-			if err = unmarshal(&modbus); err == nil {
-				a.Modbus = &modbus
-				return nil
-			}
-		}
 		return nil
 	}
-	// for backward compatibility
-	var custom CustomAccessConfig
-	if err := unmarshal(&custom); err != nil {
-		return err
-	}
-	a.Custom = &custom
 	return nil
+}
+
+func GetMappingName(id string, template *AccessTemplate) (string, error) {
+	var name string
+
+	for _, deviceProperty := range template.Properties {
+		if id == deviceProperty.ID {
+			name = deviceProperty.Name
+			break
+		}
+	}
+	if name == "" {
+		return "", ErrUnknownPropertyID
+	}
+	return name, nil
+}
+
+func GetConfigIDByModelName(name string, template *AccessTemplate) (string, error) {
+	for _, modelMapping := range template.Mappings {
+		if modelMapping.Attribute == name {
+			ids, err := ParseExpression(modelMapping.Expression)
+			if err != nil {
+				return "", err
+			}
+			if len(ids) > 0 {
+				return ids[0][1:], nil
+			}
+		}
+	}
+	return "", ErrConfigIDNotExist
+}
+
+func GetPropValueByModelName(name string, val any, template *AccessTemplate) (any, error) {
+	for _, modelMapping := range template.Mappings {
+		if modelMapping.Attribute == name {
+			if modelMapping.Type == MappingValue {
+				return val, nil
+			}
+			value, err := ParseValueToFloat64(val)
+			if err != nil {
+				return nil, err
+			}
+			propVal, err := SolveExpression(modelMapping.Expression, value)
+			if err != nil {
+				return nil, err
+			}
+			return propVal, nil
+		}
+	}
+	return nil, ErrPropertyValueNotExist
 }
