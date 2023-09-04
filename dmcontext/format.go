@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/spf13/cast"
+
+	"github.com/baetyl/baetyl-go/v2/errors"
 )
 
 const (
@@ -190,11 +191,15 @@ func ParseValueToFloat64(v any) (float64, error) {
 		return float64(i), nil
 	case int32:
 		return float64(i), nil
+	case int16:
+		return float64(i), nil
 	case int:
 		return float64(i), nil
 	case uint64:
 		return float64(i), nil
 	case uint32:
+		return float64(i), nil
+	case uint16:
 		return float64(i), nil
 	case uint:
 		return float64(i), nil

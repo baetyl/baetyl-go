@@ -89,7 +89,7 @@ func TestExecExpression(t *testing.T) {
 	args1 := map[string]any{"x1": int16(1), "x2": float32(1.1), "x3": 0.99, "x4": int64(15)}
 	res, err = ExecExpression("x4/(x1+x2+x1*x3*10)", args1, MappingCalculate)
 	assert.NoError(t, err)
-	assert.Equal(t, 1.25, res)
+	assert.Equal(t, 1.249999997516473, res)
 	args2 := map[string]any{"x1": int16(1), "x2": float32(1.1), "x3": 0.99, "x4": int64(15)}
 	res, err = processCalcMappingWithPrecision("x4/(x1+x2+x1*x3*10)", args2, 2)
 	assert.NoError(t, err)
