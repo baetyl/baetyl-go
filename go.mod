@@ -16,7 +16,6 @@ require (
 	github.com/go-playground/validator/v10 v10.11.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang/mock v1.1.1
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.1
 	github.com/jinzhu/copier v0.1.0
@@ -39,7 +38,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.20.6
 	k8s.io/apimachinery v0.20.6
@@ -95,6 +93,7 @@ require (
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.4.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.0.3 // indirect
 )
