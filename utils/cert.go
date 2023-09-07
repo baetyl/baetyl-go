@@ -30,7 +30,7 @@ func NewTLSConfigServer(c Certificate) (*tls.Config, error) {
 
 // NewTLSConfigClient loads tls config for client
 func NewTLSConfigClient(c Certificate) (*tls.Config, error) {
-	cfg, err := tlsconfig.Client(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, InsecureSkipVerify: c.InsecureSkipVerify, Passphrase: c.Passphrase})
+	cfg, err := tlsconfig.Client(tlsconfig.Options{CAFile: c.CA, KeyFile: c.Key, CertFile: c.Cert, InsecureSkipVerify: c.InsecureSkipVerify})
 	return cfg, errors.Trace(err)
 }
 
