@@ -10,6 +10,13 @@ import (
 	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 )
 
+const (
+	DeviceInactivated = 0
+	DeviceOnline      = 1
+	DeviceOffline     = 2
+	DeviceUnknown     = 3
+)
+
 type DeviceProperty struct {
 	Name           string                `yaml:"name,omitempty" json:"name,omitempty"`
 	ID             string                `yaml:"id,omitempty" json:"id,omitempty" binding:"nonzero"`
