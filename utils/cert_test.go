@@ -40,3 +40,21 @@ func TestNewTLSConfigClient(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tl)
 }
+
+func TestNewTLSConfigClientWithPassphrase(t *testing.T) {
+	tl, err := NewTLSConfigClientWithPassphrase(Certificate{Key: "../example/var/lib/baetyl/testcert/client.key"})
+	assert.Error(t, err)
+
+	tl, err = NewTLSConfigClientWithPassphrase(Certificate{Cert: "../example/var/lib/baetyl/testcert/client.crt"})
+	assert.Error(t, err)
+	assert.Empty(t, tl)
+
+	c := Certificate{
+		Key:        "../example/var/lib/baetyl/testcert/client.key",
+		Cert:       "../example/var/lib/baetyl/testcert/client.crt",
+		Passphrase: "1234",
+	}
+	tl, err = NewTLSConfigClientWithPassphrase(c)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, tl)
+}
