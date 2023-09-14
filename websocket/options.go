@@ -44,8 +44,25 @@ type ClientConfig struct {
 	utils.Certificate   `yaml:",inline" json:",inline"`
 }
 
+// ToClientOptions converts client config to client options
 func (cc ClientConfig) ToClientOptions() (*ClientOptions, error) {
 	tlsConfig, err := utils.NewTLSConfigClient(cc.Certificate)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	return &ClientOptions{
+		Address:             cc.Address,
+		Path:                cc.Path,
+		Schema:              cc.Schema,
+		TLSConfig:           tlsConfig,
+		TLSHandshakeTimeout: cc.TLSHandshakeTimeout,
+		SyncMaxConcurrency:  cc.SyncMaxConcurrency,
+	}, nil
+}
+
+// NewTLSConfigClientWithPassphrase converts client config to client options with passphrase
+func (cc ClientConfig) NewTLSConfigClientWithPassphrase() (*ClientOptions, error) {
+	tlsConfig, err := utils.NewTLSConfigClientWithPassphrase(cc.Certificate)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}

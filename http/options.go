@@ -99,3 +99,24 @@ func (cc ClientConfig) ToClientOptions() (*ClientOptions, error) {
 		SyncMaxConcurrency:    cc.SyncMaxConcurrency,
 	}, nil
 }
+
+// ToClientOptionsWithPassphrase converts client config to client options with passphrase
+func (cc ClientConfig) ToClientOptionsWithPassphrase() (*ClientOptions, error) {
+	tlsConfig, err := utils.NewTLSConfigClientWithPassphrase(cc.Certificate)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	return &ClientOptions{
+		Address:               cc.Address,
+		Timeout:               cc.Timeout,
+		TLSConfig:             tlsConfig,
+		KeepAlive:             cc.KeepAlive,
+		MaxIdleConns:          cc.MaxIdleConns,
+		IdleConnTimeout:       cc.IdleConnTimeout,
+		TLSHandshakeTimeout:   cc.TLSHandshakeTimeout,
+		ExpectContinueTimeout: cc.ExpectContinueTimeout,
+		SpeedLimit:            cc.SpeedLimit,
+		ByteUnit:              cc.ByteUnit,
+		SyncMaxConcurrency:    cc.SyncMaxConcurrency,
+	}, nil
+}
