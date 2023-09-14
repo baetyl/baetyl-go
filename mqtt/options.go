@@ -84,3 +84,30 @@ func (cc ClientConfig) ToClientOptions() (*ClientOptions, error) {
 	}
 	return ops, nil
 }
+
+// ToClientOptionsWithPassphrase converts client config to client options with passphrase
+func (cc ClientConfig) ToClientOptionsWithPassphrase() (*ClientOptions, error) {
+	ops := &ClientOptions{
+		Address:              cc.Address,
+		Username:             cc.Username,
+		Password:             cc.Password,
+		ClientID:             cc.ClientID,
+		CleanSession:         cc.CleanSession,
+		Timeout:              cc.Timeout,
+		KeepAlive:            cc.KeepAlive,
+		MaxReconnectInterval: cc.MaxReconnectInterval,
+		MaxCacheMessages:     cc.MaxCacheMessages,
+		DisableAutoAck:       cc.DisableAutoAck,
+	}
+	if cc.Certificate.Key != "" || cc.Certificate.Cert != "" {
+		tlsconfig, err := utils.NewTLSConfigClientWithPassphrase(cc.Certificate)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		ops.TLSConfig = tlsconfig
+	}
+	for _, topic := range cc.Subscriptions {
+		ops.Subscriptions = append(ops.Subscriptions, Subscription{Topic: topic.Topic, QOS: QOS(topic.QOS)})
+	}
+	return ops, nil
+}
