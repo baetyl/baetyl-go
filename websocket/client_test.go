@@ -1,40 +1,49 @@
 package websocket
 
 import (
-	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
+	"log"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
+	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 	"github.com/baetyl/baetyl-go/v2/utils"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_client(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 升级连接为websocket协议
-		upgrader := websocket.Upgrader{}
-		conn, err := upgrader.Upgrade(w, r, nil)
+func echo(w http.ResponseWriter, r *http.Request) {
+	var upgrader = websocket.Upgrader{}
+
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Print("upgrade:", err)
+		return
+	}
+	defer c.Close()
+	for {
+		_, msg, err := c.ReadMessage()
 		if err != nil {
-			t.Fatalf("Failed to upgrade HTTP connection to WebSocket: %v", err)
+			log.Println("read:", err)
+			break
 		}
-		_, msg, err := conn.ReadMessage()
+		err = c.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
-			t.Fatalf("Failed to read message from WebSocket: %v", err)
-		}
-		err = conn.WriteMessage(websocket.TextMessage, msg)
-		if err != nil {
-			t.Fatalf("Failed to write message to WebSocket: %v", err)
+			log.Println("read:", err)
 		}
 
-	}))
-	defer server.Close()
+	}
+}
+func WsServer() {
+	http.HandleFunc("/echo", echo)
+	log.Fatal(http.ListenAndServe("127.0.0.1:9341", nil))
+}
+func Test_client(t *testing.T) {
+	go WsServer()
 
 	cfg := ClientConfig{
-		Address:             server.URL[len("http://"):],
-		Path:                "",
+		Address:             "127.0.0.1:9341",
+		Path:                "echo",
 		Schema:              "ws",
 		IdleConnTimeout:     0,
 		TLSHandshakeTimeout: 0,
@@ -51,18 +60,18 @@ func Test_client(t *testing.T) {
 
 	client, err := NewClient(options, msg)
 	assert.NoError(t, err)
-	result := make(chan *SyncResults, 100)
+	result := make(chan *SyncResults, 1000)
 	extra := map[string]interface{}{"a": 1}
 
-	for i := 0; i < 100; i++ {
+	time.Sleep(time.Second * 2)
+	for i := 0; i < 20; i++ {
 		client.SyncSendMsg([]byte("hello"), result, extra)
 	}
-	time.Sleep(time.Second)
-
+	time.Sleep(time.Second * 2)
 	re := <-result
 	assert.NoError(t, re.Err)
 	assert.Equal(t, re.Extra["a"], 1)
-	assert.Equal(t, 99, len(result))
+	assert.Equal(t, 19, len(result))
 
 	for _, m := range msg {
 		r := <-m

@@ -64,6 +64,21 @@ func (c *Client) Publish(qos QOS, topic string, payload []byte, pid ID, retain b
 	return c.Send(publish)
 }
 
+// Publish sends a publish packet out cache size will drop
+func (c *Client) PublishWithDrop(qos QOS, topic string, payload []byte, pid ID, retain bool, dup bool) error {
+	publish := NewPublish()
+	publish.ID = pid
+	publish.Dup = dup
+	publish.Message.QOS = qos
+	publish.Message.Topic = topic
+	publish.Message.Payload = payload
+	publish.Message.Retain = retain
+	if qos != 0 && pid == 0 {
+		publish.ID = c.ids.NextID()
+	}
+	return c.SendOrDrop(publish)
+}
+
 // Send sends a generic packet
 func (c *Client) Send(pkt Packet) error {
 	select {
