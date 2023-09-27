@@ -1,24 +1,36 @@
 package websocket
 
 import (
-	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
+	v1 "github.com/baetyl/baetyl-go/v2/spec/v1"
+
 	"github.com/gorilla/websocket"
 	"github.com/panjf2000/ants/v2"
 )
 
-type Client struct {
-	conn    chan *websocket.Conn
-	u       url.URL
-	dialer  websocket.Dialer
-	antPool *ants.Pool
+type WsConnect struct {
+	wscon       *websocket.Conn
+	readMsgChan chan *v1.Message
 }
 
+type Client struct {
+	pool        chan *WsConnect
+	connNum     int
+	u           url.URL
+	dialer      websocket.Dialer
+	antPool     *ants.Pool
+	ops         *ClientOptions
+	readMsgChan []chan *v1.Message
+	log         *log.Logger
+}
+
+// NewClient 函数用于创建一个Client对象
+// readMsgChan 为读取信息的通道 需要配置和并发数量一致
 func NewClient(ops *ClientOptions, readMsgChan []chan *v1.Message) (*Client, error) {
 	u := url.URL{Scheme: ops.Schema, Host: ops.Address, Path: ops.Path}
 	dialer := websocket.Dialer{
@@ -28,46 +40,99 @@ func NewClient(ops *ClientOptions, readMsgChan []chan *v1.Message) (*Client, err
 		TLSClientConfig:  ops.TLSConfig,
 		HandshakeTimeout: ops.TLSHandshakeTimeout,
 	}
-	p, _ := ants.NewPool(1)
-	if ops.SyncMaxConcurrency != 0 {
-		p, _ = ants.NewPool(ops.SyncMaxConcurrency)
+	// 最少为1条
+	if ops.SyncMaxConcurrency <= 0 {
+		ops.SyncMaxConcurrency = 1
 	}
+
+	p, err := ants.NewPool(ops.SyncMaxConcurrency)
+	if err != nil {
+		return nil, err
+	}
+
 	if readMsgChan != nil && cap(readMsgChan) < ops.SyncMaxConcurrency {
 		return nil, errors.New("read msg cap must > SyncMaxConcurrency")
 	}
-	connect := make(chan *websocket.Conn, ops.SyncMaxConcurrency)
-
-	// 根据设置创建连接池
-	for i := 0; i < ops.SyncMaxConcurrency; i++ {
-		con, _, err := dialer.Dial(u.String(), nil)
-		if err != nil {
-			return nil, err
-		}
-		// 每个链接创建一个协程readMsg
-		if readMsgChan != nil {
-			go ReadConMsg(con, readMsgChan[i])
-		}
-		connect <- con
+	connect := make(chan *WsConnect, ops.SyncMaxConcurrency)
+	client := &Client{
+		pool:        connect,
+		connNum:     0,
+		u:           u,
+		dialer:      dialer,
+		antPool:     p,
+		ops:         ops,
+		readMsgChan: readMsgChan,
+		log:         log.L().With(log.Any("link", "websocket link")),
 	}
+	go client.initLink()
+	return client, nil
+}
 
-	return &Client{
-		conn:    connect,
-		u:       u,
-		dialer:  dialer,
-		antPool: p,
-	}, nil
+func (c *Client) initLink() {
+	// 根据设置创建连接池
+	for i := 0; i < c.ops.SyncMaxConcurrency; i++ {
+		var connectReadMsgChan chan *v1.Message = nil
+		if c.readMsgChan != nil {
+			connectReadMsgChan = c.readMsgChan[i]
+		}
+		ws, err := c.Connect(connectReadMsgChan)
+		if err != nil {
+			c.log.Error("link websocket error", log.Any("err", err))
+		}
+		// 为了保证连接池数量 失败wscon 以nil方式放入连接池 每次发送的时候重新连接
+		c.pool <- ws
+	}
+}
+
+func (c *Client) Connect(readMsgChan chan *v1.Message) (*WsConnect, error) {
+	con, _, err := c.dialer.Dial(c.u.String(), nil)
+	ws := &WsConnect{
+		readMsgChan: readMsgChan,
+	}
+	if err != nil {
+		ws.wscon = nil
+		c.log.Error("websocket link error", log.Any("err", err))
+		return ws, err
+	} else {
+		ws.wscon = con
+		if c.readMsgChan != nil {
+			go ws.ReadConMsg(readMsgChan)
+		}
+	}
+	return ws, nil
 }
 
 func (c *Client) SendMsg(msg []byte) error {
-	con := <-c.conn
-	err := con.WriteMessage(websocket.TextMessage, msg)
-	c.conn <- con
+	con := <-c.pool
+	var err error
+	if con.wscon == nil {
+		con, err = c.Connect(con.readMsgChan)
+		if err != nil {
+			c.pool <- con
+			c.log.Error("retry link websocket  error", log.Any("err", err))
+			return err
+		}
+	}
+	err = con.wscon.WriteMessage(websocket.TextMessage, msg)
+	if err != nil {
+		c.log.Error("websocket write msg error", log.Any("err", err))
+		con, err = c.Connect(con.readMsgChan)
+		if err != nil {
+			c.pool <- con
+			c.log.Error("retry link websocket  error", log.Any("err", err))
+			return err
+		}
+	}
+	c.pool <- con
 	return err
 }
 
-func ReadConMsg(con *websocket.Conn, readMsg chan *v1.Message) {
+func (w *WsConnect) ReadConMsg(readMsg chan *v1.Message) {
 	for {
-		msgType, data, err := con.ReadMessage()
+		if w.wscon == nil {
+			return
+		}
+		msgType, data, err := w.wscon.ReadMessage()
 		msg := &v1.Message{}
 		if err != nil {
 			msg = &v1.Message{
