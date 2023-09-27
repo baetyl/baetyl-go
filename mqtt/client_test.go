@@ -264,6 +264,60 @@ func TestMqttClientPublishSubscribeQOS0(t *testing.T) {
 	safeReceive(done)
 }
 
+func TestMqttClientPublishSubscribeQOS0WithDrop(t *testing.T) {
+	subscribe := NewSubscribe()
+	subscribe.Subscriptions = []Subscription{{Topic: "test"}}
+	subscribe.ID = subscribeId
+
+	suback := NewSuback()
+	suback.ReturnCodes = []QOS{0}
+	suback.ID = subscribeId
+
+	publish := NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+
+	broker := mock.NewFlow().Debug().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := initMockBroker(t, broker)
+
+	ops := newClientOptions(t, port, []Subscription{{Topic: "test"}})
+	cli := NewClient(ops)
+	assert.NotNil(t, cli)
+
+	obs := newMockObserver(t)
+	err := cli.Start(obs)
+	assert.NoError(t, err)
+
+	err = cli.PublishWithDrop(publish.Message.QOS, publish.Message.Topic, publish.Message.Payload, publish.ID, publish.Message.Retain, publish.Dup)
+	assert.NoError(t, err)
+	obs.assertPkts(publish)
+
+	time.Sleep(time.Second)
+
+	assert.NoError(t, cli.Close())
+	safeReceive(done)
+
+	ops = newClientOptions(t, "222", []Subscription{{Topic: "test"}})
+	newCLi := NewClient(ops)
+	for i := 0; i < 30; i++ {
+		err = newCLi.PublishWithDrop(publish.Message.QOS, publish.Message.Topic, publish.Message.Payload, publish.ID, publish.Message.Retain, publish.Dup)
+		assert.NoError(t, err)
+	}
+
+	assert.NoError(t, newCLi.Close())
+	safeReceive(done)
+
+}
+
 func TestMqttClientPublishSubscribeQOS1(t *testing.T) {
 	subscribe := NewSubscribe()
 	subscribe.Subscriptions = []Subscription{{Topic: "test", QOS: 1}}
