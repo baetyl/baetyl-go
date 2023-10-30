@@ -10,11 +10,16 @@ const (
 	AppTypeContainer = "container"
 	AppTypeFunction  = "function"
 	AppTypeAndroid   = "android"
+	AppTypeHelm      = "helm"
+	AppTypeYaml      = "yaml"
 
 	WorkloadDeployment  = "deployment"
 	WorkloadStatefulSet = "statefulset"
 	WorkloadDaemonSet   = "daemonset"
 	WorkloadJob         = "job"
+	WorkloadCustom      = "custom"
+
+	CustomAppNsLabel = "user-custom-namespace"
 )
 
 type CronStatusCode int
