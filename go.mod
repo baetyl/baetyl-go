@@ -8,6 +8,7 @@ require (
 	github.com/containerd/containerd v1.5.18
 	github.com/creasty/defaults v1.4.0
 	github.com/crsmithdev/goexpr v0.0.0-20150309021426-69a8c42346f1
+	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
