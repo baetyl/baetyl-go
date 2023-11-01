@@ -5,7 +5,12 @@ import (
 	"time"
 )
 
-const PrefixConfigObject = "_object_"
+const (
+	PrefixConfigObject = "_object_"
+	ConfigType         = "baetyl-config-type"
+	ConfigHelmTar      = "baetyl-helm-tar"
+	ConfigHelmValue    = "baetyl-helm-value"
+)
 
 // Configuration config info
 type Configuration struct {

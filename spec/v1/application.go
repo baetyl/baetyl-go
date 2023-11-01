@@ -19,7 +19,7 @@ const (
 	WorkloadJob         = "job"
 	WorkloadCustom      = "custom"
 
-	CustomAppNsLabel = "user-custom-namespace"
+	CustomAppNsLabel = "baetyl-custom-namespace"
 )
 
 type CronStatusCode int
