@@ -170,7 +170,7 @@ func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan
 			select {
 			case syncResult <- result:
 			default:
-				log.Error(errors.New("can not add send result to syncResult from websocket con"))
+				log.Error(errors.New("can not add send result to syncResult from http con"))
 			}
 		})
 	if err != nil {
@@ -184,7 +184,7 @@ func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan
 		select {
 		case syncResult <- result:
 		default:
-			log.Error(errors.New("can not add send result to syncResult from websocket con"))
+			log.Error(errors.New("can not add send result to syncResult from http con"))
 		}
 	}
 }
