@@ -97,8 +97,7 @@ func (c *Client) SendOrDrop(pkt Packet) error {
 	case <-c.tomb.Dying():
 		return errors.Trace(ErrClientAlreadyClosed)
 	default:
-		c.log.Warn("client dropped a packet", log.Any("packet", pkt))
-		return nil
+		return errors.New("mqqt failed to send message")
 	}
 }
 
