@@ -151,17 +151,17 @@ func (c *Client) SendUrl(method, url string, body io.Reader, header ...map[strin
 	return r, errors.Trace(err)
 }
 
-func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan *SyncResults, extra map[string]interface{}, header ...map[string]string) {
+func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan *SyncResults, extra map[string]interface{}, header ...map[string]string) error {
 	SyncSendStart := time.Now()
 	err := c.antPool.Submit(
 		func() {
 			sendStart := time.Now()
-			response, err := c.SendUrl(method, url, body, header...)
+			response, reErr := c.SendUrl(method, url, body, header...)
 			sendElapsed := time.Since(sendStart)
 			syncElapsed := time.Since(SyncSendStart)
 
 			result := &SyncResults{
-				Err:      err,
+				Err:      reErr,
 				Response: response,
 				SendCost: sendElapsed,
 				SyncCost: syncElapsed,
@@ -170,9 +170,10 @@ func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan
 			select {
 			case syncResult <- result:
 			default:
-				log.Error(errors.New("can not add send result to syncResult from websocket con"))
+				log.Error(errors.New("can not add send result to syncResult from http con"))
 			}
 		})
+
 	if err != nil {
 		result := &SyncResults{
 			Err:      err,
@@ -184,9 +185,10 @@ func (c *Client) SyncSendUrl(method, url string, body io.Reader, syncResult chan
 		select {
 		case syncResult <- result:
 		default:
-			log.Error(errors.New("can not add send result to syncResult from websocket con"))
+			log.Error(errors.New("can not add send result to syncResult from http con"))
 		}
 	}
+	return err
 }
 
 // HandleResponse handles response
