@@ -52,12 +52,12 @@ type Application struct {
 	Ota               OtaInfo           `json:"ota,omitempty" yaml:"ota,omitempty"`
 	AutoScaleCfg      *AutoScaleCfg     `json:"autoScaleCfg,omitempty" yaml:"autoScaleCfg,omitempty"`
 	// Reference to k8s PodSpec
-	InitServices  []Service    `json:"initServices,omitempty" yaml:"initServices,omitempty" binding:"dive"`
-	Services      []Service    `json:"services,omitempty" yaml:"services,omitempty" binding:"dive"`
-	Volumes       []Volume     `json:"volumes,omitempty" yaml:"volumes,omitempty" binding:"dive"`
-	HostNetwork   bool         `json:"hostNetwork,omitempty" yaml:"hostNetwork,omitempty"` // specifies host network mode of service
-	DNSPolicy     v1.DNSPolicy `json:"dnsPolicy,omitempty" yaml:"dnsPolicy,omitempty" default:"ClusterFirst"`
-	RollingUpdate bool         `json:"rollingUpdate,omitempty" yaml:"rollingUpdate,omitempty"`
+	InitServices    []Service    `json:"initServices,omitempty" yaml:"initServices,omitempty" binding:"dive"`
+	Services        []Service    `json:"services,omitempty" yaml:"services,omitempty" binding:"dive"`
+	Volumes         []Volume     `json:"volumes,omitempty" yaml:"volumes,omitempty" binding:"dive"`
+	HostNetwork     bool         `json:"hostNetwork,omitempty" yaml:"hostNetwork,omitempty"` // specifies host network mode of service
+	DNSPolicy       v1.DNSPolicy `json:"dnsPolicy,omitempty" yaml:"dnsPolicy,omitempty" default:"ClusterFirst"`
+	PreserveUpdates bool         `json:"preserveUpdates,omitempty" yaml:"preserveUpdates,omitempty"`
 }
 
 // Service service config1ma1
