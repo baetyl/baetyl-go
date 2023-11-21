@@ -123,6 +123,13 @@ type Service struct {
 	// the endpoint controller will remove the IP address of the Pod from the endpoints of all services that match it.
 	// The ready state before the initial delay defaults to Failure.
 	ReadinessProbe *v1.Probe `json:"readinessProbe,omitempty" yaml:"readinessProbe,omitempty"`
+	// StartupProbe indicates that the Pod has successfully initialized.
+	// If specified, no other probes are executed until this completes successfully.
+	// If this probe fails, the Pod will be restarted, just as if the livenessProbe failed.
+	// This can be used to provide different probe parameters at the beginning of a Pod's lifecycle,
+	// when it might take a long time to load data or warm a cache, than during steady-state operation.
+	// This cannot be updated.
+	StartupProbe *v1.Probe `json:"startupProbe,omitempty" yaml:"StartupProbe,omitempty"`
 }
 
 type PullPolicy string
