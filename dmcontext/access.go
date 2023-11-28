@@ -95,7 +95,7 @@ type OpcuaAccessConfig struct {
 
 type OpcdaAccessConfig struct {
 	Host      string        `yaml:"host,omitempty" json:"host,omitempty"`
-	ClsID     string        `yaml:"clsid,omitempty" json:"clsid,omitempty"`
+	ClsID     string        `yaml:"clsId,omitempty" json:"clsId,omitempty"`
 	ProgramID string        `yaml:"programId,omitempty" json:"programId,omitempty"`
 	UserName  string        `yaml:"username,omitempty" json:"username,omitempty"`
 	Password  string        `yaml:"password,omitempty" json:"password,omitempty"`
