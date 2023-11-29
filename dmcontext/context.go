@@ -4,10 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/baetyl/baetyl-go/v2/context"
 	"github.com/baetyl/baetyl-go/v2/errors"
 	"github.com/baetyl/baetyl-go/v2/log"
-	"gopkg.in/yaml.v2"
 )
 
 var _ Context = &DmCtx{}
@@ -38,6 +39,7 @@ type Context interface {
 	GetAccessTemplates(driverName, name string) (*AccessTemplate, error)
 	ParsePropertyValues(driverName string, device *DeviceInfo, props map[string]any) (map[string]any, error)
 	LoadDriverConfig(path, driverName string) error
+	GetDriverConfig() string
 }
 
 type DmCtx struct {
@@ -47,6 +49,7 @@ type DmCtx struct {
 	devices         map[string]map[string]DeviceInfo
 	deviceModels    map[string]map[string][]DeviceProperty
 	accessTemplates map[string]map[string]AccessTemplate
+	driverConfig    string
 }
 
 func NewContext(confFile string) Context {
@@ -103,6 +106,7 @@ func (c *DmCtx) LoadDriverConfig(path, driverName string) error {
 		c.deviceDriverMap[dev.Name] = driverName
 	}
 	c.devices[driverName] = devices
+	c.driverConfig = dCfg.Driver
 
 	return nil
 }
@@ -141,6 +145,10 @@ func (c *DmCtx) GetAccessTemplates(driverName, name string) (*AccessTemplate, er
 		return &accessTemplate, nil
 	}
 	return nil, ErrAccessTemplateNotExist
+}
+
+func (c *DmCtx) GetDriverConfig() string {
+	return c.driverConfig
 }
 
 func unmarshalYAML(file string, out any) error {
