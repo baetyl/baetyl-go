@@ -94,12 +94,12 @@ type OpcuaAccessConfig struct {
 }
 
 type OpcdaAccessConfig struct {
-	Host      string        `yaml:"host,omitempty" json:"host,omitempty"`
-	ClsID     string        `yaml:"clsId,omitempty" json:"clsId,omitempty"`
-	ProgramID string        `yaml:"programId,omitempty" json:"programId,omitempty"`
-	UserName  string        `yaml:"username,omitempty" json:"username,omitempty"`
-	Password  string        `yaml:"password,omitempty" json:"password,omitempty"`
-	Interval  time.Duration `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Host      string `yaml:"host,omitempty" json:"host,omitempty"`
+	ClsID     string `yaml:"clsid,omitempty" json:"clsid,omitempty"`
+	ProgramID string `yaml:"programid,omitempty" json:"programid,omitempty"`
+	UserName  string `yaml:"username,omitempty" json:"username,omitempty"`
+	Password  string `yaml:"password,omitempty" json:"password,omitempty"`
+	Interval  int    `yaml:"interval,omitempty" json:"interval,omitempty"`
 }
 
 type BacnetAccessConfig struct {
