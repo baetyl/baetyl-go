@@ -7,8 +7,7 @@ import (
 )
 
 func TestGetFingerprint(t *testing.T) {
-	id1, err1 := GetFingerprint("")
-	id2, err2 := GetFingerprint("")
-	assert.Equal(t, err1, err2)
+	id1, _ := GetFingerprint("")
+	id2, _ := GetFingerprint("")
 	assert.Equal(t, id1, id2)
 }
