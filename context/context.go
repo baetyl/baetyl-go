@@ -75,11 +75,14 @@ type Context interface {
 	// NewSystemBrokerClient creates a new system broker client.
 	NewSystemBrokerClient([]mqtt.QOSTopic) (*mqtt.Client, error)
 	GetGatewayHost() string
+
+	Done()
 }
 
 type ctx struct {
 	sync.Map // global cache
 	log      *log.Logger
+	sig      chan os.Signal
 }
 
 // NewContext creates a new context
@@ -173,6 +176,11 @@ func NewContext(confFile string) Context {
 	}
 	c.log = _log
 	c.log.Debug("context is created", log.Any("file", confFile), log.Any("conf", sc))
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
+	signal.Ignore(syscall.SIGPIPE)
+	c.sig = sig
 	return c
 }
 
@@ -229,7 +237,7 @@ func (c *ctx) Log() *log.Logger {
 }
 
 func (c *ctx) Wait() {
-	<-c.WaitChan()
+	<-c.sig
 }
 
 func (c *ctx) WaitChan() <-chan os.Signal {
@@ -338,4 +346,8 @@ func (c *ctx) NewCoreHttpClient() (*http.Client, error) {
 
 func (c *ctx) GetGatewayHost() string {
 	return GatewayHost()
+}
+
+func (c *ctx) Done() {
+	c.sig <- syscall.SIGKILL
 }
