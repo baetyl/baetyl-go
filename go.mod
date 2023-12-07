@@ -32,6 +32,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cast v1.3.0
 	github.com/stretchr/testify v1.8.1
+	github.com/super-l/machine-code v0.0.0-20210720085303-62525d58dab0
 	github.com/valyala/fasthttp v1.34.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/sync v0.1.0
